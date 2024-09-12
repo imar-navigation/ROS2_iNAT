@@ -1,0 +1,24 @@
+{
+  "ip_config": {
+    "ip_address": "192.168.4.229",
+    "ip_port": "3000"
+  },
+  "serial_config": {
+    "ignore": "1",
+    "serial_port": "1",
+    "baud_rate": "115200",
+    "enable": "1"
+  },
+  "topics__": {
+    "Imu": {"frequency_hz": "10", "remap_to": ""},
+    "NavSatStatus": {"frequency_hz": "10", "remap_to": ""},
+    "NavSatFix": {"frequency_hz": "10", "remap_to": ""},
+    "NavSatFix_INS": {"frequency_hz": "10", "remap_to": ""},
+    "TimeReference": {"frequency_hz": "10", "remap_to": ""},
+    "MagneticField": {"frequency_hz": "10", "remap_to": ""},
+    "Odometry": {"frequency_hz": "10", "remap_to": ""},
+    "PoseWithCovarianceStamped": {"frequency_hz": "10", "remap_to": ""},
+    "PoseStamped": {"frequency_hz": "10", "remap_to": ""},
+    "TwistWithCovarianceStamped": {"frequency_hz": "10", "remap_to": ""}
+  }
+}
