@@ -1,49 +1,38 @@
 /*.*******************************************************************
  FILENAME: xcom.h
  **********************************************************************
- *  PROJECT: iNAT
- *  MODULE NAME: iXCOM
- *  DESIGNER: T. Schneider
+ *  PROJECT: ROS2_iNAT
  *
- * 	CHANGE HISTORY:
  *
- * 	1.0 - 05.03.21: T. Schneider - File created
  *---------------------------------------------------------------------
  * 	Copyright 2021, iMAR Navigation
  *---------------------------------------------------------------------
  * 	MODULE DESCRIPTION:
  *
  ---------------------------------------------------------------------*/
-
 #ifndef LIB_IXCOM_X_COM_H
 #define LIB_IXCOM_X_COM_H
-
 #include "../../src/parameter_traits.h"
 #include <array>
 #include <ixcom/crc16.h>
 #include <ixcom/xcom_parser.h>
 #include <optional>
-
 #ifndef UNUSED
 #define UNUSED(x) (void)(x)
 #endif
-
 namespace xcom {
-
 class IReader {
 public:
     virtual ~IReader()                                                        = default;
     virtual int32_t read(uint8_t* buffer, std::size_t buffer_length) noexcept = 0;
     virtual bool initialize() noexcept { return true; }
 };
-
 class IWriter {
 public:
     virtual ~IWriter()                                                               = default;
     virtual int32_t write(const uint8_t* buffer, std::size_t buffer_length) noexcept = 0;
     virtual bool initialize() noexcept { return true; }
 };
-
 enum class CallBackType {
     Message,
     Parameter,
@@ -59,7 +48,6 @@ typedef struct xcom_msg_callbacks_node {
     void* context;
     struct xcom_msg_callbacks_node* next;
 } xcom_callbacks_node_t;
-
 class XComState {
     using ErrorCode = XComParser::ParserCode;
     typedef void (*xcom_msg_callback_t)(uint8_t msg[], void* context);
@@ -67,12 +55,10 @@ class XComState {
     typedef void (*xcom_command_callback_t)(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context);
     typedef void (*xcom_response_callback_t)(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context);
     typedef void (*xcom_error_callback_t)(const ErrorCode& error_code, void* context);
-
 public:
     XComState() noexcept          = default;
     virtual ~XComState() noexcept = default;
     bool initialize() noexcept;
-
     enum class ReturnCode {
         Ok,
         Timeout,
@@ -80,7 +66,6 @@ public:
         InvalidReader
     };
     ReturnCode process() noexcept;
-
     int register_message_callback(uint8_t msg_id, xcom_msg_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept;
     int register_parameter_callback(uint16_t param_id, xcom_param_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept;
     int register_command_callback(xcom_command_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept;
@@ -95,7 +80,6 @@ public:
     void set_rc(ReturnCode rc) noexcept;
     uint8_t* get_payload() noexcept;
     [[nodiscard]] std::size_t get_payload_length() const noexcept;
-
     struct system_status {
         uint32_t mode          = 0;
         uint32_t system_status = 0;
@@ -110,7 +94,6 @@ public:
         uint16_t global_status = 0;
     };
     static std::optional<system_status> process_msg_sysstat(const uint8_t* data, std::size_t len);
-
     // XCOM commands
     XCOMCmd_XCOM get_xcomcmd_open(uint16_t channel);
     XCOMCmd_XCOM get_xcomcmd_close(uint16_t channel);
@@ -118,7 +101,6 @@ public:
     XCOMCmd_LOG get_xcomcmd_enablelog(XComMessageID id, XComLogTrigger trigger, uint16_t divider);
     XCOMCmd_CONF get_cmd_save_config() noexcept;
     XCOMCmd_XCOM get_cmd_reboot() noexcept;
-
     // XCOM parameter
     template<typename ParamType>
     ParamType get_generic_param() {
@@ -129,7 +111,6 @@ public:
         complete_message(frame);
         return frame;
     }
-
     XCOMParXCOM_POSTPROC enable_postproc(uint8_t channel = 31) {
         auto frame                    = get_generic_param<XCOMParXCOM_POSTPROC>();
         frame.param_header.is_request = XCOMpar_action::XCOM_PAR_SET;
@@ -146,7 +127,6 @@ public:
         complete_message(frame);
         return frame;
     }
-
     XCOMParEKF_STARTUPV2 initialize_ekf(const std::array<double, 3> pos, const std::array<float, 3> pos_stddev, const float& hdg,
                                         const float& hdg_stddev, const std::array<float, 3> la, const std::array<float, 3> la_stddev,
                                         uint8_t position_mode, uint8_t heading_mode, bool start_alignment) {
@@ -171,7 +151,6 @@ public:
         complete_message(frame);
         return frame;
     }
-
     template<typename MsgType>
     int32_t send_message(MsgType&& msg) noexcept {
         auto p             = reinterpret_cast<uint8_t*>(&msg);
@@ -182,19 +161,16 @@ public:
         }
         return -1;
     }
-
     template<typename MsgType>
     void complete_message(MsgType& msg) noexcept {
         auto p             = reinterpret_cast<uint8_t*>(&msg);
         const auto msg_len = sizeof(MsgType);
         msg.footer.crc16   = _crc16.process(p, msg_len - sizeof(uint16_t));
     }
-
     template<typename MsgT>
     static double get_timestamp(const MsgT& msg) noexcept {
         return static_cast<double>(msg.header.gps_time_sec) + (static_cast<double>(msg.header.gps_time_usec) * 1e-6);
     }
-
     template<typename MsgT>
     static void build_header(MsgT& msg, double gps_time, uint16_t gps_week, XComMessageID id, XComLogTrigger trig_src) {
         msg.header.frame_counter++;
@@ -207,13 +183,11 @@ public:
         msg.header.gps_week       = gps_week;
         msg.header.msg_len        = static_cast<uint16_t>(sizeof(MsgT));
     }
-
     static void build_parameter_header(XCOMParHeader& subheader, const XComParameterID paramID, XCOMpar_action is_request) {
         subheader.param_id   = paramID;
         subheader.is_request = is_request;
         subheader.reserved   = 0;
     }
-
 private:
     static constexpr int BufferSize = 1024;
     std::array<uint8_t, BufferSize> _buf{};
@@ -234,18 +208,14 @@ private:
     bool _forced_exit       = false;
     ReturnCode _rc          = ReturnCode::Ok;
     Crc16 _crc16;
-
     static void state_init(xcom_state_t& state) noexcept;
     static void process_message(xcom_state_t& s, uint8_t msg_id, uint8_t payload[]) noexcept;
     static void process_parameter(xcom_state_t& s, uint16_t param_id, uint8_t payload[]) noexcept;
     static void process_command(xcom_state_t& s, uint16_t cmd_id, std::size_t payload_length, uint8_t payload[]) noexcept;
     static void process_response(xcom_state_t& s, uint16_t cmd_id, std::size_t payload_length, uint8_t payload[]) noexcept;
     static void process_error(xcom_state_t& s, XComParser::ParserCode ec) noexcept;
-
     template<typename T>
     int register_callback(T id, xcom_msg_callback_t cb, void* context, xcom_callbacks_node_t* node, CallBackType cb_type) noexcept;
 };
-
 }  // namespace xcom
-
 #endif  // LIB_IXCOM_X_COM_H

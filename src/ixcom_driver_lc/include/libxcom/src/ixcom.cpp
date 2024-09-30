@@ -1,13 +1,9 @@
 /*.*******************************************************************
  FILENAME: xcom.cc
  **********************************************************************
- *  PROJECT: iNAT
- *  MODULE NAME: iXCOM
- *  DESIGNER: T. Schneider
+ *  PROJECT: ROS2_iNAT
  *
- * 	CHANGE HISTORY:
  *
- * 	1.0 - 05.03.21: T. Schneider - File created
  *---------------------------------------------------------------------
  * 	Copyright 2021, iMAR Navigation
  *---------------------------------------------------------------------
@@ -16,19 +12,15 @@
  ---------------------------------------------------------------------*/
 #include <cstring>
 #include <ixcom/ixcom.h>
-
 namespace xcom {
-
 bool XComState::initialize() noexcept {
     state_init(_state);
     return true;
 }
-
 XComState::ReturnCode XComState::process() noexcept {
     if(_reader == nullptr) {
         return XComState::ReturnCode::InvalidReader;
     }
-
     int32_t len;
     while(!_forced_exit && (len = _reader->read(_buf.data(), _buf.size())) > 0) {
         for(int32_t idx = 0; idx < len; idx++) {
@@ -44,7 +36,6 @@ XComState::ReturnCode XComState::process() noexcept {
                     // must be a response message
                     process_response(_state, _parser.get_cmd_id(), _parser.get_payload_length(), _parser.get_payload());
                 }
-
                 // forward message
                 if((_writer != nullptr) && _enable_forwarding && !_skip_frame) {
                     _writer->write(_parser.get_payload(), _parser.get_payload_length());
@@ -61,13 +52,10 @@ XComState::ReturnCode XComState::process() noexcept {
     }
     return XComState::ReturnCode::Ok;
 }
-
 void XComState::state_init(xcom_state_t& state) noexcept { state.xcom_msg_callbacks_head = nullptr; }
-
 int XComState::register_message_callback(uint8_t msg_id, xcom_msg_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept {
     return register_callback<uint8_t>(msg_id, cb, context, node, CallBackType::Message);
 }
-
 void XComState::process_message(xcom_state_t& s, uint8_t msg_id, uint8_t* payload) noexcept {
     xcom_callbacks_node_t* node;
     for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
@@ -76,7 +64,6 @@ void XComState::process_message(xcom_state_t& s, uint8_t msg_id, uint8_t* payloa
         }
     }
 }
-
 void XComState::process_parameter(XComState::xcom_state_t& s, uint16_t param_id, uint8_t* payload) noexcept {
     xcom_callbacks_node_t* node;
     for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
@@ -85,25 +72,19 @@ void XComState::process_parameter(XComState::xcom_state_t& s, uint16_t param_id,
         }
     }
 }
-
 int XComState::register_parameter_callback(uint16_t param_id, XComState::xcom_param_callback_t cb, void* context,
                                            xcom_callbacks_node_t* node) noexcept {
     return register_callback<uint16_t>(param_id, cb, context, node, CallBackType::Parameter);
 }
-
 void XComState::enable_forwarding() noexcept { _enable_forwarding = true; }
-
 void XComState::disable_forwarding() noexcept { _enable_forwarding = false; }
-
 void XComState::skip_frame() noexcept { _skip_frame = true; }
-
 template<typename T>
 int XComState::register_callback(T id, XComState::xcom_msg_callback_t cb, void* context, xcom_callbacks_node_t* node,
                                  CallBackType cb_type) noexcept {
     if(cb == nullptr) {
         return -1;
     }
-
     if(node == nullptr) {
         return -1;
     }
@@ -131,28 +112,22 @@ int XComState::register_callback(T id, XComState::xcom_msg_callback_t cb, void* 
     node->context = context;
     node->cb_type = cb_type;
     node->next    = nullptr;
-
     /* If our linked list is empty then just add the new node to the start. */
     if(_state.xcom_msg_callbacks_head == nullptr) {
         _state.xcom_msg_callbacks_head = node;
         return 0;
     }
-
     /* Find the tail of our linked list and add our new node to the end. */
     xcom_callbacks_node_t* p = _state.xcom_msg_callbacks_head;
     while(p->next) {
         p = p->next;
     }
-
     p->next = node;
-
     return 0;
 }
-
 int XComState::register_error_callback(XComState::xcom_error_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept {
     return register_callback<uint16_t>(XCOMPAR_INVALID, reinterpret_cast<xcom_msg_callback_t>(cb), context, node, CallBackType::Error);
 }
-
 void XComState::process_error(XComState::xcom_state_t& s, XComParser::ParserCode ec) noexcept {  // NOLINT
     xcom_callbacks_node_t* node;
     for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
@@ -161,7 +136,6 @@ void XComState::process_error(XComState::xcom_state_t& s, XComParser::ParserCode
         }
     }
 }
-
 void XComState::process_command(XComState::xcom_state_t& s, uint16_t cmd_id, std::size_t payload_length, uint8_t* payload) noexcept {
     xcom_callbacks_node_t* node;
     for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
@@ -170,7 +144,6 @@ void XComState::process_command(XComState::xcom_state_t& s, uint16_t cmd_id, std
         }
     }
 }
-
 void XComState::process_response(XComState::xcom_state_t& s, uint16_t cmd_id, std::size_t payload_length, uint8_t* payload) noexcept {
     xcom_callbacks_node_t* node;
     for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
@@ -179,29 +152,24 @@ void XComState::process_response(XComState::xcom_state_t& s, uint16_t cmd_id, st
         }
     }
 }
-
 int XComState::register_command_callback(XComState::xcom_command_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept {
     if(cb == nullptr) {
         return -1;
     }
-
     if(node == nullptr) {
         return -1;
     }
-
     node->msg_id   = XCOM_MSGID_COMMAND;
     node->param_id = XCOMPAR_INVALID;
     node->cb       = reinterpret_cast<void*>(cb);
     node->context  = context;
     node->cb_type  = CallBackType::Command;
     node->next     = nullptr;
-
     /* If our linked list is empty then just add the new node to the start. */
     if(_state.xcom_msg_callbacks_head == nullptr) {
         _state.xcom_msg_callbacks_head = node;
         return 0;
     }
-
     /* Find the tail of our linked list and add our new node to the end. */
     xcom_callbacks_node_t* p = _state.xcom_msg_callbacks_head;
     while(p->next) {
@@ -210,29 +178,24 @@ int XComState::register_command_callback(XComState::xcom_command_callback_t cb, 
     p->next = node;
     return 0;
 }
-
 int XComState::register_response_callback(XComState::xcom_command_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept {
     if(cb == nullptr) {
         return -1;
     }
-
     if(node == nullptr) {
         return -1;
     }
-
     node->msg_id   = XCOM_MSGID_RESPONSE;
     node->param_id = XCOMPAR_INVALID;
     node->cb       = reinterpret_cast<void*>(cb);
     node->context  = context;
     node->cb_type  = CallBackType::Response;
     node->next     = nullptr;
-
     /* If our linked list is empty then just add the new node to the start. */
     if(_state.xcom_msg_callbacks_head == nullptr) {
         _state.xcom_msg_callbacks_head = node;
         return 0;
     }
-
     /* Find the tail of our linked list and add our new node to the end. */
     xcom_callbacks_node_t* p = _state.xcom_msg_callbacks_head;
     while(p->next) {
@@ -241,9 +204,7 @@ int XComState::register_response_callback(XComState::xcom_command_callback_t cb,
     p->next = node;
     return 0;
 }
-
 XCOMCmd_XCOM XComState::get_xcomcmd_open(uint16_t channel) {
-
     XCOMCmd_XCOM frame{};
     build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
     frame.cmd_header.cmd_id   = XCOM_CMDID_XCOM;
@@ -253,7 +214,6 @@ XCOMCmd_XCOM XComState::get_xcomcmd_open(uint16_t channel) {
     complete_message(frame);
     return frame;
 }
-
 XCOMCmd_XCOM XComState::get_xcomcmd_close(uint16_t channel) {
     XCOMCmd_XCOM frame{};
     build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
@@ -264,9 +224,7 @@ XCOMCmd_XCOM XComState::get_xcomcmd_close(uint16_t channel) {
     complete_message(frame);
     return frame;
 }
-
 void XComState::forced_exit() noexcept { _forced_exit = true; }
-
 XCOMCmd_LOG XComState::get_xcomcmd_clearall() {
     XCOMCmd_LOG frame{};
     build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
@@ -279,7 +237,6 @@ XCOMCmd_LOG XComState::get_xcomcmd_clearall() {
     complete_message(frame);
     return frame;
 }
-
 XCOMCmd_LOG XComState::get_xcomcmd_enablelog(XComMessageID id, XComLogTrigger trigger, uint16_t divider) {
     XCOMCmd_LOG frame{};
     build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
@@ -292,9 +249,7 @@ XCOMCmd_LOG XComState::get_xcomcmd_enablelog(XComMessageID id, XComLogTrigger tr
     complete_message(frame);
     return frame;
 }
-
 void XComState::set_rc(XComState::ReturnCode rc) noexcept { _rc = rc; }
-
 XCOMCmd_CONF XComState::get_cmd_save_config() noexcept {
     XCOMCmd_CONF frame{};
     build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
@@ -304,7 +259,6 @@ XCOMCmd_CONF XComState::get_cmd_save_config() noexcept {
     complete_message(frame);
     return frame;
 }
-
 XCOMCmd_XCOM XComState::get_cmd_reboot() noexcept {
     XCOMCmd_XCOM frame{};
     build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
@@ -314,13 +268,9 @@ XCOMCmd_XCOM XComState::get_cmd_reboot() noexcept {
     complete_message(frame);
     return frame;
 }
-
 uint8_t* XComState::get_payload() noexcept { return _parser.get_payload(); }
-
 std::size_t XComState::get_payload_length() const noexcept { return _parser.get_payload_length(); }
-
 std::optional<XComState::system_status> XComState::process_msg_sysstat(const uint8_t* data, std::size_t len) {
-
     system_status sysstat{};
     XCOMHeader hdr{};
     std::memcpy(reinterpret_cast<void*>(&hdr), data, sizeof(XCOMHeader));
@@ -378,6 +328,4 @@ std::optional<XComState::system_status> XComState::process_msg_sysstat(const uin
     sysstat.global_status = *reinterpret_cast<const uint32_t*>(&data[len - sizeof(XCOMFooter)]);
     return sysstat;
 }
-
-
 }  // namespace xcom

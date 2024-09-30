@@ -1,20 +1,15 @@
 /*.*******************************************************************
  FILENAME: tcp_client.cpp
  **********************************************************************
- *  PROJECT: iNAT
- *  MODULE NAME: TcpClient
- *  DESIGNER: T. Schneider
+ *  PROJECT: ROS2_iNAT
  *
- * 	CHANGE HISTORY:
  *
- * 	1.0 - 25.06.22: T. Schneider - File created
  *---------------------------------------------------------------------
  * 	Copyright 2022, iMAR Navigation
  *---------------------------------------------------------------------
  * 	MODULE DESCRIPTION:
  *
  ---------------------------------------------------------------------*/
-
 #include "ixcom/tcp_client.h"
 #include <arpa/inet.h>
 #include <cerrno>
@@ -22,20 +17,15 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <utility>
-
 #ifndef EOK
 #define EOK 0
 #endif
 #define USEC_PER_SEC 1000000
-
 namespace xcom {
-
 static constexpr int ReadTimeout = 1000 * 1000 * 5;
-
 TcpClient::TcpClient(std::string addr, int port)
     : _addr(std::move(addr)),
       _port(port) {}
-
 bool TcpClient::open_connection() {
     _error = false;
     if((_sd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -44,33 +34,28 @@ bool TcpClient::open_connection() {
     }
     _serv_addr.sin_family = AF_INET;
     _serv_addr.sin_port   = htons(_port);
-
     if(inet_pton(AF_INET, _addr.c_str(), &_serv_addr.sin_addr) <= 0) {
         _error = true;
         return false;
     }
-
     if(connect(_sd, (struct sockaddr*)&_serv_addr, sizeof(_serv_addr)) < 0) {
         _error = true;
         return false;
     }
     return true;
 }
-
 int TcpClient::read_data(uint8_t* rx_buffer, std::size_t length) const {
     if(_error) {
         return -1;
     }
     return static_cast<int>(read(_sd, rx_buffer, length));
 }
-
 int TcpClient::write_data(const uint8_t* tx_buffer, std::size_t length) const {
     if(_error) {
         return -1;
     }
     return static_cast<int>(send(_sd, tx_buffer, length, 0));
 }
-
 bool TcpClient::close_connection() {
     _error = false;
     if(close(_sd) != EOK) {
@@ -80,19 +65,16 @@ bool TcpClient::close_connection() {
     }
     return true;
 }
-
 bool TcpClient::set_read_timeout(int usec) const {
     if(_error) {
         return false;
     }
-
     struct ::timeval tv {};
     tv.tv_sec  = 0;
     tv.tv_usec = usec;
     normalize_timespec(&tv);
     return (setsockopt(_sd, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&tv), sizeof tv) == EOK);
 }
-
 bool TcpClient::is_ok() const { return !_error; }
 void TcpClient::normalize_timespec(struct ::timeval* ts) {
     while(ts->tv_usec >= USEC_PER_SEC) {
@@ -104,13 +86,11 @@ void TcpClient::normalize_timespec(struct ::timeval* ts) {
         ts->tv_usec += USEC_PER_SEC;
     }
 }
-
 ssize_t TcpClient::read_line(void* buffer, size_t n) const {
     ssize_t num_read;
     ssize_t to_read;
     uint8_t* buf;
     char ch;
-
     if(n <= 0 || buffer == nullptr) {
         errno = EINVAL;
         return -1;
@@ -144,15 +124,12 @@ ssize_t TcpClient::read_line(void* buffer, size_t n) const {
     *buf = '\0';
     return to_read;
 }
-
 /*
  * *****************************************************************************************************************************************
  */
 XcomClientReader::XcomClientReader(ClientInterface& client)
     : _client(client) {}
-
 XcomClientReader::~XcomClientReader() { _client.close_connection(); }
-
 bool XcomClientReader::initialize() noexcept {
     _client.close_connection();
     if(!_client.open_connection()) {
@@ -161,21 +138,15 @@ bool XcomClientReader::initialize() noexcept {
         return _client.set_read_timeout(ReadTimeout);
     }
 }
-
 int32_t XcomClientReader::read(uint8_t* buffer, std::size_t buffer_length) noexcept { return _client.read_data(buffer, buffer_length); }
-
 /*
  * *****************************************************************************************************************************************
  */
 XcomClientWriter::XcomClientWriter(ClientInterface& client)
     : _client(client) {}
-
 XcomClientWriter::~XcomClientWriter() { _client.close_connection(); }
-
 bool XcomClientWriter::initialize() noexcept { return _client.is_ok(); }
-
 int32_t XcomClientWriter::write(const uint8_t* buffer, std::size_t buffer_length) noexcept {
     return _client.write_data(buffer, buffer_length);
 }
-
 }  // namespace xcom

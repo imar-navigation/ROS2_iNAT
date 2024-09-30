@@ -1,34 +1,25 @@
 /*.*******************************************************************
  FILENAME: crc16.h
  **********************************************************************
- *  PROJECT: iNAT
- *  MODULE NAME: CRC16
- *  DESIGNER: T. Schneider
+ *  PROJECT: ROS2_iNAT
  *
- * 	CHANGE HISTORY:
  *
- * 	1.0 - 05.03.21: T. Schneider - File created
  *---------------------------------------------------------------------
  * 	Copyright 2021, iMAR Navigation
  *---------------------------------------------------------------------
  * 	MODULE DESCRIPTION:
  *
  ---------------------------------------------------------------------*/
-
 #ifndef LIBXCOM_CRC16_H_
 #define LIBXCOM_CRC16_H_
-
 #include <cstddef>
 #include <cstdint>
-
 namespace xcom {
-
 class Crc16 {
 public:
     explicit Crc16(uint16_t start_val = 0) noexcept;
     ~Crc16() = default;
     uint16_t process(const uint8_t* p, std::size_t length) const noexcept;
-
 private:
     uint16_t const CrcTable[256] = {
         0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
@@ -47,9 +38,7 @@ private:
         0xcb7d, 0xdb5c, 0xeb3f, 0xfb1e, 0x8bf9, 0x9bd8, 0xabbb, 0xbb9a, 0x4a75, 0x5a54, 0x6a37, 0x7a16, 0x0af1, 0x1ad0, 0x2ab3, 0x3a92,
         0xfd2e, 0xed0f, 0xdd6c, 0xcd4d, 0xbdaa, 0xad8b, 0x9de8, 0x8dc9, 0x7c26, 0x6c07, 0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1,
         0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0};
-
     uint16_t _start_value = 0;
 };
 }  // namespace xcom
-
 #endif /* LIBXCOM_CRC16_H_ */

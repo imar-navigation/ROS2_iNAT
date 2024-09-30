@@ -1,13 +1,9 @@
 /*.*******************************************************************
  FILENAME: xcom_parser.h
  **********************************************************************
- *  PROJECT: iNAT
- *  MODULE NAME: XComParser
- *  DESIGNER: T. Schneider
+ *  PROJECT: ROS2_iNAT
  *
- * 	CHANGE HISTORY:
  *
- * 	1.0 - 05.03.21: T. Schneider - File created
  *---------------------------------------------------------------------
  * 	Copyright 2021, iMAR Navigation
  *---------------------------------------------------------------------
@@ -16,25 +12,20 @@
  ---------------------------------------------------------------------*/
 #ifndef LIBXCOM_PROTOCOL_XCOM_XCOMPARSER_H_
 #define LIBXCOM_PROTOCOL_XCOM_XCOMPARSER_H_
-
 #include <cstdint>
 #include <ixcom/XCOMdat.h>
 #include <ixcom/crc16.h>
-
 namespace xcom {
-
 class XComParser {
 public:
     XComParser() noexcept;
     ~XComParser() = default;
-
     enum class ParserCode : int {
         Ok,
         Running,
         CrcError,
         InvalidLength
     };
-
     ParserCode process_byte(uint8_t rxByte) noexcept;
     bool is_cmd_open(int& channel) const noexcept;
     [[nodiscard]] bool is_cmd_close(int channel) const noexcept;
@@ -49,7 +40,6 @@ public:
     [[nodiscard]] bool is_cmd() const noexcept;
     [[nodiscard]] bool is_msg() const noexcept;
     [[nodiscard]] uint8_t get_msg_id() const noexcept;
-
 private:
     static constexpr int MaxMessageSize = XCOM_MAX_MESSAGE_LENGTH;
     typedef enum {
@@ -63,7 +53,6 @@ private:
         XComCrcLsb,
         XComCrcMsb
     } XCOMParserStates;
-
     typedef struct xcom_message {
         XCOMParserStates state = XComSync;
         uint16_t rx_cpy_idx    = 0;
@@ -76,12 +65,9 @@ private:
         uint8_t payload[MaxMessageSize];
         uint16_t crc = 0;
     } XCOMMessage;
-
     XCOMMessage _rx_state;
     Crc16 _crc16;
-
     void init_parser() noexcept;
 };
 }  // namespace xcom
-
 #endif /* LIBXCOM_PROTOCOL_XCOM_XCOMPARSER_H_ */
