@@ -34,6 +34,10 @@ struct ParameterTraits<XCOMParDAT_VEL> {
     static constexpr uint16_t Id = XCOMPAR_PARDAT_VEL;
 };
 template<>
+struct ParameterTraits<XCOMParEKF_IMUCONFIG2> {
+    static constexpr uint16_t Id = XCOMPAR_PAREKF_IMUCONFIG2;
+};
+template<>
 struct ParameterTraits<XCOMParGNSS_LOCKOUTSYSTEM> {
     static constexpr uint16_t Id = XCOMPAR_PARGNSS_LOCKOUTSYSTEM;
 };
@@ -44,10 +48,6 @@ struct ParameterTraits<XCOMParDAT_POS> {
 template<>
 struct ParameterTraits<XCOMParEKF_MAGATTAID> {
     static constexpr uint16_t Id = XCOMPAR_PAREKF_MAGATTAID;
-};
-template<>
-struct ParameterTraits<XCOMParEKF_IMUCONFIG2> {
-    static constexpr uint16_t Id = XCOMPAR_PAREKF_IMUCONFIG2;
 };
 template<>
 struct ParameterTraits<XCOMParXCOM_POSTPROC> {

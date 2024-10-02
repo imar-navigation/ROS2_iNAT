@@ -18,14 +18,6 @@ struct MessageTraits<XCOMmsg_SYSSTAT> {
     static constexpr uint8_t Id = XCOM_MSGID_SYSSTAT;
 };
 template<>
-struct MessageTraits<XCOMmsg_INSSOLECEF> {
-    static constexpr uint8_t Id = XCOM_MSGID_INSSOLECEF;
-};
-template<>
-struct MessageTraits<XCOMmsg_EKFSTDDEVECEF> {
-    static constexpr uint8_t Id = XCOM_MSGID_EKFSTDDEVECEF;
-};
-template<>
 struct MessageTraits<XCOMmsg_INSSOL> {
     static constexpr uint8_t Id = XCOM_MSGID_INSSOL;
 };
@@ -38,15 +30,23 @@ struct MessageTraits<XCOMmsg_EKFSTDDEV> {
     static constexpr uint8_t Id = XCOM_MSGID_EKFSTDDEV;
 };
 template<>
+struct MessageTraits<XCOMmsg_INSSOLECEF> {
+    static constexpr uint8_t Id = XCOM_MSGID_INSSOLECEF;
+};
+template<>
+struct MessageTraits<XCOMmsg_EKFSTDDEVECEF> {
+    static constexpr uint8_t Id = XCOM_MSGID_EKFSTDDEVECEF;
+};
+template<>
+struct MessageTraits<XCOMmsg_INSDCM> {
+    static constexpr uint8_t Id = XCOM_MSGID_INSDCM;
+};
+template<>
 struct MessageTraits<XCOMmsg_MAGDATA> {
     static constexpr uint8_t Id = XCOM_MSGID_MAGDATA;
 };
 template<>
 struct MessageTraits<XCOMmsg_GNSSLEVERARM> {
     static constexpr uint8_t Id = XCOM_MSGID_GNSSLEVERARM;
-};
-template<>
-struct MessageTraits<XCOMmsg_INSDCM> {
-    static constexpr uint8_t Id = XCOM_MSGID_INSDCM;
 };
 #endif
