@@ -328,4 +328,16 @@ std::optional<XComState::system_status> XComState::process_msg_sysstat(const uin
     sysstat.global_status = *reinterpret_cast<const uint32_t*>(&data[len - sizeof(XCOMFooter)]);
     return sysstat;
 }
+void XComState::set_sync_byte(uint8_t sync_byte) noexcept { _parser.set_sync_byte(sync_byte); }
+uint8_t XComState::get_sync_byte() const noexcept { return _parser.get_sync_byte(); }
+XCOMCmdEKF_ALIGNCOMPLETE XComState::align_complete() noexcept {
+    XCOMCmdEKF_ALIGNCOMPLETE frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id                 = XCOM_CMDID_EKF;
+    frame.cmd_header.specific               = 0;
+    frame.ekf_arguments.ekf_cmd_id          = XCOM_CMDEKF_ALIGNCOMPLETE;
+    frame.ekf_arguments.number_of_arguments = 0U;
+    complete_message(frame);
+    return frame;
+}
 }  // namespace xcom

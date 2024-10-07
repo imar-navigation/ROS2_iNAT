@@ -14,12 +14,7 @@
 #include <cstring>
 namespace xcom {
 XComParser::XComParser() noexcept { init_parser(); }
-uint8_t* XComParser::get_payload() noexcept {
-    if(_rx_state.msg_id == 25) {
-        _rx_state.payload[3] = 1;
-    }
-    return &_rx_state.payload[0];
-}
+uint8_t* XComParser::get_payload() noexcept { return &_rx_state.payload[0]; }
 void XComParser::init_parser() noexcept {
     _rx_state.state         = XComSync;
     _rx_state.rx_cpy_idx    = 0;
@@ -31,14 +26,11 @@ XComParser::ParserCode XComParser::process_byte(uint8_t rxByte) noexcept {
     XComParser::ParserCode ret_val = XComParser::ParserCode::Running;
     if(_rx_state.rx_cpy_idx < MaxMessageSize) {
         _rx_state.payload[_rx_state.rx_cpy_idx] = rxByte;
-//        if((_rx_state.rx_cpy_idx == 3) && (rxByte == 0)) {
-//            _rx_state.payload[_rx_state.rx_cpy_idx] = 2;
-//        }
         _rx_state.rx_cpy_idx++;
     }
     switch(_rx_state.state) {
         case XComSync:
-            if(rxByte == XCOM_SYNC_BYTE) {
+            if(rxByte == _sync_byte) {
                 _rx_state.state         = XComMsgSync;
                 _rx_state.bytes_to_read = 5;
             } else {
@@ -92,7 +84,6 @@ XComParser::ParserCode XComParser::process_byte(uint8_t rxByte) noexcept {
         case XComCrcMsb:
             _rx_state.crc |= static_cast<uint16_t>(rxByte) << 8U;
             const uint16_t crc16 = _crc16.process(_rx_state.payload, static_cast<std::size_t>(_rx_state.rx_cpy_idx) - 2);
-//#define USE_FUZZING
 #ifdef USE_FUZZING
             ret_val = XComParser::ParserCode::Ok;  // skip CRC check
 #else
@@ -163,9 +154,7 @@ uint16_t XComParser::get_cmd_id() const noexcept {
     const auto* cmd_id = reinterpret_cast<const uint16_t*>(&_rx_state.payload[sizeof(XCOMHeader)]);
     return *cmd_id;
 }
-uint8_t XComParser::get_msg_id() const noexcept {
-    return _rx_state.msg_id;
-}
+uint8_t XComParser::get_msg_id() const noexcept { return _rx_state.msg_id; }
 uint16_t XComParser::get_param_id(const uint8_t* payload) noexcept {
     const auto* param_id = reinterpret_cast<const uint16_t*>(&payload[sizeof(XCOMHeader)]);
     return *param_id;
@@ -178,4 +167,6 @@ bool XComParser::is_param_request(const uint8_t* payload) noexcept {
 }
 bool XComParser::is_param(const uint8_t* payload) noexcept { return static_cast<bool>(payload[1] == XCOM_MSGID_PARAMETER); }
 bool XComParser::is_msg() const noexcept { return (_rx_state.msg_id < XCOM_MSGID_COMMAND); }
+void XComParser::set_sync_byte(uint8_t sync_byte) noexcept { _sync_byte = sync_byte; }
+uint8_t XComParser::get_sync_byte() const noexcept { return _sync_byte; }
 }  // namespace xcom

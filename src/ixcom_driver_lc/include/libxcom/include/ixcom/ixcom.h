@@ -80,6 +80,8 @@ public:
     void set_rc(ReturnCode rc) noexcept;
     uint8_t* get_payload() noexcept;
     [[nodiscard]] std::size_t get_payload_length() const noexcept;
+    void set_sync_byte(uint8_t sync_byte) noexcept;
+    [[nodiscard]] uint8_t get_sync_byte() const noexcept;
     struct system_status {
         uint32_t mode          = 0;
         uint32_t system_status = 0;
@@ -101,6 +103,7 @@ public:
     XCOMCmd_LOG get_xcomcmd_enablelog(XComMessageID id, XComLogTrigger trigger, uint16_t divider);
     XCOMCmd_CONF get_cmd_save_config() noexcept;
     XCOMCmd_XCOM get_cmd_reboot() noexcept;
+    XCOMCmdEKF_ALIGNCOMPLETE align_complete() noexcept;
     // XCOM parameter
     template<typename ParamType>
     ParamType get_generic_param() {

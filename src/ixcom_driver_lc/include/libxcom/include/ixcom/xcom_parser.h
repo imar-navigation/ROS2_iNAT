@@ -40,6 +40,8 @@ public:
     [[nodiscard]] bool is_cmd() const noexcept;
     [[nodiscard]] bool is_msg() const noexcept;
     [[nodiscard]] uint8_t get_msg_id() const noexcept;
+    void set_sync_byte(uint8_t sync_byte) noexcept;
+    [[nodiscard]] uint8_t get_sync_byte() const noexcept;
 private:
     static constexpr int MaxMessageSize = XCOM_MAX_MESSAGE_LENGTH;
     typedef enum {
@@ -67,6 +69,7 @@ private:
     } XCOMMessage;
     XCOMMessage _rx_state;
     Crc16 _crc16;
+    uint8_t _sync_byte = XCOM_SYNC_BYTE;
     void init_parser() noexcept;
 };
 }  // namespace xcom
