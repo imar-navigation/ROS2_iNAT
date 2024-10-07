@@ -52,6 +52,8 @@
 #define XCOM_INTERFACE_LAN                 0    /**< Needed for PARXCOM_NETCONFIG */
 #define XCOM_INTERFACE_USB                 1    /**< Needed for PARXCOM_NETCONFIG */
 #define XCOM_SYNC_BYTE                     0x7E /**< Synchronization character */
+#define XCOM_MAX_MSG_PAYLOAD_LENGTH        (XCOM_MAX_MESSAGE_LENGTH - sizeof(XCOMHeader) - sizeof(XCOMFooter))
+#define XCOM_MAX_PAR_PAYLOAD_LENGTH        (XCOM_MAX_MESSAGE_LENGTH - sizeof(XCOMHeader) - sizeof(XCOMFooter) - sizeof(XCOMParHeader))
 #define XCOMPAR_PLUGIN_MAX_NUM    2
 /**
  * *****************************************************************************************************************************************
@@ -137,7 +139,8 @@ enum XCOMcmd_XCom {
     XCOM_CMDXCOM_EJECTDEVICE        = 0x0014,   /**< Eject recording device (USB) */
     XCOM_CMDXCOM_SETTIME            = 0x0015,   /**< Set system time */
     XCOM_CMDXCOM_GYROCALIB          = 0x0016,   /**< Start gyro bias calibration */
-    XCOM_CMDXCOM_MAX                = XCOM_CMDXCOM_GYROCALIB
+    XCOM_CMDXCOM_LOGLISTPRESET      = 0x0017,   /**< This command configures one XCOM channel with a predefined loglist */
+    XCOM_CMDXCOM_MAX                = XCOM_CMDXCOM_LOGLISTPRESET
 };
 /**
  * iXCOM LOG command:
@@ -439,7 +442,9 @@ typedef struct {
     uint32_t wahba_vel_timeout : 1;             /**< Set if global WAHBA velocity timeout occurred */
     uint32_t frozen_height_updates : 1;         /**< Set if frozen height updates are processed */
     uint32_t gnss_sample_rejected : 1;          /**< Set if GNSS samples are rejected caused by a transmission delay larger than the filter delay */
-    uint32_t reserved : 16;                     /**< Reserved for further use */
+    uint32_t odometer_cbit_error : 1;           /**< Set if odometer CBIT fails */
+    uint32_t accel_bias_rw_muted : 1;           /**< Set if accel. bias random walk is muted */
+    uint32_t reserved : 14;                     /**< Reserved for further use */
 } XCOMEkfExtendedStatus;
 typedef union {
     XCOMEkfExtendedStatus bits;
@@ -487,7 +492,7 @@ typedef struct XCOM_STRUCT_PACK {
                                      this can be used to detect lost messages. For parameters and commands, the system response to an
                                      input parameter or command will contain the same frame counter as the input. */
     uint8_t trigger_source;     /**< See <iXCOM LOG command trigger type> */
-    uint16_t msg_len;           /**< Length of the overall message (from sync byte to crc16 field), depends on the message log (num- ber of bytes) */
+    uint16_t msg_len;           /**< Length of the overall message (from sync byte to crc16 field), depends on the message log (number of bytes) */
     uint16_t gps_week;          /**< GPS week number */
     uint32_t gps_time_sec;      /**< GPS time of week - integer part in [sec] */
     uint32_t gps_time_usec;     /**< GPS time of week - fractional part in [μs] */
@@ -551,7 +556,7 @@ enum XCOMGlobalStatusAlignmode {
  */
 enum XCOMGlobalStatusPosMode {
     PosBad          = 0,    /**< This solution status is set during alignment, if no valid position solution is available */
-    PosMadium       = 1,    /**< This solution status is set, if the INS has calculated a valid position solution and the standard deviation of the
+    PosMedium       = 1,    /**< This solution status is set, if the INS has calculated a valid position solution and the standard deviation of the
                                  estimated position is lower than THR_POS_MED AND larger than THR_POS_HIGH (set through parameter PAREKF_HDGPOSTHR) */
     PosHigh         = 2,    /**< This solution status is set if the INS has calculated a valid position solution and the standard deviation of
                                  the estimated position is lower than THR_POS_HIGH (set through parameter PAREKF_HDGPOSTHR) */
@@ -573,9 +578,9 @@ typedef struct XCOM_STRUCT_PACK {
  * ******************************************************************************************
  */
 typedef struct XCOM_STRUCT_PACK {
-    XCOMHeader header;                               /**< XCOM header */
-    uint8_t payload_buffer[XCOM_MAX_MESSAGE_LENGTH]; /**< XCOM payload buffer */
-    XCOMFooter footer;                               /**< XCOM footer */
+    XCOMHeader header;                                   /**< XCOM header */
+    uint8_t payload_buffer[XCOM_MAX_MSG_PAYLOAD_LENGTH]; /**< XCOM payload buffer */
+    XCOMFooter footer;                                   /**< XCOM footer */
 } XCOMGeneric;
 typedef struct XCOM_STRUCT_PACK {
     uint16_t param_id;  /**< Parameter ID */
@@ -583,10 +588,10 @@ typedef struct XCOM_STRUCT_PACK {
     uint8_t is_request; /** Requesting/Changing a parameter */
 } XCOMParHeader;
 typedef struct XCOM_STRUCT_PACK {
-    XCOMHeader header;                                                       /**< XCOM header */
-    XCOMParHeader param_header;                                              /**< XCOM parameter header */
-    uint8_t payload_buffer[XCOM_MAX_MESSAGE_LENGTH - sizeof(XCOMParHeader)]; /**< XCOM payload buffer */
-    XCOMFooter footer;                                                       /**< XCOM footer */
+    XCOMHeader header;                                      /**< XCOM header */
+    XCOMParHeader param_header;                             /**< XCOM parameter header */
+    uint8_t payload_buffer[XCOM_MAX_PAR_PAYLOAD_LENGTH];    /**< XCOM payload buffer */
+    XCOMFooter footer;                                      /**< XCOM footer */
 } XCOMParamGeneric;
 typedef struct XCOM_STRUCT_PACK {
     uint8_t port;        /**< External serial port number */
@@ -662,7 +667,7 @@ typedef struct XCOM_STRUCT_PACK {
     float altitude;          /**< Altitude/Height in [m]. The content (WGS or MSL or Baro based) can be selected via the PARDAT_POS
                                   parameter. The selected value is masked in the DATSEL field. */
     int16_t undulation;      /**< Relationship between the geoid and the ellipsoid in [cm]. */
-    uint16_t data_selection; /**< Data selection mask. This field contains the selected data sources for this mes- sage  */
+    uint16_t data_selection; /**< Data selection mask. This field contains the selected data sources for this message  */
     XCOMFooter footer;
 } XCOMmsg_INSSOL;
 /**
@@ -735,7 +740,7 @@ typedef struct XCOM_STRUCT_PACK {
     float bias_acc[3]; /**< Standard deviation of estimated acceleration bias along IMU x-, y- and z-axis in [m/s2 ] */
     float bias_omg[3]; /**< Standard deviation of estimated angular rate bias along IMU x-, y- and z-axis in [rad/s] */
     float scf_acc[3];  /**< Standard deviation of estimated acceleration scale  factor along IMU x-, y- and z-axis */
-    float scf_omg[3];  /**< Standard deviation of estimated angular rate scale  factor along IMU x-, y- and z- axis */
+    float scf_omg[3];  /**< Standard deviation of estimated angular rate scale  factor along IMU x-, y- and z-axis */
     float scf_odo;     /**< Standard deviation of the estimated odometer scale factor */
     XCOMFooter footer;
 } XCOMmsg_EKFSTDDEV;
@@ -809,28 +814,29 @@ enum GnssPosVelType {
 };
 /* GNSS Status */
 typedef struct {
-    uint32_t InvalidFirmware : 1;    /**< Invalid firmware */
-    uint32_t RomStatus : 1;          /**< ROM status */
-    uint32_t SupplyVoltage : 1;      /**< Supply voltage status */
-    uint32_t PllRf1Error : 1;        /**< TrackingPLL RF1 Hardware Status - L1 */
-    uint32_t PllRf2Error : 1;        /**< TrackingPLL RF2 Hardware Status - L2 */
-    uint32_t SwRessourceLimit : 1;   /**< Software Resource Status */
-    uint32_t InvalidModel : 1;       /**< Model not valid */
-    uint32_t HwFailure : 1;          /**< Component hardware failure */
-    uint32_t TempError : 1;          /**< Temperature status */
-    uint32_t AntennaPowerStatus : 1; /**< Antenna power status */
-    uint32_t AntennaOpen : 1;        /**< Antenna open */
-    uint32_t AntennaShorted : 1;     /**< Antenna shorted */
-    uint32_t CpuOverload : 1;        /**< CPU overload */
-    uint32_t Com1BufferOverrun : 1;  /**< COM1 buffer overrun */
-    uint32_t Com2BufferOverrun : 1;  /**< COM2 buffer overrun */
-    uint32_t Com3BufferOverrun : 1;  /**< COM3 buffer overrun */
-    uint32_t AlmanacFlag : 1;        /**< Almanac flag/UTC known */
-    uint32_t SolutionInvalid : 1;    /**< Position solution flag */
-    uint32_t VoltageSupply : 1;      /**< Power supply warning */
-    uint32_t UpdateInProgress : 1;   /**< Firmware update in progress */
-    uint32_t SolutionCodeType : 1;   /**< 0: Some data in PVT solution from C/A-code. 1: All data in PVT solution from P-code */
-    uint32_t Reserved : 11;          /**< Reserved for further use */
+    uint32_t InvalidFirmware : 1;          /**< Invalid firmware */
+    uint32_t RomStatus : 1;                /**< ROM status */
+    uint32_t SupplyVoltage : 1;            /**< Supply voltage status */
+    uint32_t PllRf1Error : 1;              /**< TrackingPLL RF1 Hardware Status - L1 */
+    uint32_t PllRf2Error : 1;              /**< TrackingPLL RF2 Hardware Status - L2 */
+    uint32_t SwRessourceLimit : 1;         /**< Software Resource Status */
+    uint32_t InvalidModel : 1;             /**< Model not valid */
+    uint32_t HwFailure : 1;                /**< Component hardware failure */
+    uint32_t TempError : 1;                /**< Temperature status */
+    uint32_t AntennaPowerStatus : 1;       /**< Antenna power status */
+    uint32_t PrimaryAntennaOpen : 1;       /**< Primary antenna open */
+    uint32_t PrimaryAntennaShorted : 1;    /**< Primary antenna shorted */
+    uint32_t CpuOverload : 1;              /**< CPU overload */
+    uint32_t Com1BufferOverrun : 1;        /**< COM1 buffer overrun */
+    uint32_t Com2BufferOverrun : 1;        /**< COM2 buffer overrun */
+    uint32_t Com3BufferOverrun : 1;        /**< COM3 buffer overrun */
+    uint32_t AlmanacFlag : 1;              /**< Almanac flag/UTC known */
+    uint32_t SolutionInvalid : 1;          /**< Position solution flag */
+    uint32_t VoltageSupply : 1;            /**< Power supply warning */
+    uint32_t UpdateInProgress : 1;         /**< Firmware update in progress */
+    uint32_t SolutionCodeType : 1;         /**< 0: Some data in PVT solution from C/A-code. 1: All data in PVT solution from P-code */
+    uint32_t SecondaryAntennaOpen : 1;     /**< Secondary antenna open */
+    uint32_t Reserved : 10;                /**< Reserved for further use */
 } GnssStatusBits;
 typedef union {
     uint32_t value;
@@ -878,7 +884,7 @@ typedef struct XCOM_STRUCT_PACK {
     uint8_t utc_day;     /**< UTC day (0-31). If UTC time is unknown, the value is 0 */
     uint8_t utc_hour;    /**< UTC hour (0-23). If UTC time is unknown, the value is 0 */
     uint8_t utc_min;     /**< UTC min (0-59). If UTC time is unknown, the value is 0 */
-    uint32_t utc_ms;     /**< UTC milliseconds (0- 60999). Maximum of 60999 when leap second is applied. */
+    uint32_t utc_ms;     /**< UTC milliseconds (0-60999). Maximum of 60999 when leap second is applied. */
     uint32_t utc_status; /**< UTC Status */
     XCOMFooter footer;
 } XCOMmsg_GNSSTIME;
@@ -905,7 +911,7 @@ typedef struct XCOM_STRUCT_PACK {
  */
 typedef struct XCOM_STRUCT_PACK {
     uint16_t cmd_id;   /**< Command ID (see XCOMcmdCategory) */
-    uint16_t specific; /**< Meaning is dependent on CmdID (re- served) */
+    uint16_t specific; /**< Meaning is dependent on CmdID (reserved) */
 } XCOMCmdHeader;
 /**
  * iXCOM LOG command:
@@ -953,9 +959,28 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMCmdHeader cmd_header;   /**< XCOM command header */
     uint16_t xcom_cmd;
-    uint16_t reserved;
+    uint16_t runtime;           /**< Calibration runtime in [sec] */
     XCOMFooter footer;
 } XCOMCmd_GYROCALIB;
+/**
+ * This command configures one XCOM channel with a predefined loglist (without starting the system recorder)
+ * #name: XCOMCmd_LOGLISTPRESET
+ */
+enum XCOM_ENUM_EXT XCOMLoglistPreset {
+    Rawdata,        /**< IMU/GNSS/Odometer rawdata (usefully for post-processing without having an INS online solution) */
+    NavSolution,    /**< INS online solution without rawdata acquisition  */
+    Support,        /**< Combination of Rawdata and NavSolution */
+    Qualification   /**< Similar to Rawdata but with additional hardware monitoring messages */
+};
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;          /**< XCOM header */
+    XCOMCmdHeader cmd_header;   /**< XCOM command header */
+    uint16_t xcom_cmd;          /**< XCOM command header */
+    uint8_t reserved;           /**< Reserved for further use */
+    uint8_t channel;            /**< XCOM channel to be configured */
+    uint32_t preset;            /**< Loglist preset (see XCOMLoglistPreset) */
+    XCOMFooter footer;
+} XCOMCmd_LOGLISTPRESET;
 /**
  * iXCOM CONF command:
  * -------------------
@@ -1260,14 +1285,16 @@ typedef struct XCOM_STRUCT_PACK {
  * ******************************************************************************************
  */
 typedef struct XCOM_STRUCT_PACK {
-    XCOMHeader header;                                                      /**< XCOM header */
-    XCOMParHeader param_header;                                             /**< XCOM parameter header */
-    XCOMPluginHeader plugin_header;                                         /**< XCOM plugin header */
-    uint8_t payload_buffer[XCOM_MAX_MESSAGE_LENGTH + sizeof(XCOMFooter)];   /**< Generic payload buffer */
+    XCOMHeader header;                                                          /**< XCOM header */
+    XCOMParHeader param_header;                                                 /**< XCOM parameter header */
+    XCOMPluginHeader plugin_header;                                             /**< XCOM plugin header */
+    uint8_t payload_buffer[XCOM_MAX_MSG_PAYLOAD_LENGTH + sizeof(XCOMFooter) - sizeof(XCOMPluginHeader)];   /**< Generic payload buffer */
 } XCOMPluginGeneric;
 /**
  * This parameter is read-only and will be factory set during production. This parameter contains the nominal sampling rate in Hz of
  * the integrated inertial sensors. Writing of this parameter is password-protected.
+ * #domain: public
+ * #scope: read only
  */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
@@ -1279,7 +1306,10 @@ typedef struct XCOM_STRUCT_PACK {
 /**
  * This parameter is read-only and will be factory set during production. It contains the downsampling factor which is used in the internal
  * compensation methods, such as the coning and sculling correction module. The prescaler also affects the maximum rate which is applicable
- * through the message log mechanism. Writing this parameter is password-protected. */
+ * through the message log mechanism. Writing this parameter is password-protected.
+ * #domain: public
+ * #scope: read only
+ */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMParHeader param_header; /**< XCOM parameter header */
@@ -1289,6 +1319,8 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMParSYS_PRESCALER;
 /**
  * This parameter contains the firmware version
+ * #domain: public
+ * #scope: read only
  */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;                             /**< XCOM header */
@@ -1298,6 +1330,8 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMParSYS_FWVERSION;
 /**
  * This parameter can be used to exclude certain satellite constellations from the GNSS solution computation.
+ * #domain: public
+ * #scope: read and write
  * #name: XCOMParGNSS_LOCKOUTSYSTEM
  */
 #define PARGNSS_LOCKOUTSYSTEM_MASK_GPS     (1 << 0)
@@ -1315,31 +1349,12 @@ typedef struct XCOM_STRUCT_PACK {
     uint16_t reserved2;         /**< Reserved for further use */
     XCOMFooter footer;
 } XCOMParGNSS_LOCKOUTSYSTEM;
-/**
- * This parameter defines the GNSS features of the system.
- */
-enum XCOMParGnssFeatures {
-    GnssFeatures_GPS                = 0,     /**< The integrated GNSS receiver supports GPS constellation */
-    GnssFeatures_GLO                = 1,     /**< The integrated GNSS receiver supports GLONASS constellation */
-    GnssFeatures_GAL                = 2,     /**< The integrated GNSS receiver supports Galileo constellation */
-    GnssFeatures_BDS                = 3,     /**< The integrated GNSS receiver supports BeiDou constellation */
-    GnssFeatures_NAVIC              = 4,     /**< The integrated GNSS receiver supports BeiDou constellation */
-    GnssFeatures_SingleFreq         = 5,     /**< The integrated GNSS receiver supports single frequency mode */
-    GnssFeatures_DualFreq           = 6,     /**< The integrated GNSS receiver supports dual frequency mode */
-    GnssFeatures_MultiFreq          = 7,     /**< The integrated GNSS receiver supports multi frequency mode */
-    GnssFeatures_DualAntennaHeading = 8,     /**< The integrated GNSS receiver supports dual antenna heading */
-    GnssFeatures_MovingBaseline     = 9,     /**< The integrated GNSS receiver supports moving baseline mode */
-    GnssFeatures_RTK                = 10,    /**< The integrated GNSS receiver supports RTK */
-    GnssFeatures_PPP                = 11,    /**< The integrated GNSS receiver supports PPP */
-    GnssFeatures_SBAS               = 12,    /**< The integrated GNSS receiver supports satellite based augmentation system */
-    GnssFeatures_BaseStation        = 13,    /**< The integrated GNSS receiver supports base station mode */
-    GnssFeatures_BaseStationOnly    = 14,    /**< The integrated GNSS receiver supports base station mode. No IMU measurements available */
-    GnssFeatures_Size
-};
 #define PARODO_MODE2_MAX_ODOMETERS  3
 /**
  * This parameter can be used to define the initialization behavior of the  Kalman filter. A state chart detailing the navigation
  * startup process is available in appendix of DOC141126064.
+ * #domain: public
+ * #scope: read and write
  * #name: XCOMParEKF_STARTUPV2
  */
 #define PAREKF_STARTUPV2_POSMODE_GNSS        0 /**< The initial position will be set via the GNSS solution. If no valid GNSS data are
@@ -1401,6 +1416,8 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMParEKF_STARTUPV2;
 /**
  * This parameter configures the iMAG parameters inside the Kalman filter.
+ * #domain: public
+ * #scope: read and write
  * #name: XCOMParEKF_MAGATTAID
  */
 #define EKF_MAGATTAID_MODE_INIT     0 /**< Initialization mode: The iMAG heading will be used to set the initial heading */
@@ -1425,9 +1442,11 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMParEKF_MAGATTAID;
 /**
  * This parameter defines the initial standard deviations and the process noise model for the used inertial sensors.
- * #name: XCOMParEKF_IMUCONFIG
+ * #domain: public
+ * #scope: read only
+ * #name: XCOMParEKF_IMUCONFIG2
  */
-typedef struct {
+ typedef struct {
     double root_noise_psd[3];        /**< Root Noise for x-, y- and z-axis in: accelerometers: [m/s2/sqrt(Hz)]; gyroscopes: [rad/s/sqrt(Hz)] */
     double offset_stddev[3];         /**< Bias standard deviation for x-, y- and z-axis in  accelerometers: [m/s2]; gyroscopes: [rad/s] */
     double offset_rw[3];             /**< Bias random walk for x-, y- and z-axis in accelerometers: [m/s3/sqrt(Hz)] gyroscopes: [rad/s2/sqrt(Hz)] */
@@ -1436,7 +1455,7 @@ typedef struct {
     double ma_stddev;                /**< Misalignment standard deviation in: accelerometers: [m]; gyroscopes: [rad] */
     double ma_rw;                    /**< Misalignment random walk in: accelerometers: [m/s2/sqrt(Hz)]; gyroscopes: [rad/s/Hz] */
     double quantization[3];          /**< Quantization for x-, y- and z-axis */
-} XCOMparEKF_IMUCONFIGtype;
+} XCOMparEKF_IMUCONFIGtype2;
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;                  /**< XCOM header */
     union {
@@ -1447,41 +1466,14 @@ typedef struct XCOM_STRUCT_PACK {
             uint8_t is_request;
         };
     };
-    XCOMparEKF_IMUCONFIGtype acc;  /**< Deviation values related to accelerometers */
-    XCOMparEKF_IMUCONFIGtype gyro; /**< Deviation values related to angular rate sensors */
-    XCOMFooter footer;
-} XCOMParEKF_IMUCONFIG;
-/**
- * This parameter defines the initial standard deviations and the process noise model for the used inertial sensors.
- * #domain: public
- * #scope: read only
- *
- */
-typedef struct XCOM_STRUCT_PACK {
-    XCOMHeader header;                  /**< XCOM header */
-    union {
-        XCOMParHeader param_header;     /**< XCOM parameter header */
-        struct {
-            uint16_t param_id;
-            uint8_t estimation_config; /**< Estimated sensor misalignment configuration */
-            uint8_t is_request;
-        };
-    };
-    XCOMparEKF_IMUCONFIGtype acc;  /**< Deviation values related to accelerometers */
-    XCOMparEKF_IMUCONFIGtype gyro; /**< Deviation values related to angular rate sensors */
+    XCOMparEKF_IMUCONFIGtype2 acc;  /**< Deviation values related to accelerometers */
+    XCOMparEKF_IMUCONFIGtype2 gyro; /**< Deviation values related to angular rate sensors */
     XCOMFooter footer;
 } XCOMParEKF_IMUCONFIG2;
 /**
- * This parameter configures the behaviour of the outlier detection
- */
-typedef struct XCOM_STRUCT_PACK {
-    uint32_t max_num_consec_outliers;
-    uint32_t num_forced_updates;
-    float var_limit;
-    float nis_thr;
-} XComNisThrType;
-/**
  * This parameter defines the position output frame of the INSSOL message.
+ * #scope: read and write
+ * #domain: public
  * #name: XCOMParDAT_POS
  */
 enum XCOM_PARDAT_POS_PosMode {
@@ -1502,6 +1494,8 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMParDAT_POS;
 /**
  * This parameter defines the velocity output frame of the INSSOL message.
+ * #scope: read and write
+ * #domain: public
  * #name: XCOMParDAT_VEL
  */
 enum XCOM_PARDAT_VEL_Mode {
@@ -1518,6 +1512,8 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMParDAT_VEL;
 /**
  * This parameter defines the content of the SYS_STAT message.
+ * #scope: read and write
+ * #domain: public
  * #name: XCOMParDAT_SYSSTAT
  */
 #define PARDAT_SYSSTAT_MASK_IMU          0x00000001 /**< IMU status information */
@@ -1540,6 +1536,8 @@ typedef struct XCOM_STRUCT_PACK {
 /**
  * This parameter contains the interface configuration of the available serial ports. The number of serial ports may vary depending on the
  * hardware platform.
+ * #scope: read and write
+ * #domain: public
  * #name:XCOMParXCOM_INTERFACE
  */
 #define PARXCOM_INTERFACE_MODE_NONE             0 /**< Serial port disabled */
@@ -1564,6 +1562,8 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMParXCOM_INTERFACE;
 /**
  * This parameters enables the internal system recorder and configures the loglist automatically
+ * #scope: read and write
+ * #domain: public
  */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
@@ -1575,6 +1575,8 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMParXCOM_POSTPROC;
 /**
  * This parameter configures the serial ports
+ * #scope: read and write
+ * #domain: public
  */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
@@ -1585,6 +1587,68 @@ typedef struct XCOM_STRUCT_PACK {
     uint32_t baud_rate;         /**< Serial port baud rate */
     XCOMFooter footer;
 } XCOMParXCOM_SERIALPORT;
+#define XCOMMSG_PLUGINID_DBXDBOUT XCOM_PLUGINID_DBXDBOUT
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_BITE_LEVEL0      0x00
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_BITE_LEVEL1      0x01
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_BITE_LEVEL2      0x02
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_BITE_LEVEL3      0x04
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_BITE_LEVEL4      0x06
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_MODE_NAV         0x00
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_MODE_ALIGN       0x01
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_MODE_MAINT       0x03  // maintenance mode
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_GNSSTIME_VALID   0x00
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_GNSSTIME_DRIFT   0x01
+#define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_GNSSTIME_INVALID 0x03
+#define XCOMMSG_PLUGINID_DBXDBOUT_SATS_USED_MAX  15
+#define XCOMMSG_PLUGINID_DBXDBOUT_POSERROR_VALUE 0xffff
+typedef struct {
+    uint8_t NAV_BITE           : 3;  // error level
+    uint8_t NAV_MODE           : 2;  // alignment/navigation/maintenance mode
+    uint8_t NAV_ATTVEL_INVALID : 1;  // attitude/velocity invalid
+    uint8_t NAV_POS_INVALID    : 1;
+    uint8_t NAV_INMOTION       : 1;  // system detected motion
+} XCOMDbxDbOutputStatusInatBits;
+typedef union {
+    XCOMDbxDbOutputStatusInatBits bits;
+    uint8_t value;
+} XCOMDbxDbOutputStatusInatType;
+typedef struct {
+    uint8_t GNSS_SATS_USED     : 4;  // satellites used
+    uint8_t GNSS_POS_USED      : 1;
+    uint8_t GNSS_DIFF_SOL      : 1;  // 0: single point solution, 1: differential/RTK solution
+    uint8_t GNSS_TIMEREF       : 2;  // see XCOMMSG_PLUGINID_DBXDBOUT_STATUS_GNSSTIME
+} XCOMDbxDbOutputStatusGps1Bits;
+typedef union {
+    XCOMDbxDbOutputStatusGps1Bits bits;
+    uint8_t value;
+} XCOMDbxDbOutputStatusGps1Type;
+typedef struct {
+    uint8_t GNSS_NODATA        : 1;  // no data from GNSS receiver
+    uint8_t GNSS_SW_RESET      : 1;  // unused
+    uint8_t GNSS_MEM_ERROR     : 1;  // unused
+    uint8_t GNSS_BAT_EMPTY     : 1;  // unused
+    uint8_t GNSS_NODATA_DIFF   : 1;  // No DPGS data on GNSS receiver8
+} XCOMDbxDbOutputStatusGps2Bits;
+typedef union {
+    XCOMDbxDbOutputStatusGps2Bits bits;
+    uint8_t value;
+} XCOMDbxDbOutputStatusGps2Type;
+typedef struct {
+    uint8_t HPOS_VALID    : 1;  /**< validity of horizontal position and drms values */
+    uint8_t TIMEREF_VALID : 1;  /**< validity of provided timestamp */
+    uint8_t DATA_SYNC     : 1;  /**< sync data with INS time */
+    uint8_t HEIGHT_VALID  : 1;  /**< validity of height value */
+    uint8_t RESTART       : 1;  /**< indicates if navigation should get stopped and re-alignment initiated */
+    uint8_t IN_MOTION     : 1;  /**< indicates if vehicle is in motion */
+    uint8_t USE_GNSS      : 1;  /**< indicates if GNSS position/velocity should be used for aiding */
+    uint8_t ATT_VALID     : 1;  /**< validity of rail-pitch, alpha-c, beta-c and gamma-c values */
+} XCOMDbxDbInputStatusBits;
+typedef union {
+    XCOMDbxDbInputStatusBits bits;
+    uint8_t value;
+} XCOMDbxDbInputStatusType;
+#define XCOMPAR_PLUGINID_DBXDBIN XCOM_PLUGINID_DBXDBIN
+#define XCOMPAR_PLUGINID_DBXDBCONF XCOM_PLUGINID_DBXDBCONF
 #if defined __clang__ || defined __GNUC__ || defined __MINGW32__
 #undef XCOM_STRUCT_PACK
 #elif defined _MSC_VER
