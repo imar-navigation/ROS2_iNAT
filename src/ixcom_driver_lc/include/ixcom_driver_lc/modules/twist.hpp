@@ -74,7 +74,7 @@ private:
     bool active_ = false;
     int32_t setup_freq_ = 0;
     size_t num_of_subscribers_ = 0;
-    std::atomic_bool success_ = false;
+    std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
     rclcpp::Publisher<TwistStampedMsg>::SharedPtr pub_;
     TwistStampedMsg twiststamped_msg_;
     rclcpp::Time gps_time_;
@@ -99,17 +99,17 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> t_pub_;
     std::chrono::time_point<std::chrono::high_resolution_clock> t_pub_upd_;
     uint16_t msg_INSSOL_frq_ = 0;
-    std::atomic_uint32_t msg_INSSOL_age_ = 0;
+    std::atomic_uint32_t msg_INSSOL_age_ = ATOMIC_VAR_INIT(0);
     uint32_t msg_INSSOL_c_ = 0;
     uint16_t msg_IMUCORR_frq_ = 0;
-    std::atomic_uint32_t msg_IMUCORR_age_ = 0;
+    std::atomic_uint32_t msg_IMUCORR_age_ = ATOMIC_VAR_INIT(0);
     uint32_t msg_IMUCORR_c_ = 0;
     uint16_t msg_INSDCM_frq_ = 0;
-    std::atomic_uint32_t msg_INSDCM_age_ = 0;
+    std::atomic_uint32_t msg_INSDCM_age_ = ATOMIC_VAR_INIT(0);
     uint32_t msg_INSDCM_c_ = 0;
     const uint32_t age_max_val_ = 0xffffffff;
     const uint32_t xcom_age_max_ = 3;
-    std::atomic_uint64_t duration_ = 0;
+    std::atomic_uint64_t duration_ = ATOMIC_VAR_INIT(0);
     enum class PubState {
         UNKNOWN,
         OK,
