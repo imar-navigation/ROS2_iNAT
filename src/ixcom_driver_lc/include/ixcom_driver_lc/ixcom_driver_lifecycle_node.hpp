@@ -28,6 +28,7 @@
 #include "ixcom_driver_lc/modules/odometry.hpp"
 #include "ixcom_driver_lc/modules/pose_ecef.hpp"
 #include "ixcom_driver_lc/modules/twist.hpp"
+#include "ixcom_driver_lc/modules/srv_extaid.hpp"
 
 class DriverNode : public rclcpp_lifecycle::LifecycleNode
 {
@@ -51,6 +52,8 @@ protected:
     std::unique_ptr<XcomHandler> client_;
     xcom::XComState xcom_tf_;
     TransformStamped::SharedPtr transformstamped_;
+    xcom::XComState xcom_srv_extaid_;
+    SrvExtAid::SharedPtr srvextaid_;
 
     rclcpp::QoS *qos_;
 
@@ -88,13 +91,14 @@ private:
     void declare_parameters();
     void get_parameters();
     void build_broadcast_transformstamped();
-    void build_topic_imu();
-    void build_topic_navsatstatus();
-    void build_topic_navsatfix_gnss();
-    void build_topic_navsatfix_ins();
-    void build_topic_timereference();
-    void build_topic_magneticfield();
-    void build_topic_odometry();
-    void build_topic_posewithcovariancestamped();
-    void build_topic_twiststamped();
+    void build_srv_extaid();
+    bool build_topic_imu();
+    bool build_topic_navsatstatus();
+    bool build_topic_navsatfix_gnss();
+    bool build_topic_navsatfix_ins();
+    bool build_topic_timereference();
+    bool build_topic_magneticfield();
+    bool build_topic_odometry();
+    bool build_topic_posewithcovariancestamped();
+    bool build_topic_twiststamped();
 };

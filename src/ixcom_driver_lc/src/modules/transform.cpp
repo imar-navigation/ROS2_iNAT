@@ -44,10 +44,10 @@ void TransformStamped::cleanup() {
 void TransformStamped::init() {
 
     if(prescaler_ == 0) {
-        RCLCPP_ERROR(node_->get_logger(), "%s", "transform: prescaler is 0");
+        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "tf2", "prescaler is 0");
     }
     if(maintiming_ == 0) {
-        RCLCPP_ERROR(node_->get_logger(), "%s", "transform: maintiming is 0");
+        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "tf2", "maintiming is 0");
     }
 
     // connect to device
@@ -55,12 +55,12 @@ void TransformStamped::init() {
     // define input source
     xcom::XcomClientReader tcp_reader(tcp_client);
     if(!tcp_reader.initialize()) {
-        RCLCPP_ERROR(node_->get_logger(), "%s", "unable to initialize tcp_reader for tf2");
+        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "tf2", "unable to initialize tcp_reader");
     }
     // define output source (optional)
     xcom::XcomClientWriter tcp_writer(tcp_client);
     if(!tcp_writer.initialize()) {
-        RCLCPP_ERROR(node_->get_logger(), "%s", "unable to initialize tcp_writer for tf2");
+        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "tf2", "unable to initialize tcp_writer");
     }
 
     xcom_.set_reader(&tcp_reader);
@@ -68,7 +68,7 @@ void TransformStamped::init() {
     xcom_.disable_forwarding();
 
     bool exit = false;
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "Transform", ("connecting to iNAT @ "
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "tf2", ("connecting to iNAT @ "
                                      + ip_address_ + ":"
                                      + std::to_string(ip_port_)
                                      + "...").c_str());
@@ -87,10 +87,10 @@ void TransformStamped::init() {
             }
             channel_++;
             if(channel_ > 31) {
-                RCLCPP_ERROR(node_->get_logger(), "%s", "no available channel found");
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "tf2", "no available channel found");
             }
             if(!tcp_reader.initialize()) {
-                RCLCPP_ERROR(node_->get_logger(), "%s", "tcp reader initialization failed");
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "tf2", "tcp reader initialization failed");
             }
         } else {
             exit = true;
@@ -106,7 +106,7 @@ void TransformStamped::handle_response(XCOMResp response) {
 
         if(!init_done_) {
 
-            RCLCPP_INFO(node_->get_logger(), "[%s] %s", "Transform",
+            RCLCPP_INFO(node_->get_logger(), "[%s] %s", "tf2",
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
 
             tfs_msg_1_.header.frame_id = tfs_msg_2_.header.frame_id = "inat_enclosure";
@@ -128,9 +128,9 @@ void TransformStamped::handle_response(XCOMResp response) {
         if(response == XCOMResp::INVALIDCHANNEL) {
             invalid_channel_ = true;
         } else if(response == XCOMResp::LOGEXISTS) {
-            RCLCPP_WARN(node_->get_logger(), "[%s] %s", "Transform", "requested log already exists");
+            RCLCPP_WARN(node_->get_logger(), "[%s] %s", "tf2", "requested log already exists");
         } else {
-            RCLCPP_ERROR(node_->get_logger(), "%s: %d", "invalid response received", static_cast<int>(response));
+            RCLCPP_ERROR(node_->get_logger(), "[%s] %s: %d", "tf2", "invalid response received", static_cast<int>(response));
         }
         xcom_.set_rc(xcom::XComState::ReturnCode::InvalidResponse);
         xcom_.forced_exit();

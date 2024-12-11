@@ -1,18 +1,11 @@
 
 # iXCOM-ROS2-driver   _- C++ Implementation -_
 
-The **_ixcom_driver_** is a _ROS2_ node that is developed in _C++_. It establishes a connection to an _iNAT_, activates logs, receives the data and publishes them using topics.
-
-## Dependencies
-
-Install iXCOM Client:
-```console
-pip install ixcom
-```
+The **_ixcom_driver_** is a _ROS2_ node developed in _C++_. It establishes a connection to an _iNAT_, activates logs, receives the data and publishes them using topics.
 
 ## General Information
 
-While the _ixcom_driver_ is running it will appear in the _ROS2_ node list.
+While running the _ixcom_driver_ will appear in the _ROS2_ node list.
 
 ```console
 ~$ ros2 node list

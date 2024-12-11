@@ -15,6 +15,14 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Sphere.msg"
   "msg/Array.msg"
   "srv/AddThreeInts.srv"
+  "srv/ExtAidPosLlh.srv"
+  "srv/ExtAidPosEcef.srv"
+  "srv/ExtAidPosUtm.srv"
+  "srv/ExtAidPosMgrs.srv"
+  "srv/ExtAidHdg.srv"
+  "srv/ExtAidVel.srv"
+  "srv/ExtAidVelBody.srv"
+  "srv/ExtAidHeight.srv"
   "action/Example.action"
   "action/Stop.action"
   "action/Realign.action"
@@ -35,4 +43,5 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+ament_export_dependencies(rosidl_default_runtime)
 ament_package()

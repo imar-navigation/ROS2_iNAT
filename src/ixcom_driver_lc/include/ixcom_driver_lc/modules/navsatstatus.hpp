@@ -65,7 +65,7 @@ private:
     bool active_ = false;
     int32_t setup_freq_ = 0;
     size_t num_of_subscribers_ = 0;
-    std::atomic_bool success_ = false;
+    std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
 //    rclcpp_lifecycle::LifecyclePublisher<ImuMsg>::SharedPtr pub_;
     rclcpp::Publisher<NavSatStatusMsg>::SharedPtr pub_;
     NavSatStatusMsg navsatstatus_msg_;
@@ -89,14 +89,14 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> t_pub_;
     std::chrono::time_point<std::chrono::high_resolution_clock> t_pub_upd_;
     const uint16_t par_frq_ = 1;
-    std::atomic_uint32_t par_LOCKOUTSYSTEM_age_ = 0;
+    std::atomic_uint32_t par_LOCKOUTSYSTEM_age_ = ATOMIC_VAR_INIT(0);
     uint32_t par_LOCKOUTSYSTEM_c_ = 0;
     uint16_t msg_GNSSSOL_frq_ = 0;
-    std::atomic_uint32_t msg_GNSSSOL_age_ = 0;
+    std::atomic_uint32_t msg_GNSSSOL_age_ = ATOMIC_VAR_INIT(0);
     uint32_t msg_GNSSSOL_c_ = 0;
     const uint32_t age_max_val_ = 0xffffffff;
     const uint32_t xcom_age_max_ = 3;
-    std::atomic_uint64_t duration_ = 0;
+    std::atomic_uint64_t duration_ = ATOMIC_VAR_INIT(0);
     enum class PubState {
         UNKNOWN,
         OK,

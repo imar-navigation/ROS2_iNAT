@@ -145,7 +145,12 @@ void NavINS::handle_response(XCOMResp response) {
             auto cmd_add_gnsssol = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_GNSSSOL, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, div2);
             xcom_.send_message(cmd_add_gnsssol);
 
-            setup_freq_ = calculateRateForDivider(std::min({div1, div2}), maintiming_, prescaler_);
+            uint16_t div3 = calculateDividerForRate(((topic_freq_ > Config::FRQ_EKF) ? (Config::FRQ_EKF) : (topic_freq_)), maintiming_, prescaler_);
+            msg_EKFSTDDEV_frq_ = calculateRateForDivider(div3, maintiming_, prescaler_);
+            auto cmd_add_ekfstddev = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_EKFSTDDEV, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, div3);
+            xcom_.send_message(cmd_add_ekfstddev);
+
+            setup_freq_ = calculateRateForDivider(std::min({div1, div2, div3}), maintiming_, prescaler_);
             time_delta_ = static_cast<uint64_t>(1.0 / double(setup_freq_) * 1e6);
             if(setup_freq_ < topic_freq_) {
                 RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(),
@@ -186,6 +191,11 @@ void NavINS::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
 void NavINS::handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) {
     msg_GNSSSOL_age_ = 0;
     updateGNSSSOL(msg);
+}
+
+void NavINS::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) {
+    msg_EKFSTDDEV_age_ = 0;
+    updateEKFSTDDEV(msg);
 }
 
 void NavINS::handle_xcom_param(const XCOMParGNSS_LOCKOUTSYSTEM& param) {
@@ -258,6 +268,15 @@ void NavINS::updateGNSSSOL(const XCOMmsg_GNSSSOL &msg) {
     gnssSolDataIsSet_ = true;
 }
 
+void NavINS::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
+
+    navsatfix_msg_.position_covariance[0] = msg.pos[0] * msg.pos[0];
+    navsatfix_msg_.position_covariance[4] = msg.pos[1] * msg.pos[1];
+    navsatfix_msg_.position_covariance[8] = msg.pos[2] * msg.pos[2];
+
+    ekfDataIsSet_ = true;
+}
+
 void NavINS::updateINSSOL(const XCOMmsg_INSSOL& msg) {
 
     if(!parDataPosIsSet_) {
@@ -280,7 +299,8 @@ void NavINS::updateINSSOL(const XCOMmsg_INSSOL& msg) {
 
 void NavINS::publish() {
 
-    if(!(parDataLockoutIsSet_ && parDataPosIsSet_ && gnssSolDataIsSet_ && insSolDataIsSet_)) {
+    // if(!(parDataLockoutIsSet_ && parDataPosIsSet_ && gnssSolDataIsSet_ && insSolDataIsSet_)) {
+    if(!(parDataLockoutIsSet_ && parDataPosIsSet_ && gnssSolDataIsSet_ && ekfDataIsSet_ && insSolDataIsSet_)) {
         return;
     }
 
@@ -315,6 +335,7 @@ void NavINS::frq_mon() {
     bool par_POS_ok = true;
     bool msg_INSSOL_ok = true;
     bool msg_GNSSSOL_ok = true;
+    bool msg_EKFSTDDEV_ok = true;
 
     while(run_frq_mon_) {
 
@@ -396,6 +417,13 @@ void NavINS::frq_mon() {
             msg_GNSSSOL_ok = true;
             RCLCPP_INFO(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "receiving iNAT data", "XCOMmsg_GNSSSOL");
         }
+        if(msg_EKFSTDDEV_ok && (msg_EKFSTDDEV_age_ > xcom_age_max_)) {
+            msg_EKFSTDDEV_ok = false;
+            RCLCPP_ERROR(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "missing iNAT data", "XCOMmsg_EKFSTDDEV");
+        } else if(!msg_EKFSTDDEV_ok && !(msg_EKFSTDDEV_age_ > xcom_age_max_)) {
+            msg_EKFSTDDEV_ok = true;
+            RCLCPP_INFO(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "receiving iNAT data", "XCOMmsg_EKFSTDDEV");
+        }
 
         if(!parDataLockoutIsSet_) {
             if(par_LOCKOUTSYSTEM_c_ > (mon_frq_ / par_frq_)) {
@@ -433,11 +461,20 @@ void NavINS::frq_mon() {
             }
             msg_GNSSSOL_c_ = 0;
         }
+        if(msg_EKFSTDDEV_c_ > (mon_frq_ / msg_EKFSTDDEV_frq_)) {
+            if(msg_EKFSTDDEV_age_ == age_max_val_) {
+                msg_EKFSTDDEV_age_ = xcom_age_max_ + 1;
+            } else {
+                msg_EKFSTDDEV_age_++;
+            }
+            msg_EKFSTDDEV_c_ = 0;
+        }
 
         par_LOCKOUTSYSTEM_c_++;
         par_POS_c_++;
         msg_INSSOL_c_++;
         msg_GNSSSOL_c_++;
+        msg_EKFSTDDEV_c_++;
 
         // std::this_thread::sleep_for(std::chrono::milliseconds(10));
         std::this_thread::sleep_for(std::chrono::milliseconds(mon_t_gap_));
