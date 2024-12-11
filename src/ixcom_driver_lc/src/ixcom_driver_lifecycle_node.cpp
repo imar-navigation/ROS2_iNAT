@@ -105,22 +105,24 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
         sleeper.sleep();
         build_broadcast_transformstamped();
         sleeper.sleep();
-        build_topic_imu();
+        build_srv_extaid();
         sleeper.sleep();
-        build_topic_navsatstatus();
-        sleeper.sleep();
-        build_topic_navsatfix_gnss();
-        sleeper.sleep();
-        build_topic_navsatfix_ins();
-        sleeper.sleep();
-        build_topic_timereference();
-        sleeper.sleep();
-        build_topic_magneticfield();
-        sleeper.sleep();
-        build_topic_odometry();
-        sleeper.sleep();
-        build_topic_posewithcovariancestamped();
-        sleeper.sleep();
+        if(build_topic_imu())
+            sleeper.sleep();
+        if(build_topic_navsatstatus())
+            sleeper.sleep();
+        if(build_topic_navsatfix_gnss())
+            sleeper.sleep();
+        if(build_topic_navsatfix_ins())
+            sleeper.sleep();
+        if(build_topic_timereference())
+            sleeper.sleep();
+        if(build_topic_magneticfield())
+            sleeper.sleep();
+        if(build_topic_odometry())
+            sleeper.sleep();
+        if(build_topic_posewithcovariancestamped())
+            sleeper.sleep();
         build_topic_twiststamped();
 
         return CallbackReturn::SUCCESS;
@@ -220,7 +222,21 @@ void DriverNode::build_broadcast_transformstamped() {
                                                            client_->getPrescaler());
 }
 
-void DriverNode::build_topic_imu() {
+void DriverNode::build_srv_extaid() {
+    if(!xcom_srv_extaid_.initialize()) {
+        RCLCPP_ERROR(get_logger(), "%s", "unable to initialize xcom state object for extaid service");
+    }
+    RCLCPP_INFO(get_logger(), "%s", "creating extaid service");
+    srvextaid_ = std::make_shared<SrvExtAid>(shared_from_this(),
+                                             xcom_srv_extaid_,
+                                             conf_->ip_address_,
+                                             conf_->ip_port_,
+                                             conf_->leap_seconds_);
+}
+
+bool DriverNode::build_topic_imu() {
+
+    bool built = true;
 
     if(conf_->imu_remap_.length() == 0) {
         imu_topic_name_ = conf_->TOPICNAME_IMU;
@@ -248,11 +264,15 @@ void DriverNode::build_topic_imu() {
                                      client_->getPrescaler(),
                                      *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", imu_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
-void DriverNode::build_topic_navsatstatus() {
+bool DriverNode::build_topic_navsatstatus() {
+
+    bool built = true;
 
     if(conf_->navsatstatus_remap_.length() == 0) {
         navsatstatus_topic_name_ = conf_->TOPICNAME_NAVSATSTATUS;
@@ -280,11 +300,15 @@ void DriverNode::build_topic_navsatstatus() {
                                                        client_->getPrescaler(),
                                                        *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", navsatstatus_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
-void DriverNode::build_topic_navsatfix_gnss() {
+bool DriverNode::build_topic_navsatfix_gnss() {
+
+    bool built = true;
 
     if(conf_->navsatfix_gnss_remap_.length() == 0) {
         navgnss_topic_name_ = conf_->TOPICNAME_NAVGNSS;
@@ -312,11 +336,15 @@ void DriverNode::build_topic_navsatfix_gnss() {
                                                        client_->getPrescaler(),
                                                        *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", navgnss_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
-void DriverNode::build_topic_navsatfix_ins() {
+bool DriverNode::build_topic_navsatfix_ins() {
+
+    bool built = true;
 
     if(conf_->navsatfix_ins_remap_.length() == 0) {
         navins_topic_name_ = conf_->TOPICNAME_NAVINS;
@@ -344,11 +372,15 @@ void DriverNode::build_topic_navsatfix_ins() {
                                                        client_->getPrescaler(),
                                                        *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", navins_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
-void DriverNode::build_topic_timereference() {
+bool DriverNode::build_topic_timereference() {
+
+    bool built = true;
 
     if(conf_->timereference_remap_.length() == 0) {
         timeref_topic_name_ = conf_->TOPICNAME_TIMEREF;
@@ -376,11 +408,15 @@ void DriverNode::build_topic_timereference() {
                                                    client_->getPrescaler(),
                                                    *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", timeref_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
-void DriverNode::build_topic_magneticfield() {
+bool DriverNode::build_topic_magneticfield() {
+
+    bool built = true;
 
     if(conf_->magneticfield_remap_.length() == 0) {
         magfield_topic_name_ = conf_->TOPICNAME_MAGFIELD;
@@ -411,11 +447,15 @@ void DriverNode::build_topic_magneticfield() {
                                                     conf_->magnetometer_scale_factor_,
                                                     *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", magfield_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
-void DriverNode::build_topic_odometry() {
+bool DriverNode::build_topic_odometry() {
+
+    bool built = true;
 
     if(conf_->odometry_remap_.length() == 0) {
         odometry_topic_name_ = conf_->TOPICNAME_ODOMETRY;
@@ -448,11 +488,15 @@ void DriverNode::build_topic_odometry() {
                                                    mltp,
                                                    *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", odometry_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
-void DriverNode::build_topic_posewithcovariancestamped() {
+bool DriverNode::build_topic_posewithcovariancestamped() {
+
+    bool built = true;
 
     if(conf_->posewithcovariancestamped_remap_.length() == 0) {
         posewithcovstamped_topic_name_ = conf_->TOPICNAME_POSECOVSTAMPED;
@@ -480,11 +524,15 @@ void DriverNode::build_topic_posewithcovariancestamped() {
                                                    client_->getPrescaler(),
                                                    *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", posewithcovstamped_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
-void DriverNode::build_topic_twiststamped() {
+bool DriverNode::build_topic_twiststamped() {
+
+    bool built = true;
 
     if(conf_->twiststamped_remap_.length() == 0) {
         twiststamped_topic_name_ = conf_->TOPICNAME_TWISTSTAMPED;
@@ -512,8 +560,10 @@ void DriverNode::build_topic_twiststamped() {
                                                    client_->getPrescaler(),
                                                    *qos_);
     } else {
+        built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", twiststamped_topic_name_.c_str(), "- topic skipped");
     }
+    return built;
 }
 
 DriverNode::CallbackReturn DriverNode::on_activate(const rclcpp_lifecycle::State& state) {
@@ -748,6 +798,9 @@ void DriverNode::clearModules() {
 
     transformstamped_->cleanup();
     transformstamped_.reset();
+
+    srvextaid_->cleanup();
+    srvextaid_.reset();
 }
 
 

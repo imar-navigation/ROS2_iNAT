@@ -19,6 +19,12 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(interfaces REQUIRED)
+# find_package(rosidl_default_generators REQUIRED)
+
+# rosidl_generate_interfaces(${PROJECT_NAME}
+#   "../interfaces/srv/ExtAidXcomMsg.srv"
+# )
 
 set(ixcom_src
         include/libxcom/src/ixcom.cpp
@@ -46,6 +52,7 @@ add_executable(ixcom_driver_lifecycle_node
         src/modules/odometry.cpp
         src/modules/pose_ecef.cpp
         src/modules/twist.cpp
+        src/modules/srv_extaid.cpp
 )
 # target_link_libraries(ixcom_driver_lifecycle_node
 #         ${CMAKE_CURRENT_LIST_DIR}/include/libxcom/bin/libxcom/libxcom.a
@@ -62,14 +69,15 @@ target_include_directories(ixcom_driver_lifecycle_node PUBLIC $<BUILD_INTERFACE:
 target_compile_features(ixcom_driver_lifecycle_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 ament_target_dependencies(
   ixcom_driver_lifecycle_node
-  "rclcpp"
-  "rclcpp_lifecycle"
-  "lifecycle_msgs"
-  "sensor_msgs"
-  "geometry_msgs"
-  "nav_msgs"
-  "tf2"
-  "tf2_geometry_msgs"
+  rclcpp
+  rclcpp_lifecycle
+  lifecycle_msgs
+  sensor_msgs
+  geometry_msgs
+  nav_msgs
+  tf2
+  tf2_geometry_msgs
+  interfaces
 )
 
 install(TARGETS ixcom_driver_lifecycle_node
@@ -93,4 +101,5 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+# ament_export_dependencies(rosidl_default_runtime)
 ament_package()

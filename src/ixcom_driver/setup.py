@@ -24,6 +24,7 @@ setup(
         'console_scripts': [
             'pub = ixcom_driver.ixcom_driver_publisher:main',
             'sub = ixcom_driver.ixcom_driver_subscriber:main',
+            'subInts = ixcom_driver.ixcom_driver_subscriber_integrationTests:main',
             'cli = ixcom_driver.ixcom_driver_client:main',
         ],
     },

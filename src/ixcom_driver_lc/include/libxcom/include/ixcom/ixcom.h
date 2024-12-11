@@ -1,7 +1,7 @@
 /*.*******************************************************************
  FILENAME: xcom.h
  **********************************************************************
- *  PROJECT: ROS2_iNAT
+ *  PROJECT: ROS2_ROS2_iNAT
  *
  *
  *---------------------------------------------------------------------
@@ -103,6 +103,31 @@ public:
     XCOMCmd_LOG get_xcomcmd_enablelog(XComMessageID id, XComLogTrigger trigger, uint16_t divider);
     XCOMCmd_CONF get_cmd_save_config() noexcept;
     XCOMCmd_XCOM get_cmd_reboot() noexcept;
+    XCOMCmd_EXTAID_POSLLH get_xcomcmd_extaid_posllh(const double& timestamp, uint16_t timemode,
+                                                    const std::array<double, 3>& pos, const std::array<double, 3>& pos_stddev,
+                                                    const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev,
+                                                    uint32_t enable_msl_alt);
+    XCOMCmd_EXTAID_POSECEF get_xcomcmd_extaid_posecef(const double& timestamp, uint16_t timemode,
+                                                      const std::array<double, 3>& pos, const std::array<double, 3>& pos_stddev,
+                                                      const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_POSUTM get_xcomcmd_extaid_posutm(const double& timestamp, uint16_t timemode,
+                                                    int32_t zone, uint8_t north_hp,
+                                                    const double& easting, const double& northing, const double& altitude,
+                                                    const std::array<double, 3>& pos_stddev,
+                                                    const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_POSMGRS get_xcomcmd_extaid_posmgrs(const double& timestamp, uint16_t timemode,
+                                                      int8_t mgrs[XCOM_EXTAID_POSMGRS_MAX_LENGTH],
+                                                      const double& alt, const std::array<double, 3>& pos_stddev,
+                                                      const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_HDG get_xcomcmd_extaid_hdg(const double& timestamp, uint16_t timemode,
+                                              const double& heading, const double& heading_stddev);
+    XCOMCmd_EXTAID_VEL get_xcomcmd_extaid_vel(const double& timestamp, uint16_t timemode,
+                                              const std::array<double, 3>& vel, const std::array<double, 3>& vel_stddev);
+    XCOMCmd_EXTAID_VELBODY get_xcomcmd_extaid_velbody(const double& timestamp, uint16_t timemode,
+                                                      const std::array<double, 3>& vel, const std::array<double, 3>& vel_stddev,
+                                                      const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_HEIGHT get_xcomcmd_extaid_height(const double& timestamp, uint16_t timemode,
+                                                    const double& height, const double& height_stddev);
     XCOMCmdEKF_ALIGNCOMPLETE align_complete() noexcept;
     // XCOM parameter
     template<typename ParamType>

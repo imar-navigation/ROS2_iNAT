@@ -119,7 +119,7 @@ private:
     std::atomic_uint32_t msg_EKFSTDDEV_age_ = ATOMIC_VAR_INIT(0);
     uint32_t msg_EKFSTDDEV_c_ = 0;
     const uint32_t age_max_val_ = 0xffffffff;
-    const uint32_t xcom_age_max_ = 3;    
+    const uint32_t xcom_age_max_ = 3;
     std::atomic_uint64_t duration_ = ATOMIC_VAR_INIT(0);
     enum class PubState {
         UNKNOWN,

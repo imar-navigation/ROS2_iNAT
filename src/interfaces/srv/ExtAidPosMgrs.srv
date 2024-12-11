@@ -1,0 +1,10 @@
+float64 time_stamp
+uint16 time_mode
+string mgrs
+float64 altitude
+float64[3] position_stddev
+float64[3] lever_arm
+float64[3] lever_arm_stddev
+---
+bool success
+

@@ -1,0 +1,7 @@
+float64 time_stamp
+uint16 time_mode
+float64 height
+float64 height_stddev
+---
+bool success
+

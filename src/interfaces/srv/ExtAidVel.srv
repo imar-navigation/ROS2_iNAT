@@ -1,0 +1,7 @@
+float64 time_stamp
+uint16 time_mode
+float64[3] velocity
+float64[3] velocity_stddev
+---
+bool success
+

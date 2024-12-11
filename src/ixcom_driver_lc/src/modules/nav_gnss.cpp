@@ -6,7 +6,6 @@
 #include <cmath>
 #include <ixcom_driver_lc/modules/utility.hpp>
 #include <thread>
-#include <cmath>
 
 
 NavGNSS::NavGNSS(rclcpp_lifecycle::LifecycleNode::SharedPtr node,

@@ -150,7 +150,7 @@ void NavINS::handle_response(XCOMResp response) {
             auto cmd_add_ekfstddev = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_EKFSTDDEV, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, div3);
             xcom_.send_message(cmd_add_ekfstddev);
 
-            setup_freq_ = calculateRateForDivider(std::min({div1, div2}), maintiming_, prescaler_);
+            setup_freq_ = calculateRateForDivider(std::min({div1, div2, div3}), maintiming_, prescaler_);
             time_delta_ = static_cast<uint64_t>(1.0 / double(setup_freq_) * 1e6);
             if(setup_freq_ < topic_freq_) {
                 RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(),
@@ -270,12 +270,9 @@ void NavINS::updateGNSSSOL(const XCOMmsg_GNSSSOL &msg) {
 
 void NavINS::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
 
-    navsatfix_msg_.position_covariance[0] = msg.pos[1] * msg.pos[1];
-    navsatfix_msg_.position_covariance[7] = msg.pos[0] * msg.pos[0];
-    navsatfix_msg_.position_covariance[14] = msg.pos[2] * msg.pos[2];
-    navsatfix_msg_.position_covariance[21] = msg.tilt[0] * msg.tilt[0];
-    navsatfix_msg_.position_covariance[28] = msg.tilt[1] * msg.tilt[1];
-    navsatfix_msg_.position_covariance[35] = msg.tilt[2] * msg.tilt[2];
+    navsatfix_msg_.position_covariance[0] = msg.pos[0] * msg.pos[0];
+    navsatfix_msg_.position_covariance[4] = msg.pos[1] * msg.pos[1];
+    navsatfix_msg_.position_covariance[8] = msg.pos[2] * msg.pos[2];
 
     ekfDataIsSet_ = true;
 }
@@ -302,6 +299,7 @@ void NavINS::updateINSSOL(const XCOMmsg_INSSOL& msg) {
 
 void NavINS::publish() {
 
+    // if(!(parDataLockoutIsSet_ && parDataPosIsSet_ && gnssSolDataIsSet_ && insSolDataIsSet_)) {
     if(!(parDataLockoutIsSet_ && parDataPosIsSet_ && gnssSolDataIsSet_ && ekfDataIsSet_ && insSolDataIsSet_)) {
         return;
     }
