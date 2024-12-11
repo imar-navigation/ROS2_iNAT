@@ -1,4 +1,3 @@
-
 # iXCOM-ROS2-driver   _- C++ Implementation -_
 
 The **_ixcom_driver_** is a _ROS2_ node developed in _C++_. It establishes a connection to an _iNAT_, activates logs, receives the data and publishes them using topics.
@@ -28,6 +27,17 @@ The node info shows the implemented features (not configured topics are not visi
     /TimeReference: sensor_msgs/msg/TimeReference
     /TwistStamped: geometry_msgs/msg/TwistStamped
     /tf_static: tf2_msgs/msg/TFMessage
+  Service Servers:
+    /ext_heading: interfaces/srv/ExtAidHdg
+    /ext_height: interfaces/srv/ExtAidHeight
+    /ext_position_ecef: interfaces/srv/ExtAidPosEcef
+    /ext_position_llh: interfaces/srv/ExtAidPosLlh
+    /ext_position_mgrs: interfaces/srv/ExtAidPosMgrs
+    /ext_position_utm: interfaces/srv/ExtAidPosUtm
+    /ext_velocity: interfaces/srv/ExtAidVel
+    /ext_velocity_body: interfaces/srv/ExtAidVelBody
+
+    [...]
 ```
 
 ## Build
@@ -131,9 +141,9 @@ ixcom_driver_lifecycle_node:
   ros2 run ixcom_driver sub
   ```
 
-## Topics 
+## Publishers 
 
-The topics with the following standard _ROS2_ messages are implemented so far:  
+Publishers with the following topics using standard _ROS2_ messages are implemented:  
   `/Imu:                         sensor_msgs/msg/Imu`  
   `/MagneticField:               sensor_msgs/msg/MagneticField`  
   `/NavSatFix_GNSS:              sensor_msgs/msg/NavSatFix`  
@@ -143,6 +153,221 @@ The topics with the following standard _ROS2_ messages are implemented so far:
   `/TwistStamped                 geometry_msgs.msg/TwistStamped`  
   `/Odometry:                    nav_msgs/msg/Odometry`  
   `/TimeReference:               sensor_msgs/msg/TimeReference`
+
+## Service Servers
+
+The following Service Servers are implemented:  
+  `/ext_heading:                 interfaces/srv/ExtAidHdg`  
+  `/ext_height:                  interfaces/srv/ExtAidHeight`  
+  `/ext_position_ecef:           interfaces/srv/ExtAidPosEcef`  
+  `/ext_position_llh:            interfaces/srv/ExtAidPosLlh`  
+  `/ext_position_mgrs:           interfaces/srv/ExtAidPosMgrs`  
+  `/ext_position_utm:            interfaces/srv/ExtAidPosUtm`  
+  `/ext_velocity:                interfaces/srv/ExtAidVel`  
+  `/ext_velocity_body:           interfaces/srv/ExtAidVelBody`
+  
+- The interface of the Service Server `/ext_heading`:  
+  ```console
+  ~$ ros2 interface show interfaces/srv/ExtAidHdg  
+  ```
+  ```console
+  float64 time_stamp  
+  uint16 time_mode  
+  float64 heading  
+  float64 heading_stddev  
+  - - -  
+  bool success
+  ```
+  The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
+  ```console
+  ~$ ros2 service call /ext_heading interfaces/srv/ExtAidHdg
+  ```
+  ```console
+  requester: making request: interfaces.srv.ExtAidHdg_Request(time_stamp=0.0, time_mode=0, heading=0.0, heading_stddev=0.0)  
+  
+  response:  
+  interfaces.srv.ExtAidHdg_Response(success=False)
+  ```
+
+- The interface of the Service Server `/ext_height`:  
+  ```console
+  ~$ ros2 interface show interfaces/srv/ExtAidHeight  
+  ```
+  ```console
+  float64 time_stamp
+  uint16 time_mode
+  float64 height
+  float64 height_stddev
+  - - -
+  bool success
+  ```
+  The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
+  ```console
+  ~$ ros2 service call /ext_height interfaces/srv/ExtAidHeight
+  ```
+  ```console
+  requester: making request: interfaces.srv.ExtAidHeight_Request(time_stamp=0.0, time_mode=0, height=0.0, height_stddev=0.0)
+  
+  response:  
+  interfaces.srv.ExtAidHeight_Response(success=False)
+  ```
+  
+- The interface of the Service Server `/ext_position_ecef`:  
+  ```console
+  ~$ ros2 interface show interfaces/srv/ExtAidPosEcef  
+  ```
+  ```console
+  float64 time_stamp
+  uint16 time_mode
+  float64[3] position
+  float64[3] position_stddev
+  float64[3] lever_arm
+  float64[3] lever_arm_stddev
+  - - -
+  bool success
+  ```
+  The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
+  ```console
+  ~$ ros2 service call /ext_position_ecef interfaces/srv/ExtAidPosEcef
+  ```
+  ```console
+  requester: making request: interfaces.srv.ExtAidPosEcef_Request(time_stamp=0.0, time_mode=0, position=array([0., 0., 0.]), position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
+  
+  response:  
+  interfaces.srv.ExtAidPosEcef_Response(success=False)
+  ```
+
+- The interface of the Service Server `/ext_position_llh`:  
+  ```console
+  ~$ ros2 interface show interfaces/srv/ExtAidPosLlh  
+  ```
+  ```console
+  float64 time_stamp
+  uint16 time_mode
+  float64[3] position
+  float64[3] position_stddev
+  float64[3] lever_arm
+  float64[3] lever_arm_stddev
+  uint32 enable_msl_altitude
+  - - -
+  bool success
+  ```
+  The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
+  ```console
+  ~$ ros2 service call /ext_position_llh interfaces/srv/ExtAidPosLlh
+  ```
+  ```console
+  requester: making request: interfaces.srv.ExtAidPosLlh_Request(time_stamp=0.0, time_mode=0, position=array([0., 0., 0.]), position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]), enable_msl_altitude=0)
+  
+  response:  
+  interfaces.srv.ExtAidPosLlh_Response(success=False)
+  ```
+
+- The interface of the Service Server `/ext_position_mgrs`:  
+  ```console
+  ~$ ros2 interface show interfaces/srv/ExtAidPosMgrs  
+  ```
+  ```console
+  float64 time_stamp
+  uint16 time_mode
+  string mgrs
+  float64 altitude
+  float64[3] position_stddev
+  float64[3] lever_arm
+  float64[3] lever_arm_stddev
+  - - -
+  bool success
+  ```
+  The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
+  ```console
+  ~$ ros2 service call /ext_position_mgrs interfaces/srv/ExtAidPosMgrs
+  ```
+  ```console
+  requester: making request: interfaces.srv.ExtAidPosMgrs_Request(time_stamp=0.0, time_mode=0, mgrs='', altitude=0.0, position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
+  
+  response:  
+  interfaces.srv.ExtAidPosMgrs_Response(success=False)
+  ```
+
+- The interface of the Service Server `/ext_position_utm`:  
+  ```console
+  ~$ ros2 interface show interfaces/srv/ExtAidPosUtm  
+  ```
+  ```console
+  float64 time_stamp
+  uint16 time_mode
+  uint32 zone
+  uint8 north_hp
+  float64 easting
+  float64 northing
+  float64 altitude
+  float64[3] position_stddev
+  float64[3] lever_arm
+  float64[3] lever_arm_stddev
+  - - -
+  bool success
+  ```
+  The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
+  ```console
+  ~$ ros2 service call /ext_position_utm interfaces/srv/ExtAidPosUtm
+  ```
+  ```console
+  requester: making request: interfaces.srv.ExtAidPosUtm_Request(time_stamp=0.0, time_mode=0, zone=0, north_hp=0, easting=0.0, northing=0.0, altitude=0.0, position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
+  
+  response:  
+  interfaces.srv.ExtAidPosUtm_Response(success=False)
+  ```
+
+- The interface of the Service Server `/ext_velocity`:  
+  ```console
+  ~$ ros2 interface show interfaces/srv/ExtAidVel  
+  ```
+  ```console
+  float64 time_stamp
+  uint16 time_mode
+  float64[3] velocity
+  float64[3] velocity_stddev
+  - - -
+  bool success
+  ```
+  The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
+  ```console
+  ~$ ros2 service call /ext_velocity interfaces/srv/ExtAidVel
+  ```
+  ```console
+  requester: making request: interfaces.srv.ExtAidVel_Request(time_stamp=0.0, time_mode=0, velocity=array([0., 0., 0.]), velocity_stddev=array([0., 0., 0.]))
+  
+  response:  
+  interfaces.srv.ExtAidVel_Response(success=False)
+  ```
+
+- The interface of the Service Server `/ext_velocity_body`:  
+  ```console
+  ~$ ros2 interface show interfaces/srv/ExtAidVelBody  
+  ```
+  ```console
+  float64 time_stamp
+  uint16 time_mode
+  float64[3] velocity
+  float64[3] velocity_stddev
+  float64[3] lever_arm
+  float64[3] lever_arm_stddev
+  - - -
+  bool success
+  ```
+  The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
+  ```console
+  ~$ ros2 service call /ext_velocity_body interfaces/srv/ExtAidVelBody
+  ```
+  ```console
+  requester: making request: interfaces.srv.ExtAidVelBody_Request(time_stamp=0.0, time_mode=0, velocity=array([0., 0., 0.]), velocity_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
+  
+  response:  
+  interfaces.srv.ExtAidVelBody_Response(success=False)
+  ```
+
+_**NOTE:**_ The data sent to the node will be forwarded to the _iNAT_. The _iNAT_ must send a response back to the node within a second. Otherwise, the requester receives `success=False` due to the timeout. 
+    
 
 
 
@@ -271,9 +496,9 @@ The _ixcom_driver_ configuration is located in `src/ixcom_driver/params/config.j
   ```
     This command requires an argument. Possible arguments will be shown after entering the command without any.
 
-## Topics 
+## Publishers 
 
-The topics with the following standard _ROS2_ messages are implemented so far:  
+Publishers with the following topics using standard _ROS2_ messages are implemented:  
   `/Imu:                         sensor_msgs/msg/Imu`  
   `/MagneticField:               sensor_msgs/msg/MagneticField`  
   `/NavSatFix:                   sensor_msgs/msg/NavSatFix`  
@@ -328,3 +553,4 @@ Show results:
 ```console
 colcon test-result --all --verbose
 ```
+
