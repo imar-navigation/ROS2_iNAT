@@ -1,0 +1,47 @@
+ixcom_driver_lifecycle_node:
+  ros__parameters:
+    ip:
+      address: 192.168.4.48
+    serial:
+      ignore: true
+      port: 1
+      baud: 115200
+      enable: true
+    timestamp_mode: GPS
+    qos: SYSTEMDEFAULTS
+    leap_seconds: 18
+    manual_local_tangential_plane:
+      enable: false
+      lon: 0.0
+      lat: 0.0
+      alt: 0.0
+    magnetometer_scale_factor: 1.0000000116860974e-07
+    topics:
+      Imu:
+        frequency_hz: 0
+        remap_to: ""
+      NavSatStatus:
+        frequency_hz: 0
+        remap_to: ""
+      NavSatFix_GNSS:
+        frequency_hz: 0
+        remap_to: "NavSatFix"
+      NavSatFix_INS:
+        frequency_hz: 1
+        remap_to: ""
+      TimeReference:
+        frequency_hz: 0
+        remap_to: ""
+      MagneticField:
+        frequency_hz: 0
+        remap_to: ""
+      Odometry:
+        frequency_hz: 0
+        remap_to: ""
+      PoseWithCovarianceStamped:
+        frequency_hz: 0
+        remap_to: ""
+      TwistStamped:
+        frequency_hz: 2
+        remap_to: ""
+

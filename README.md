@@ -178,6 +178,12 @@ The following Service Servers are implemented:
   - - -  
   bool success
   ```
+  
+  `time_stamp     :` Time at which the measurement was valid in _s_  
+  `time_mode      :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
+  `heading        :` Heading in _rad_  
+  `heading_stddev :` Heading standard deviation in _rad_  
+  
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
   ~$ ros2 service call /ext_heading interfaces/srv/ExtAidHdg
@@ -201,6 +207,12 @@ The following Service Servers are implemented:
   - - -
   bool success
   ```
+  
+  `time_stamp     :` Time at which the measurement was valid in _s_  
+  `time_mode      :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
+  `height         :` Height in _m_  
+  `height_stddev  :` Height standard deviation in _m_  
+  
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
   ~$ ros2 service call /ext_height interfaces/srv/ExtAidHeight
@@ -226,6 +238,14 @@ The following Service Servers are implemented:
   - - -
   bool success
   ```
+  
+  `time_stamp        :` Time at which the measurement was valid in _s_  
+  `time_mode         :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
+  `position          :` Position in ECEF frame in _m_  
+  `position_stddev   :` Standard deviation of the position in _m_  
+  `lever_arm         :` Lever arm in x,y,z direction in _m_  
+  `lever_arm_stddev  :` Lever arm standard deviation in x,y,z direction in _m_  
+  
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
   ~$ ros2 service call /ext_position_ecef interfaces/srv/ExtAidPosEcef
@@ -252,6 +272,14 @@ The following Service Servers are implemented:
   - - -
   bool success
   ```
+  
+  `time_stamp        :` Time at which the measurement was valid in _s_  
+  `time_mode         :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
+  `position          :` Longitude, latitude, altitude in _rad_ and _m_  
+  `position_stddev   :` Standard deviation in _m_ (longitude, latitude, altitude)  
+  `lever_arm         :` Lever arm in _m_  
+  `lever_arm_stddev  :` Lever arm standard deviation in _m_  
+  
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
   ~$ ros2 service call /ext_position_llh interfaces/srv/ExtAidPosLlh
@@ -278,6 +306,15 @@ The following Service Servers are implemented:
   - - -
   bool success
   ```
+  
+  `time_stamp        :` Time at which the measurement was valid in _s_  
+  `time_mode         :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
+  `mgrs              :` MGRS string (e.g. 32U LV 66136 59531)  
+  `altitude          :` Altitude in _m_    
+  `position_stddev   :` Position standard deviation in _m_ (easting, northing, altitude)  
+  `lever_arm         :` Lever arm in x,y,z direction _m_  
+  `lever_arm_stddev  :` Lever arm standard deviation in x,y,z direction in _m_  
+  
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
   ~$ ros2 service call /ext_position_mgrs interfaces/srv/ExtAidPosMgrs
@@ -307,6 +344,18 @@ The following Service Servers are implemented:
   - - -
   bool success
   ```
+  
+  `time_stamp        :` Time at which the measurement was valid in _s_  
+  `time_mode         :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
+  `zone              :` UTM zone (0 = UPS)  
+  `north_hp          :` Hemisphere (true = north, false = south)  
+  `easting           :` East component in _m_  
+  `northing          :` North component in _m_  
+  `altitude          :` Altitude in _m_  
+  `position_stddev   :` Position standard deviation in _m_ (easting, northing, altitude)  
+  `lever_arm         :` Lever arm in x,y,z direction _m_  
+  `lever_arm_stddev  :` Lever arm standard deviation in x,y,z direction in _m_  
+  
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
   ~$ ros2 service call /ext_position_utm interfaces/srv/ExtAidPosUtm
@@ -330,6 +379,12 @@ The following Service Servers are implemented:
   - - -
   bool success
   ```
+  
+  `time_stamp       :` Time at which the measurement was valid in _s_  
+  `time_mode        :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
+  `velocity         :` Velocity east, north, dowm in _m/s_  
+  `velocity_stddev  :` Velocity standard deviation in _m/s_  
+  
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
   ~$ ros2 service call /ext_velocity interfaces/srv/ExtAidVel
@@ -355,6 +410,14 @@ The following Service Servers are implemented:
   - - -
   bool success
   ```
+  
+  `time_stamp        :` Time at which the measurement was valid in _s_  
+  `time_mode         :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
+  `velocity          :` Velocity in body x,y,z direction in _m/s_  
+  `velocity_stddev   :` Velocity standard deviation in _m/s_  
+  `lever_arm         :` Lever arm in x,y,z direction _m_  
+  `lever_arm_stddev  :` Lever arm standard deviation in x,y,z direction in _m_  
+  
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
   ~$ ros2 service call /ext_velocity_body interfaces/srv/ExtAidVelBody
@@ -373,7 +436,9 @@ _**NOTE:**_ The data sent to the node will be forwarded to the _iNAT_. The _iNAT
 
 # iXCOM-ROS2-driver   _- PYTHON Implementation -_
 
-The **_ixcom_driver_** is a _ROS2_ node that is developed in _Python_. It establishes a connection to an _iNAT_, activates logs, receives the data and publishes them using topics.
+_**NOTE:** The PYTHON version is no longer being developed._
+
+The **_ixcom_driver_** is a _ROS2_ node developed in _Python_. It establishes a connection to an _iNAT_, activates logs, receives the data and publishes them using topics.
 
 ## Dependencies
 

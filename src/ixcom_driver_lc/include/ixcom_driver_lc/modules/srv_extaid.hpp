@@ -39,6 +39,16 @@ public:
 
 private:
 
+    const std::string SRV_EXTAID {"srv_extaid"};
+    const std::string SRV_EXTPOSLLH {"ext_position_llh"};
+    const std::string SRV_EXTPOSECEF {"ext_position_ecef"};
+    const std::string SRV_EXTPOSUTM {"ext_position_utm"};
+    const std::string SRV_EXTPOSMGRS {"ext_position_mgrs"};
+    const std::string SRV_EXTHDG {"ext_heading"};
+    const std::string SRV_EXTVEL {"ext_velocity"};
+    const std::string SRV_EXTVELBODY {"ext_velocity_body"};
+    const std::string SRV_EXTHEIGHT {"ext_height"};
+
     using extaid_posllh_msg = interfaces::srv::ExtAidPosLlh;
     using extaid_posecef_msg = interfaces::srv::ExtAidPosEcef;
     using extaid_posutm_msg = interfaces::srv::ExtAidPosUtm;

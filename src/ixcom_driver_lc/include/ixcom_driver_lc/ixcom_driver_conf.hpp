@@ -9,7 +9,7 @@
 
 struct Config
 {
-	using UniquePtr = std::unique_ptr<Config>;
+    using UniquePtr = std::unique_ptr<Config>;
 
     static const uint8_t FRQ_GNSS = 1;
     static const uint8_t FRQ_EKF = 20;
@@ -17,7 +17,7 @@ struct Config
     enum class TimestampMode : uint8_t {
         ROS,
         GPS
-	};
+    };
 
     struct MLTP {
         bool enable;
@@ -25,6 +25,9 @@ struct Config
         float lat;
         float alt;
     };
+
+    // const std::string PAR_USE_ADAPTER = "use_adapter";
+    // bool use_adapter_;
 
     const std::string PAR_IP_ADDRESS = "ip.address";
     std::string ip_address_;
@@ -111,20 +114,20 @@ struct Config
     const std::string PAR_TWISTSTAMPED_REMAP_TO = "topics." + TOPICNAME_TWISTSTAMPED + ".remap_to";
     std::string twiststamped_remap_;
 
-	static Config::TimestampMode TimestampModeFromString(const std::string& mode)
-	{
-		std::string transformed;
-		transformed.resize(mode.size());
-		std::transform(mode.begin(), mode.end(), transformed.begin(), ::tolower);
+    static Config::TimestampMode TimestampModeFromString(const std::string& mode)
+    {
+        std::string transformed;
+        transformed.resize(mode.size());
+        std::transform(mode.begin(), mode.end(), transformed.begin(), ::tolower);
 
         if (transformed == "ros") {
             return Config::TimestampMode::ROS;
         } else if (transformed == "gps") {
             return Config::TimestampMode::GPS;
         }
-		
+
         throw std::runtime_error("Invalid value \"" + mode + "\" for enum TimestampMode. Valid values: ROS, GPS.");
-	}
+    }
 
     static rclcpp::QoS* qosFromString(const std::string &qos_s) {
         rclcpp::QoS *qos;

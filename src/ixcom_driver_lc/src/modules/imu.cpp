@@ -257,9 +257,9 @@ void IMU::setParData(const XCOMParEKF_IMUCONFIG2& param) {
 
 void IMU::updateINSSOL(const XCOMmsg_INSSOL &msg) {
 
-	tf2::Quaternion q;
+    tf2::Quaternion q;
     q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
-	imu_msg_.orientation = tf2::toMsg(q);
+    imu_msg_.orientation = tf2::toMsg(q);
 
     imu_msg_.linear_acceleration.x = msg.accel[0];
     imu_msg_.linear_acceleration.y = msg.accel[1];
@@ -297,7 +297,7 @@ void IMU::updateIMUCORR(const XCOMmsg_IMUCORR &msg) {
 void IMU::publish() {
 
     // pub_age_ = 0;
-	
+    
     if(!(parDataIsSet_ && insSolDataIsSet_ && ekfDataIsSet_ && imuCorrDataIsSet_)) {
         return;
     }

@@ -33,22 +33,22 @@
 class DriverNode : public rclcpp_lifecycle::LifecycleNode
 {
 public:
-	DriverNode();
+    DriverNode();
     ~DriverNode();
 
-	CallbackReturn on_configure(const rclcpp_lifecycle::State& state) override;
-	CallbackReturn on_activate(const rclcpp_lifecycle::State& state) override;
-	CallbackReturn on_deactivate(const rclcpp_lifecycle::State& state) override;
-	CallbackReturn on_cleanup(const rclcpp_lifecycle::State& state) override;
-	CallbackReturn on_shutdown(const rclcpp_lifecycle::State& state) override;
+    CallbackReturn on_configure(const rclcpp_lifecycle::State& state) override;
+    CallbackReturn on_activate(const rclcpp_lifecycle::State& state) override;
+    CallbackReturn on_deactivate(const rclcpp_lifecycle::State& state) override;
+    CallbackReturn on_cleanup(const rclcpp_lifecycle::State& state) override;
+    CallbackReturn on_shutdown(const rclcpp_lifecycle::State& state) override;
 
 
 protected:
-	using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
+    using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-	void clearModules();
+    void clearModules();
 
-	Config::UniquePtr conf_;
+    Config::UniquePtr conf_;
     std::unique_ptr<XcomHandler> client_;
     xcom::XComState xcom_tf_;
     TransformStamped::SharedPtr transformstamped_;

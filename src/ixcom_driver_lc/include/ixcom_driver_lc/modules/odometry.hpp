@@ -44,8 +44,8 @@ public:
     void cleanup();
 
 private:
-	using OdometryMsg = nav_msgs::msg::Odometry;
-	using Point = geometry_msgs::msg::Point;
+    using OdometryMsg = nav_msgs::msg::Odometry;
+    using Point = geometry_msgs::msg::Point;
 
     //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
     void handle_response(XCOMResp response) override;

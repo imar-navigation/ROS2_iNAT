@@ -47,26 +47,26 @@ void SrvExtAid::init() {
 
     // required for the service to be available
     // srv_ = node_->create_service<ExtAidMsg>("ext_aid_xcom", &SrvExtAid::getExtAidMsg);
-    srv_posllh_ = node_->create_service<extaid_posllh_msg>("ext_position_llh", std::bind(&SrvExtAid::get_extaid_posllh_msg, this, _1, _2));
-    srv_posecef_ = node_->create_service<extaid_posecef_msg>("ext_position_ecef", std::bind(&SrvExtAid::get_extaid_posecef_msg, this, _1, _2));
-    srv_posutm_ = node_->create_service<extaid_posutm_msg>("ext_position_utm", std::bind(&SrvExtAid::get_extaid_posutm_msg, this, _1, _2));
-    srv_posmgrs_ = node_->create_service<extaid_posmgrs_msg>("ext_position_mgrs", std::bind(&SrvExtAid::get_extaid_posmgrs_msg, this, _1, _2));
-    srv_hdg_ = node_->create_service<extaid_hdg_msg>("ext_heading", std::bind(&SrvExtAid::get_extaid_hdg_msg, this, _1, _2));
-    srv_vel_ = node_->create_service<extaid_vel_msg>("ext_velocity", std::bind(&SrvExtAid::get_extaid_vel_msg, this, _1, _2));
-    srv_velbody_ = node_->create_service<extaid_velbody_msg>("ext_velocity_body", std::bind(&SrvExtAid::get_extaid_velbody_msg, this, _1, _2));
-    srv_height_ = node_->create_service<extaid_height_msg>("ext_height", std::bind(&SrvExtAid::get_extaid_height_msg, this, _1, _2));
+    srv_posllh_ = node_->create_service<extaid_posllh_msg>(SRV_EXTPOSLLH, std::bind(&SrvExtAid::get_extaid_posllh_msg, this, _1, _2));
+    srv_posecef_ = node_->create_service<extaid_posecef_msg>(SRV_EXTPOSECEF, std::bind(&SrvExtAid::get_extaid_posecef_msg, this, _1, _2));
+    srv_posutm_ = node_->create_service<extaid_posutm_msg>(SRV_EXTPOSUTM, std::bind(&SrvExtAid::get_extaid_posutm_msg, this, _1, _2));
+    srv_posmgrs_ = node_->create_service<extaid_posmgrs_msg>(SRV_EXTPOSMGRS, std::bind(&SrvExtAid::get_extaid_posmgrs_msg, this, _1, _2));
+    srv_hdg_ = node_->create_service<extaid_hdg_msg>(SRV_EXTHDG, std::bind(&SrvExtAid::get_extaid_hdg_msg, this, _1, _2));
+    srv_vel_ = node_->create_service<extaid_vel_msg>(SRV_EXTVEL, std::bind(&SrvExtAid::get_extaid_vel_msg, this, _1, _2));
+    srv_velbody_ = node_->create_service<extaid_velbody_msg>(SRV_EXTVELBODY, std::bind(&SrvExtAid::get_extaid_velbody_msg, this, _1, _2));
+    srv_height_ = node_->create_service<extaid_height_msg>(SRV_EXTHEIGHT, std::bind(&SrvExtAid::get_extaid_height_msg, this, _1, _2));
 
     // connect to device
     xcom::TcpClient tcp_client(ip_address_, ip_port_);
     // define input source
     xcom::XcomClientReader tcp_reader(tcp_client);
     if(!tcp_reader.initialize()) {
-        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "srv_extaid", "unable to initialize tcp_reader");
+        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", SRV_EXTAID.c_str(), "unable to initialize tcp_reader");
     }
     // define output source (optional)
     xcom::XcomClientWriter tcp_writer(tcp_client);
     if(!tcp_writer.initialize()) {
-        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "srv_extaid", "unable to initialize tcp_writer");
+        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", SRV_EXTAID.c_str(), "unable to initialize tcp_writer");
     }
 
     // set_writer(&tcp_writer);
@@ -75,7 +75,7 @@ void SrvExtAid::init() {
     xcom_.disable_forwarding();
 
     bool exit = false;
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid", ("connecting to iNAT @ "
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTAID.c_str(), ("connecting to iNAT @ "
                                      + ip_address_ + ":"
                                      + std::to_string(ip_port_)
                                      + "...").c_str());
@@ -95,11 +95,11 @@ void SrvExtAid::init() {
             }
             channel_++;
             if(channel_ > 31) {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "srv_extaid", "no available channel found");
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s", SRV_EXTAID.c_str(), "no available channel found");
             }
             if(!tcp_reader.initialize()) {
 //                perror("timeout: ");
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s", "srv_extaid", "tcp reader initialization failed");
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s", SRV_EXTAID.c_str(), "tcp reader initialization failed");
             }
         } else {
             // exit = true;
@@ -111,7 +111,7 @@ void SrvExtAid::init() {
 void SrvExtAid::get_extaid_posllh_msg(const std::shared_ptr<extaid_posllh_msg::Request> request,
                                       std::shared_ptr<extaid_posllh_msg::Response> response) {
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_posllh", "request received");
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTPOSLLH.c_str(), "request received");
 
     auto cmd = xcom_.get_xcomcmd_extaid_posllh(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                                request->position, request->position_stddev,
@@ -149,15 +149,15 @@ void SrvExtAid::get_extaid_posllh_msg(const std::shared_ptr<extaid_posllh_msg::R
     //     return;
     // }
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid", "setting success", extaidItems_.pos_llh.success);
+    // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", SRV_EXTPOSLLH.c_str(), "setting success", extaidItems_.pos_llh.success);
+    // assert(0==1);
     response->success = extaidItems_.pos_llh.success;
-
 }
 
 void SrvExtAid::get_extaid_posecef_msg(const std::shared_ptr<extaid_posecef_msg::Request> request,
                                        std::shared_ptr<extaid_posecef_msg::Response> response) {
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_posecef", "request received");
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTPOSECEF.c_str(), "request received");
 
     auto cmd = xcom_.get_xcomcmd_extaid_posecef(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                                 request->position, request->position_stddev,
@@ -175,7 +175,7 @@ void SrvExtAid::get_extaid_posecef_msg(const std::shared_ptr<extaid_posecef_msg:
 void SrvExtAid::get_extaid_posutm_msg(const std::shared_ptr<extaid_posutm_msg::Request> request,
                                       std::shared_ptr<extaid_posutm_msg::Response> response) {
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_posutm", "request received");
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTPOSUTM.c_str(), "request received");
 
     auto cmd = xcom_.get_xcomcmd_extaid_posutm(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                                request->zone, request->north_hp,
@@ -195,7 +195,7 @@ void SrvExtAid::get_extaid_posutm_msg(const std::shared_ptr<extaid_posutm_msg::R
 void SrvExtAid::get_extaid_posmgrs_msg(const std::shared_ptr<extaid_posmgrs_msg::Request> request,
                                        std::shared_ptr<extaid_posmgrs_msg::Response> response) {
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_posmgrs", "request received");
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTPOSMGRS.c_str(), "request received");
 
     int8_t mgrs[XCOM_EXTAID_POSMGRS_MAX_LENGTH];
     std::string s = request->mgrs;
@@ -221,7 +221,7 @@ void SrvExtAid::get_extaid_posmgrs_msg(const std::shared_ptr<extaid_posmgrs_msg:
 void SrvExtAid::get_extaid_hdg_msg(const std::shared_ptr<extaid_hdg_msg::Request> request,
                                    std::shared_ptr<extaid_hdg_msg::Response> response) {
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_hdg", "request received");
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTHDG.c_str(), "request received");
 
     auto cmd = xcom_.get_xcomcmd_extaid_hdg(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                             request->heading, request->heading_stddev);
@@ -238,7 +238,7 @@ void SrvExtAid::get_extaid_hdg_msg(const std::shared_ptr<extaid_hdg_msg::Request
 void SrvExtAid::get_extaid_vel_msg(const std::shared_ptr<extaid_vel_msg::Request> request,
                                    std::shared_ptr<extaid_vel_msg::Response> response) {
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_vel", "request received");
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTVEL.c_str(), "request received");
 
     auto cmd = xcom_.get_xcomcmd_extaid_vel(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                             request->velocity, request->velocity_stddev);
@@ -255,7 +255,7 @@ void SrvExtAid::get_extaid_vel_msg(const std::shared_ptr<extaid_vel_msg::Request
 void SrvExtAid::get_extaid_velbody_msg(const std::shared_ptr<extaid_velbody_msg::Request> request,
                                        std::shared_ptr<extaid_velbody_msg::Response> response) {
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_velbody", "request received");
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTVELBODY.c_str(), "request received");
 
     auto cmd = xcom_.get_xcomcmd_extaid_velbody(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                                 request->velocity, request->velocity_stddev,
@@ -273,7 +273,7 @@ void SrvExtAid::get_extaid_velbody_msg(const std::shared_ptr<extaid_velbody_msg:
 void SrvExtAid::get_extaid_height_msg(const std::shared_ptr<extaid_height_msg::Request> request,
                                        std::shared_ptr<extaid_height_msg::Response> response) {
 
-    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_height", "request received");
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTHEIGHT.c_str(), "request received");
 
     auto cmd = xcom_.get_xcomcmd_extaid_height(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                                request->height, request->height_stddev);
@@ -288,7 +288,7 @@ void SrvExtAid::get_extaid_height_msg(const std::shared_ptr<extaid_height_msg::R
 }
 
 void SrvExtAid::handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) {
-       std::cout << "Command received" << "\n";
+       std::cout << "Command received" << cmd_id << "\n";
 }
 
 void SrvExtAid::handle_response(XCOMResp response) {
@@ -298,7 +298,7 @@ void SrvExtAid::handle_response(XCOMResp response) {
     if(!init_done_) {
         if(response == XCOMResp::OK) {
             invalid_channel_ = false;
-            RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid",
+            RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTAID.c_str(),
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
 
             auto cmd_clearall = xcom_.get_xcomcmd_clearall();
@@ -316,9 +316,9 @@ void SrvExtAid::handle_response(XCOMResp response) {
             if(response == XCOMResp::INVALIDCHANNEL) {
                 invalid_channel_ = true;
             } else if(response == XCOMResp::INVALIDCMD) {
-                RCLCPP_WARN(node_->get_logger(), "[%s] %s", "srv_extaid", "invalid command");
+                RCLCPP_WARN(node_->get_logger(), "[%s] %s", SRV_EXTAID.c_str(), "invalid command");
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s: %d", "srv_extaid", "invalid response received", static_cast<int>(response));
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s: %d", SRV_EXTAID.c_str(), "invalid response received", static_cast<int>(response));
             }
             xcom_.set_rc(xcom::XComState::ReturnCode::InvalidResponse);
             xcom_.forced_exit();
@@ -349,12 +349,12 @@ void SrvExtAid::handle_response(XCOMResp response) {
                 // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid_llh", "frame counter match: ", frame_counter);
                 extaidItems_.pos_llh.success = inv_resp;
                 if(extaidItems_.pos_llh.success) {
-                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_llh", "iNAT accepted the data");
+                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTPOSLLH.c_str(), "iNAT accepted the data");
                 } else {
-                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", "srv_extaid_llh", "iNAT did not accept the data", response);
+                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTPOSLLH.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", "srv_extaid_llh", "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTPOSLLH.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
             }
         } else if(extaidItems_.pos_ecef.requested) {
             extaidItems_.pos_ecef.requested = false;
@@ -362,12 +362,12 @@ void SrvExtAid::handle_response(XCOMResp response) {
                 // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid_ecef", "frame counter match: ", frame_counter);
                 extaidItems_.pos_ecef.success = inv_resp;
                 if(extaidItems_.pos_ecef.success) {
-                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_ecef", "iNAT accepted the data");
+                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTPOSECEF.c_str(), "iNAT accepted the data");
                 } else {
-                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", "srv_extaid_ecef", "iNAT did not accept the data", response);
+                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTPOSECEF.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", "srv_extaid_ecef", "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTPOSECEF.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
             }
         } else if(extaidItems_.pos_utm.requested) {
             extaidItems_.pos_utm.requested = false;
@@ -375,12 +375,12 @@ void SrvExtAid::handle_response(XCOMResp response) {
                 // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid_utm", "frame counter match: ", frame_counter);
                 extaidItems_.pos_utm.success = inv_resp;
                 if(extaidItems_.pos_utm.success) {
-                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_utm", "iNAT accepted the data");
+                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTPOSUTM.c_str(), "iNAT accepted the data");
                 } else {
-                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", "srv_extaid_utm", "iNAT did not accept the data", response);
+                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTPOSUTM.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", "srv_extaid_utm", "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTPOSUTM.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
             }
         } else if(extaidItems_.hdg.requested) {
             extaidItems_.hdg.requested = false;
@@ -388,12 +388,12 @@ void SrvExtAid::handle_response(XCOMResp response) {
                 // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid_hdg", "frame counter match: ", frame_counter);
                 extaidItems_.hdg.success = inv_resp;
                 if(extaidItems_.hdg.success) {
-                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_hdg", "iNAT accepted the data");
+                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTHDG.c_str(), "iNAT accepted the data");
                 } else {
-                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", "srv_extaid_hdg", "iNAT did not accept the data", response);
+                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTHDG.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", "srv_extaid_hdg", "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTHDG.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
             }
         } else if(extaidItems_.vel.requested) {
             extaidItems_.vel.requested = false;
@@ -401,12 +401,12 @@ void SrvExtAid::handle_response(XCOMResp response) {
                 // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid_vel", "frame counter match: ", frame_counter);
                 extaidItems_.vel.success = inv_resp;
                 if(extaidItems_.vel.success) {
-                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_vel", "iNAT accepted the data");
+                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTVEL.c_str(), "iNAT accepted the data");
                 } else {
-                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", "srv_extaid_vel", "iNAT did not accept the data", response);
+                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTVEL.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", "srv_extaid_vel", "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTVEL.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
             }
         } else if(extaidItems_.vel_body.requested) {
             extaidItems_.vel_body.requested = false;
@@ -414,12 +414,12 @@ void SrvExtAid::handle_response(XCOMResp response) {
                 // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid_velbody", "frame counter match: ", frame_counter);
                 extaidItems_.vel_body.success = inv_resp;
                 if(extaidItems_.vel_body.success) {
-                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_velbody", "iNAT accepted the data");
+                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTVELBODY.c_str(), "iNAT accepted the data");
                 } else {
-                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", "srv_extaid_velbody", "iNAT did not accept the data", response);
+                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTVELBODY.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", "srv_extaid_velbody", "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTVELBODY.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
             }
         } else if(extaidItems_.height.requested) {
             extaidItems_.height.requested = false;
@@ -427,12 +427,12 @@ void SrvExtAid::handle_response(XCOMResp response) {
                 // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid_height", "frame counter match: ", frame_counter);
                 extaidItems_.height.success = inv_resp;
                 if(extaidItems_.height.success) {
-                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid_height", "iNAT accepted the data");
+                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTHEIGHT.c_str(), "iNAT accepted the data");
                 } else {
-                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", "srv_extaid_height", "iNAT did not accept the data", response);
+                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTHEIGHT.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", "srv_extaid_height", "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTHEIGHT.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
             }
         }
         // RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid", "notifying");

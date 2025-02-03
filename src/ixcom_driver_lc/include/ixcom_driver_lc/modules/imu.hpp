@@ -86,7 +86,7 @@ private:
     int32_t ip_port_;
     const std::string &topic_name_;
     int32_t topic_freq_;
-	Config::TimestampMode timestamp_mode_;
+    Config::TimestampMode timestamp_mode_;
     int32_t leap_seconds_;
     uint16_t maintiming_;
     uint16_t prescaler_;

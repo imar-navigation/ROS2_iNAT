@@ -375,15 +375,15 @@ class DataSubscriber(Node):
         else:
             self.get_logger().info(f'ODO ({msg.header.frame_id}) '
                                    f'Timestamp: {msg.header.stamp.sec}.{msg.header.stamp.nanosec}'
-                                   # f'x: {msg.pose.pose.position.x} '
-                                   # f'y: {msg.pose.pose.position.y} '
-                                   # f'z: {msg.pose.pose.position.z} '
-                                   # f'tlx: {msg.twist.twist.linear.x} '
-                                   # f'tly: {msg.twist.twist.linear.y} '
-                                   # f'tlz: {msg.twist.twist.linear.z} '
-                                   # f'tax: {msg.twist.twist.angular.x} '
-                                   # f'tay: {msg.twist.twist.angular.y} '
-                                   # f'taz: {msg.twist.twist.angular.z} '
+                                   f'x: {msg.pose.pose.position.x} '
+                                   f'y: {msg.pose.pose.position.y} '
+                                   f'z: {msg.pose.pose.position.z} '
+                                   f'tlx: {msg.twist.twist.linear.x} '
+                                   f'tly: {msg.twist.twist.linear.y} '
+                                   f'tlz: {msg.twist.twist.linear.z} '
+                                   f'tax: {msg.twist.twist.angular.x} '
+                                   f'tay: {msg.twist.twist.angular.y} '
+                                   f'taz: {msg.twist.twist.angular.z} '
                                    )
             # try:
             #     add_utc = 0

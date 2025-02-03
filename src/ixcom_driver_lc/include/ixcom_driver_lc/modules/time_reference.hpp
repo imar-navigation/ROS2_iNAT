@@ -37,7 +37,7 @@ public:
     void cleanup();
 
 private:
-	using TimeReferenceMsg = sensor_msgs::msg::TimeReference;
+    using TimeReferenceMsg = sensor_msgs::msg::TimeReference;
 
     //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
     void handle_response(XCOMResp response) override;
