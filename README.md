@@ -4,7 +4,7 @@ The **_ixcom_driver_lc_** is a _ROS2_ node developed in _C++_. It establishes a 
 
 ## General Information
 
-While running the _ixcom_driver_ will appear in the _ROS2_ node list.
+While running the _ixcom_driver_lc_ will appear in the _ROS2_ node list.
 
 ```console
 ~$ ros2 node list
@@ -52,7 +52,7 @@ colcon build --packages-select ixcom_driver_lc   (which builds only the specifie
 
 ## Configuration
 
-The _ixcom_driver_ configuration is located in `src/ixcom_driver_lc/params/default.yml`. If changes have been done in this file,
+The _ixcom_driver_lc_ configuration is located in `src/ixcom_driver_lc/params/default.yml`. If changes have been done in this file,
 the node has to be rebuilt since this file wil be copied into the install directory where it will be used from. If the install directory
 already exists, the configuration file can be modified directly in the directory `install/ixcom_driver_lc/share/ixcom_driver_lc/params/default.yml`.
 NOTE: The configuration file in the install directory will be overwritten once a rebuild has been performed.
@@ -125,7 +125,7 @@ ixcom_driver_lifecycle_node:
 
 ## Run
 
-- Change to the directory where the _ixcom_driver_ is located:
+- Change to the directory where the _ixcom_driver_lc_ is located:
   ```console
   cd ixcom-ros2-driver
   ```
