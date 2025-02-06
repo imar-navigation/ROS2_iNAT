@@ -3,6 +3,7 @@
 #include "rclcpp/rclcpp.hpp"
 // #include "std_msgs/msg/string.hpp"
 #include <mutex>
+#include <cmath>
 
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_status.hpp>
@@ -141,4 +142,5 @@ class ServiceAdapter {
         rclcpp::QoS *qos_;
 
         inline double get_timestamp(int32_t s, uint32_t ns) {return s + ns * 1e-9;}
+        inline double get_rad(double deg) {return deg * M_PI / 180;}
 };
