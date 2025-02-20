@@ -14,6 +14,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include "interfaces/srv/ext_aid_pos_llh.hpp"
 #include "interfaces/srv/ext_aid_pos_ecef.hpp"
 #include "interfaces/srv/ext_aid_pos_utm.hpp"
@@ -28,6 +29,7 @@ class ServiceAdapter {
         ServiceAdapter();
         ~ServiceAdapter();
     private:
+        using TwistWithCovarianceStampedMsg = geometry_msgs::msg::TwistWithCovarianceStamped;
         using ImuMsg = sensor_msgs::msg::Imu;
         using MagneticFieldMsg = sensor_msgs::msg::MagneticField;
         using NavSatStatusMsg = sensor_msgs::msg::NavSatStatus;
@@ -46,6 +48,7 @@ class ServiceAdapter {
         using if_extaid_velbody = interfaces::srv::ExtAidVelBody;
         using if_extaid_height = interfaces::srv::ExtAidHeight;
 
+        const std::string TOPIC_TWISTWITHCOVARIANCESTAMPED {"ExtVelocityBody"};
         const std::string TOPIC_IMU {"Imu"};
         const std::string TOPIC_MAGNETICFIELD {"MagneticField"};
         const std::string TOPIC_NAVSATSTATUS {"NavSatStatus"};
@@ -74,6 +77,7 @@ class ServiceAdapter {
         // TimeReferenceMsg timereference_msg_;
         // TwistStampedMsg twiststamped_msg_;
 
+        rclcpp::Subscription<TwistWithCovarianceStampedMsg>::SharedPtr sub_twistwithcovariancestamped_;
         rclcpp::Subscription<ImuMsg>::SharedPtr sub_imu_;
         rclcpp::Subscription<MagneticFieldMsg>::SharedPtr sub_magneticfield_;
         rclcpp::Subscription<NavSatStatusMsg>::SharedPtr sub_navsatstatus_;
@@ -85,6 +89,7 @@ class ServiceAdapter {
         rclcpp::Subscription<TwistStampedMsg>::SharedPtr sub_twiststamped_;
         
         void run();
+        void cb_twistwithcovariancestamped(const TwistWithCovarianceStampedMsg& msg);
         void cb_imu(const ImuMsg& msg);
         void cb_magneticfield(const MagneticFieldMsg& msg);
         void cb_navsatstatus(const NavSatStatusMsg& msg);

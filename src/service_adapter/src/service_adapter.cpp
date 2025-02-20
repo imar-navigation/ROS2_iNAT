@@ -23,6 +23,8 @@ void ServiceAdapter::run() {
   
     node_ = rclcpp::Node::make_shared("service_adapter");
 
+    sub_twistwithcovariancestamped_ = node_->create_subscription<TwistWithCovarianceStampedMsg>(TOPIC_TWISTWITHCOVARIANCESTAMPED, *qos_,
+        std::bind(&ServiceAdapter::cb_twistwithcovariancestamped, this, std::placeholders::_1));
     qos_ = new rclcpp::SystemDefaultsQoS();
     sub_imu_ = node_->create_subscription<ImuMsg>(TOPIC_IMU, *qos_,
         std::bind(&ServiceAdapter::cb_imu, this, std::placeholders::_1));
@@ -61,6 +63,28 @@ void ServiceAdapter::run() {
     rq_send_extheight_ = std::make_shared<if_extaid_height::Request>();
 
     rclcpp::spin(node_);
+}
+
+void ServiceAdapter::cb_twistwithcovariancestamped(const TwistWithCovarianceStampedMsg& msg) {
+    RCLCPP_INFO(node_->get_logger(), "Received %s, calling %s service.",
+    std::string("TwistWithCovarianceStampedMsg").c_str(), CL_EXTVELBODY.c_str());
+
+    std::unique_lock<std::mutex> lk(mx_extvelbody_);
+    rq_send_extvelbody_->time_stamp = get_timestamp(msg.header.stamp.sec, msg.header.stamp.nanosec);
+    rq_send_extvelbody_->time_mode = 1;
+    rq_send_extvelbody_->velocity[0] = msg.twist.twist.linear.x;
+    rq_send_extvelbody_->velocity[1] = msg.twist.twist.linear.y;
+    rq_send_extvelbody_->velocity[2] = msg.twist.twist.linear.z;
+    rq_send_extvelbody_->velocity_stddev[0] = sqrt(msg.twist.covariance.at(0));
+    rq_send_extvelbody_->velocity_stddev[1] = sqrt(msg.twist.covariance.at(1));
+    rq_send_extvelbody_->velocity_stddev[2] = sqrt(msg.twist.covariance.at(2));
+    rq_send_extvelbody_->lever_arm[0] = 0.0;
+    rq_send_extvelbody_->lever_arm[1] = 0.0;
+    rq_send_extvelbody_->lever_arm[2] = 0.0;
+    rq_send_extvelbody_->lever_arm_stddev[0] = 0.1;
+    rq_send_extvelbody_->lever_arm_stddev[1] = 0.1;
+    rq_send_extvelbody_->lever_arm_stddev[2] = 0.1;
+    lk.unlock();
 }
 
 void ServiceAdapter::cb_imu(const ImuMsg& msg) {
