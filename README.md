@@ -43,14 +43,14 @@ The node info shows the implemented features (not configured topics are not visi
     /ixcom/TwistStamped: geometry_msgs/msg/TwistStamped
     /ixcom/tf_static: tf2_msgs/msg/TFMessage
   Service Servers:
-    /ixcom/ext_heading: interfaces/srv/ExtAidHdg
-    /ixcom/ext_height: interfaces/srv/ExtAidHeight
-    /ixcom/ext_position_ecef: interfaces/srv/ExtAidPosEcef
-    /ixcom/ext_position_llh: interfaces/srv/ExtAidPosLlh
-    /ixcom/ext_position_mgrs: interfaces/srv/ExtAidPosMgrs
-    /ixcom/ext_position_utm: interfaces/srv/ExtAidPosUtm
-    /ixcom/ext_velocity: interfaces/srv/ExtAidVel
-    /ixcom/ext_velocity_body: interfaces/srv/ExtAidVelBody
+    /ixcom/ext_heading: ixcom_interfaces/srv/ExtAidHdg
+    /ixcom/ext_height: ixcom_interfaces/srv/ExtAidHeight
+    /ixcom/ext_position_ecef: ixcom_interfaces/srv/ExtAidPosEcef
+    /ixcom/ext_position_llh: ixcom_interfaces/srv/ExtAidPosLlh
+    /ixcom/ext_position_mgrs: ixcom_interfaces/srv/ExtAidPosMgrs
+    /ixcom/ext_position_utm: ixcom_interfaces/srv/ExtAidPosUtm
+    /ixcom/ext_velocity: ixcom_interfaces/srv/ExtAidVel
+    /ixcom/ext_velocity_body: ixcom_interfaces/srv/ExtAidVelBody
 
     [...]
 ```
