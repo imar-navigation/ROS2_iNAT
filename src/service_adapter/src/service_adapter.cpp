@@ -21,11 +21,11 @@ ServiceAdapter::~ServiceAdapter(){
 
 void ServiceAdapter::run() {
   
-    node_ = rclcpp::Node::make_shared("service_adapter");
+    node_ = rclcpp::Node::make_shared("ixcom_service_adapter");
 
+    qos_ = new rclcpp::SystemDefaultsQoS();
     sub_twistwithcovariancestamped_ = node_->create_subscription<TwistWithCovarianceStampedMsg>(TOPIC_TWISTWITHCOVARIANCESTAMPED, *qos_,
         std::bind(&ServiceAdapter::cb_twistwithcovariancestamped, this, std::placeholders::_1));
-    qos_ = new rclcpp::SystemDefaultsQoS();
     sub_imu_ = node_->create_subscription<ImuMsg>(TOPIC_IMU, *qos_,
         std::bind(&ServiceAdapter::cb_imu, this, std::placeholders::_1));
     sub_magneticfield_ = node_->create_subscription<MagneticFieldMsg>(TOPIC_MAGNETICFIELD, *qos_,

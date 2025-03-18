@@ -1,41 +1,56 @@
 # iXCOM-ROS2-driver   _- C++ Implementation -_
 
-The **_ixcom_driver_lc_** is a _ROS2_ node developed in _C++_. It establishes a connection to an _iNAT_, activates logs, receives the data and publishes them using topics.
+**_ixcom_driver_lc_** is a _ROS2_ node developed in _C++_. It establishes a connection to an _iNAT_, activates logs, receives the data and publishes them using topics.<br><br>
+
+The default namespace used by the node is `ixcom`. To change this namespace, the top line of the configuration file must be modified:<br>
+
+```console
+/ixcom/ixcom_driver_lifecycle_node:
+```
+becomes
+```console
+/your_ns/ixcom_driver_lifecycle_node:
+```
+
+A modified namespace can also be passed as argument to the launch file with `namespace:=your_ns` which must fit the namespace definition in the configuration file. Also, a different configuration file can be passed as argument with `publisher_config_file:='/your/path/to/file.yml'`. So, if multiple configuration files are available, multiple nodes can be launched using different namespaces and configuration files, which these namespaces are defined in, as arguments.<br>
+
+If no launch file is used, a subscriber must be launched with `--ros-args -r __ns:=/your_ns` as argument.
+
 
 ## General Information
 
-While running the _ixcom_driver_lc_ will appear in the _ROS2_ node list.
+While running, the _ixcom_driver_lc_ will appear in the _ROS2_ node list.
 
 ```console
 ~$ ros2 node list
-/ixcom_driver_lifecycle_node
+/ixcom/ixcom_driver_lifecycle_node
 ```
 
-The node info shows the implemented features (not configured topics are not visible in this view, see [Configuration](#configuration-1)).
+The node info shows the implemented features (not configured topics are not visible in this view, see configuration section for details).
 
 ```console
-~$ ros2 node info /ixcom_driver_lifecycle_node
-/ixcom_driver_lifecycle_node
+~$ ros2 node info /ixcom/ixcom_driver_lifecycle_node
+/ixcom/ixcom_driver_lifecycle_node
   Publishers:
-    /Imu: sensor_msgs/msg/Imu
-    /MagneticField: sensor_msgs/msg/MagneticField
-    /NavSatFix_GNSS: sensor_msgs/msg/NavSatFix
-    /NavSatFix_INS: sensor_msgs/msg/NavSatFix
-    /NavSatStatus: sensor_msgs/msg/NavSatStatus
-    /Odometry: nav_msgs/msg/Odometry
-    /PoseWithCovarianceStamped: geometry_msgs/msg/PoseWithCovarianceStamped
-    /TimeReference: sensor_msgs/msg/TimeReference
-    /TwistStamped: geometry_msgs/msg/TwistStamped
-    /tf_static: tf2_msgs/msg/TFMessage
+    /ixcom/Imu: sensor_msgs/msg/Imu
+    /ixcom/MagneticField: sensor_msgs/msg/MagneticField
+    /ixcom/NavSatFix_GNSS: sensor_msgs/msg/NavSatFix
+    /ixcom/NavSatFix_INS: sensor_msgs/msg/NavSatFix
+    /ixcom/NavSatStatus: sensor_msgs/msg/NavSatStatus
+    /ixcom/Odometry: nav_msgs/msg/Odometry
+    /ixcom/PoseWithCovarianceStamped: geometry_msgs/msg/PoseWithCovarianceStamped
+    /ixcom/TimeReference: sensor_msgs/msg/TimeReference
+    /ixcom/TwistStamped: geometry_msgs/msg/TwistStamped
+    /ixcom/tf_static: tf2_msgs/msg/TFMessage
   Service Servers:
-    /ext_heading: interfaces/srv/ExtAidHdg
-    /ext_height: interfaces/srv/ExtAidHeight
-    /ext_position_ecef: interfaces/srv/ExtAidPosEcef
-    /ext_position_llh: interfaces/srv/ExtAidPosLlh
-    /ext_position_mgrs: interfaces/srv/ExtAidPosMgrs
-    /ext_position_utm: interfaces/srv/ExtAidPosUtm
-    /ext_velocity: interfaces/srv/ExtAidVel
-    /ext_velocity_body: interfaces/srv/ExtAidVelBody
+    /ixcom/ext_heading: interfaces/srv/ExtAidHdg
+    /ixcom/ext_height: interfaces/srv/ExtAidHeight
+    /ixcom/ext_position_ecef: interfaces/srv/ExtAidPosEcef
+    /ixcom/ext_position_llh: interfaces/srv/ExtAidPosLlh
+    /ixcom/ext_position_mgrs: interfaces/srv/ExtAidPosMgrs
+    /ixcom/ext_position_utm: interfaces/srv/ExtAidPosUtm
+    /ixcom/ext_velocity: interfaces/srv/ExtAidVel
+    /ixcom/ext_velocity_body: interfaces/srv/ExtAidVelBody
 
     [...]
 ```
@@ -53,14 +68,14 @@ colcon build --packages-select ixcom_driver_lc   (which builds only the specifie
 ## Configuration
 
 The _ixcom_driver_lc_ configuration is located in `src/ixcom_driver_lc/params/publisher_config.yml`. If changes have been done in this file,
-the node has to be rebuilt since this file wil be copied into the install directory where it will be used from. If the install directory
+the node has to be rebuilt since this file will be copied into the install directory where it will be used from. If the install directory
 already exists, the configuration file can be modified directly in the directory `install/ixcom_driver_lc/share/ixcom_driver_lc/params/publisher_config.yml`.
-NOTE: The configuration file in the install directory will be overwritten once a rebuild has been performed.
+_NOTE_: The configuration file in the install directory will be overwritten once a rebuild has been performed.
 The configuration file has currently the following structure.
 
 
 ```yaml
-ixcom_driver_lifecycle_node:
+/ixcom/ixcom_driver_lifecycle_node:
   ros__parameters:
     ip:
       address: 192.168.1.30
@@ -140,35 +155,36 @@ ixcom_driver_lifecycle_node:
   ```console
   ros2 run ixcom_driver sub
   ```
+  _NOTE:_ If a namespace is used, the argument `--ros-args -r __ns:=/your_ns` must be passed.
 
 ## Publishers 
 
 Publishers with the following topics using standard _ROS2_ messages are implemented:  
-  `/Imu:                         sensor_msgs/msg/Imu`  
-  `/MagneticField:               sensor_msgs/msg/MagneticField`  
-  `/NavSatFix_GNSS:              sensor_msgs/msg/NavSatFix`  
-  `/NavSatFix_INS:               sensor_msgs/msg/NavSatFix`  
-  `/NavSatStatus:                sensor_msgs/msg/NavSatStatus`  
-  `/PoseWithCovarianceStamped    geometry_msgs.msg/PoseWithCovarianceStamped`  
-  `/TwistStamped                 geometry_msgs.msg/TwistStamped`  
-  `/Odometry:                    nav_msgs/msg/Odometry`  
-  `/TimeReference:               sensor_msgs/msg/TimeReference`
+  `/ixcom/Imu:                         sensor_msgs/msg/Imu`  
+  `/ixcom/MagneticField:               sensor_msgs/msg/MagneticField`  
+  `/ixcom/NavSatFix_GNSS:              sensor_msgs/msg/NavSatFix`  
+  `/ixcom/NavSatFix_INS:               sensor_msgs/msg/NavSatFix`  
+  `/ixcom/NavSatStatus:                sensor_msgs/msg/NavSatStatus`  
+  `/ixcom/PoseWithCovarianceStamped    geometry_msgs.msg/PoseWithCovarianceStamped`  
+  `/ixcom/TwistStamped                 geometry_msgs.msg/TwistStamped`  
+  `/ixcom/Odometry:                    nav_msgs/msg/Odometry`  
+  `/ixcom/TimeReference:               sensor_msgs/msg/TimeReference`
 
 ## Service Servers
 
 The following Service Servers are implemented:  
-  `/ext_heading:                 interfaces/srv/ExtAidHdg`  
-  `/ext_height:                  interfaces/srv/ExtAidHeight`  
-  `/ext_position_ecef:           interfaces/srv/ExtAidPosEcef`  
-  `/ext_position_llh:            interfaces/srv/ExtAidPosLlh`  
-  `/ext_position_mgrs:           interfaces/srv/ExtAidPosMgrs`  
-  `/ext_position_utm:            interfaces/srv/ExtAidPosUtm`  
-  `/ext_velocity:                interfaces/srv/ExtAidVel`  
-  `/ext_velocity_body:           interfaces/srv/ExtAidVelBody`
+  `/ixcom/ext_heading:                 ixcom_interfaces/srv/ExtAidHdg`  
+  `/ixcom/ext_height:                  ixcom_interfaces/srv/ExtAidHeight`  
+  `/ixcom/ext_position_ecef:           ixcom_interfaces/srv/ExtAidPosEcef`  
+  `/ixcom/ext_position_llh:            ixcom_interfaces/srv/ExtAidPosLlh`  
+  `/ixcom/ext_position_mgrs:           ixcom_interfaces/srv/ExtAidPosMgrs`  
+  `/ixcom/ext_position_utm:            ixcom_interfaces/srv/ExtAidPosUtm`  
+  `/ixcom/ext_velocity:                ixcom_interfaces/srv/ExtAidVel`  
+  `/ixcom/ext_velocity_body:           ixcom_interfaces/srv/ExtAidVelBody`
   
-- The interface of the Service Server `/ext_heading`:  
+- The interface of the Service Server `/ixcom/ext_heading`:  
   ```console
-  ~$ ros2 interface show interfaces/srv/ExtAidHdg  
+  ~$ ros2 interface show ixcom_interfaces/srv/ExtAidHdg  
   ```
   ```console
   float64 time_stamp  
@@ -186,18 +202,18 @@ The following Service Servers are implemented:
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
-  ~$ ros2 service call /ext_heading interfaces/srv/ExtAidHdg
+  ~$ ros2 service call /ixcom/ext_heading ixcom_interfaces/srv/ExtAidHdg
   ```
   ```console
-  requester: making request: interfaces.srv.ExtAidHdg_Request(time_stamp=0.0, time_mode=0, heading=0.0, heading_stddev=0.0)  
+  requester: making request: ixcom_interfaces.srv.ExtAidHdg_Request(time_stamp=0.0, time_mode=0, heading=0.0, heading_stddev=0.0)  
   
   response:  
-  interfaces.srv.ExtAidHdg_Response(success=False)
+  ixcom_interfaces.srv.ExtAidHdg_Response(success=False)
   ```
 
-- The interface of the Service Server `/ext_height`:  
+- The interface of the Service Server `/ixcom/ext_height`:  
   ```console
-  ~$ ros2 interface show interfaces/srv/ExtAidHeight  
+  ~$ ros2 interface show ixcom_interfaces/srv/ExtAidHeight  
   ```
   ```console
   float64 time_stamp
@@ -215,18 +231,18 @@ The following Service Servers are implemented:
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
-  ~$ ros2 service call /ext_height interfaces/srv/ExtAidHeight
+  ~$ ros2 service call /ixcom/ext_height ixcom_interfaces/srv/ExtAidHeight
   ```
   ```console
-  requester: making request: interfaces.srv.ExtAidHeight_Request(time_stamp=0.0, time_mode=0, height=0.0, height_stddev=0.0)
+  requester: making request: ixcom_interfaces.srv.ExtAidHeight_Request(time_stamp=0.0, time_mode=0, height=0.0, height_stddev=0.0)
   
   response:  
-  interfaces.srv.ExtAidHeight_Response(success=False)
+  ixcom_interfaces.srv.ExtAidHeight_Response(success=False)
   ```
   
-- The interface of the Service Server `/ext_position_ecef`:  
+- The interface of the Service Server `/ixcom/ext_position_ecef`:  
   ```console
-  ~$ ros2 interface show interfaces/srv/ExtAidPosEcef  
+  ~$ ros2 interface show ixcom_interfaces/srv/ExtAidPosEcef  
   ```
   ```console
   float64 time_stamp
@@ -248,18 +264,18 @@ The following Service Servers are implemented:
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
-  ~$ ros2 service call /ext_position_ecef interfaces/srv/ExtAidPosEcef
+  ~$ ros2 service call /ixcom/ext_position_ecef ixcom_interfaces/srv/ExtAidPosEcef
   ```
   ```console
-  requester: making request: interfaces.srv.ExtAidPosEcef_Request(time_stamp=0.0, time_mode=0, position=array([0., 0., 0.]), position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
+  requester: making request: ixcom_interfaces.srv.ExtAidPosEcef_Request(time_stamp=0.0, time_mode=0, position=array([0., 0., 0.]), position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
   
   response:  
-  interfaces.srv.ExtAidPosEcef_Response(success=False)
+  ixcom_interfaces.srv.ExtAidPosEcef_Response(success=False)
   ```
 
-- The interface of the Service Server `/ext_position_llh`:  
+- The interface of the Service Server `/ixcom/ext_position_llh`:  
   ```console
-  ~$ ros2 interface show interfaces/srv/ExtAidPosLlh  
+  ~$ ros2 interface show ixcom_interfaces/srv/ExtAidPosLlh  
   ```
   ```console
   float64 time_stamp
@@ -282,18 +298,18 @@ The following Service Servers are implemented:
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
-  ~$ ros2 service call /ext_position_llh interfaces/srv/ExtAidPosLlh
+  ~$ ros2 service call /ixcom/ext_position_llh ixcom_interfaces/srv/ExtAidPosLlh
   ```
   ```console
-  requester: making request: interfaces.srv.ExtAidPosLlh_Request(time_stamp=0.0, time_mode=0, position=array([0., 0., 0.]), position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]), enable_msl_altitude=0)
+  requester: making request: ixcom_interfaces.srv.ExtAidPosLlh_Request(time_stamp=0.0, time_mode=0, position=array([0., 0., 0.]), position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]), enable_msl_altitude=0)
   
   response:  
-  interfaces.srv.ExtAidPosLlh_Response(success=False)
+  ixcom_interfaces.srv.ExtAidPosLlh_Response(success=False)
   ```
 
-- The interface of the Service Server `/ext_position_mgrs`:  
+- The interface of the Service Server `/ixcom/ext_position_mgrs`:  
   ```console
-  ~$ ros2 interface show interfaces/srv/ExtAidPosMgrs  
+  ~$ ros2 interface show ixcom_interfaces/srv/ExtAidPosMgrs  
   ```
   ```console
   float64 time_stamp
@@ -317,18 +333,18 @@ The following Service Servers are implemented:
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
-  ~$ ros2 service call /ext_position_mgrs interfaces/srv/ExtAidPosMgrs
+  ~$ ros2 service call /ixcom/ext_position_mgrs ixcom_interfaces/srv/ExtAidPosMgrs
   ```
   ```console
-  requester: making request: interfaces.srv.ExtAidPosMgrs_Request(time_stamp=0.0, time_mode=0, mgrs='', altitude=0.0, position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
+  requester: making request: ixcom_interfaces.srv.ExtAidPosMgrs_Request(time_stamp=0.0, time_mode=0, mgrs='', altitude=0.0, position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
   
   response:  
-  interfaces.srv.ExtAidPosMgrs_Response(success=False)
+  ixcom_interfaces.srv.ExtAidPosMgrs_Response(success=False)
   ```
 
-- The interface of the Service Server `/ext_position_utm`:  
+- The interface of the Service Server `/ixcom/ext_position_utm`:  
   ```console
-  ~$ ros2 interface show interfaces/srv/ExtAidPosUtm  
+  ~$ ros2 interface show ixcom_interfaces/srv/ExtAidPosUtm  
   ```
   ```console
   float64 time_stamp
@@ -358,18 +374,18 @@ The following Service Servers are implemented:
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
-  ~$ ros2 service call /ext_position_utm interfaces/srv/ExtAidPosUtm
+  ~$ ros2 service call /ixcom/ext_position_utm ixcom_interfaces/srv/ExtAidPosUtm
   ```
   ```console
-  requester: making request: interfaces.srv.ExtAidPosUtm_Request(time_stamp=0.0, time_mode=0, zone=0, north_hp=0, easting=0.0, northing=0.0, altitude=0.0, position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
+  requester: making request: ixcom_interfaces.srv.ExtAidPosUtm_Request(time_stamp=0.0, time_mode=0, zone=0, north_hp=0, easting=0.0, northing=0.0, altitude=0.0, position_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
   
   response:  
-  interfaces.srv.ExtAidPosUtm_Response(success=False)
+  ixcom_interfaces.srv.ExtAidPosUtm_Response(success=False)
   ```
 
-- The interface of the Service Server `/ext_velocity`:  
+- The interface of the Service Server `/ixcom/ext_velocity`:  
   ```console
-  ~$ ros2 interface show interfaces/srv/ExtAidVel  
+  ~$ ros2 interface show ixcom_interfaces/srv/ExtAidVel  
   ```
   ```console
   float64 time_stamp
@@ -387,18 +403,18 @@ The following Service Servers are implemented:
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
-  ~$ ros2 service call /ext_velocity interfaces/srv/ExtAidVel
+  ~$ ros2 service call /ixcom/ext_velocity ixcom_interfaces/srv/ExtAidVel
   ```
   ```console
-  requester: making request: interfaces.srv.ExtAidVel_Request(time_stamp=0.0, time_mode=0, velocity=array([0., 0., 0.]), velocity_stddev=array([0., 0., 0.]))
+  requester: making request: ixcom_interfaces.srv.ExtAidVel_Request(time_stamp=0.0, time_mode=0, velocity=array([0., 0., 0.]), velocity_stddev=array([0., 0., 0.]))
   
   response:  
-  interfaces.srv.ExtAidVel_Response(success=False)
+  ixcom_interfaces.srv.ExtAidVel_Response(success=False)
   ```
 
-- The interface of the Service Server `/ext_velocity_body`:  
+- The interface of the Service Server `/ixcom/ext_velocity_body`:  
   ```console
-  ~$ ros2 interface show interfaces/srv/ExtAidVelBody  
+  ~$ ros2 interface show ixcom_interfaces/srv/ExtAidVelBody  
   ```
   ```console
   float64 time_stamp
@@ -420,13 +436,13 @@ The following Service Servers are implemented:
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
   ```console
-  ~$ ros2 service call /ext_velocity_body interfaces/srv/ExtAidVelBody
+  ~$ ros2 service call /ixcom/ext_velocity_body ixcom_interfaces/srv/ExtAidVelBody
   ```
   ```console
-  requester: making request: interfaces.srv.ExtAidVelBody_Request(time_stamp=0.0, time_mode=0, velocity=array([0., 0., 0.]), velocity_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
+  requester: making request: ixcom_interfaces.srv.ExtAidVelBody_Request(time_stamp=0.0, time_mode=0, velocity=array([0., 0., 0.]), velocity_stddev=array([0., 0., 0.]), lever_arm=array([0., 0., 0.]), lever_arm_stddev=array([0., 0., 0.]))
   
   response:  
-  interfaces.srv.ExtAidVelBody_Response(success=False)
+  ixcom_interfaces.srv.ExtAidVelBody_Response(success=False)
   ```
 
 _**NOTE:**_ The data sent to the node will be forwarded to the _iNAT_. The _iNAT_ must send a response back to the node within a second. Otherwise, the requester receives `success=False` due to the timeout. 
@@ -456,7 +472,7 @@ While the _ixcom_driver_ is running it will appear in the _ROS2_ node list.
 /ixcom_driver_publisher
 ```
 
-The node info shows the implemented features (not configured topics are not visible in this view, see [Configuration](#configuration)).
+The node info shows the implemented features (not configured topics are not visible in this view, see see configuration section for details).
 
 ```console
 ~$ ros2 node info /ixcom_driver_pub
@@ -561,6 +577,8 @@ The _ixcom_driver_ configuration is located in `src/ixcom_driver/params/config.j
   ```
     This command requires an argument. Possible arguments will be shown after entering the command without any.
 
+_NOTE:_ If a namespace is used, the argument `--ros-args -r __ns:=/your_ns` must be passed.
+
 ## Publishers 
 
 Publishers with the following topics using standard _ROS2_ messages are implemented:  
@@ -579,7 +597,7 @@ Publishers with the following topics using standard _ROS2_ messages are implemen
 The following _Action Servers_ are implemented so far:  
   `/stop:      interfaces/action/Stop    ` - stops the publisher  
   `/realign:   interfaces/action/Realign ` - performs a realignment of the connected _iNAT_  
-  `/reboot:    interfaces/action/Reboot `  - performs a reboot of the connected _iNAT_
+  `/reboot:    interfaces/action/Reboot  ` - performs a reboot of the connected _iNAT_
 
 ## Logs
 

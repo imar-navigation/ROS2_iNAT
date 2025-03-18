@@ -99,7 +99,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         # Declare the launch arguments
-        DeclareLaunchArgument('namespace', default_value='', description='Top-level namespace'),
+        DeclareLaunchArgument('namespace', default_value='ixcom', description='Top-level namespace'),
         DeclareLaunchArgument('publisher_config_file',
                               default_value=get_package_share_directory('ixcom_driver_lc')
                               + '/params/publisher_config.yml',

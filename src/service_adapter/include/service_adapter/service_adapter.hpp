@@ -15,14 +15,14 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
-#include "interfaces/srv/ext_aid_pos_llh.hpp"
-#include "interfaces/srv/ext_aid_pos_ecef.hpp"
-#include "interfaces/srv/ext_aid_pos_utm.hpp"
-#include "interfaces/srv/ext_aid_pos_mgrs.hpp"
-#include "interfaces/srv/ext_aid_hdg.hpp"
-#include "interfaces/srv/ext_aid_vel.hpp"
-#include "interfaces/srv/ext_aid_vel_body.hpp"
-#include "interfaces/srv/ext_aid_height.hpp"
+#include "ixcom_interfaces/srv/ext_aid_pos_llh.hpp"
+#include "ixcom_interfaces/srv/ext_aid_pos_ecef.hpp"
+#include "ixcom_interfaces/srv/ext_aid_pos_utm.hpp"
+#include "ixcom_interfaces/srv/ext_aid_pos_mgrs.hpp"
+#include "ixcom_interfaces/srv/ext_aid_hdg.hpp"
+#include "ixcom_interfaces/srv/ext_aid_vel.hpp"
+#include "ixcom_interfaces/srv/ext_aid_vel_body.hpp"
+#include "ixcom_interfaces/srv/ext_aid_height.hpp"
 
 class ServiceAdapter {
     public:
@@ -39,14 +39,14 @@ class ServiceAdapter {
         using TimeReferenceMsg = sensor_msgs::msg::TimeReference;
         using TwistStampedMsg = geometry_msgs::msg::TwistStamped;
 
-        using if_extaid_posllh = interfaces::srv::ExtAidPosLlh;
-        using if_extaid_posecef = interfaces::srv::ExtAidPosEcef;
-        using if_extaid_posutm = interfaces::srv::ExtAidPosUtm;
-        using if_extaid_posmgrs = interfaces::srv::ExtAidPosMgrs;
-        using if_extaid_hdg = interfaces::srv::ExtAidHdg;
-        using if_extaid_vel = interfaces::srv::ExtAidVel;
-        using if_extaid_velbody = interfaces::srv::ExtAidVelBody;
-        using if_extaid_height = interfaces::srv::ExtAidHeight;
+        using if_extaid_posllh = ixcom_interfaces::srv::ExtAidPosLlh;
+        using if_extaid_posecef = ixcom_interfaces::srv::ExtAidPosEcef;
+        using if_extaid_posutm = ixcom_interfaces::srv::ExtAidPosUtm;
+        using if_extaid_posmgrs = ixcom_interfaces::srv::ExtAidPosMgrs;
+        using if_extaid_hdg = ixcom_interfaces::srv::ExtAidHdg;
+        using if_extaid_vel = ixcom_interfaces::srv::ExtAidVel;
+        using if_extaid_velbody = ixcom_interfaces::srv::ExtAidVelBody;
+        using if_extaid_height = ixcom_interfaces::srv::ExtAidHeight;
 
         const std::string TOPIC_TWISTWITHCOVARIANCESTAMPED {"ExtVelocityBody"};
         const std::string TOPIC_IMU {"Imu"};

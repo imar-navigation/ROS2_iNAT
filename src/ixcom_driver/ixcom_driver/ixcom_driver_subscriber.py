@@ -17,16 +17,16 @@ import argparse
 
 from std_msgs.msg import String
 from std_msgs.msg import Float64MultiArray
-from interfaces.msg import Num
-from interfaces.msg import Sphere
-from interfaces.msg import Array
+from ixcom_interfaces.msg import Num
+from ixcom_interfaces.msg import Sphere
+from ixcom_interfaces.msg import Array
 
 from sensor_msgs.msg import Imu, NavSatStatus, NavSatFix, TimeReference, MagneticField
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped, TwistStamped
 from tf2_msgs.msg import TFMessage
 
-from interfaces.action import GetConfigFile
+from ixcom_interfaces.action import GetConfigFile
 from rclpy.qos import *
 
 

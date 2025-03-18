@@ -19,7 +19,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(interfaces REQUIRED)
+find_package(ixcom_interfaces REQUIRED)
 # find_package(rosidl_default_generators REQUIRED)
 
 # rosidl_generate_interfaces(${PROJECT_NAME}
@@ -77,7 +77,7 @@ ament_target_dependencies(
   nav_msgs
   tf2
   tf2_geometry_msgs
-  interfaces
+  ixcom_interfaces
 )
 
 install(TARGETS ixcom_driver_lifecycle_node

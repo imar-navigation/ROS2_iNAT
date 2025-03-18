@@ -10,7 +10,7 @@ import json
 import time
 import ixcom.protocol
 from ixcom.exceptions import CommunicationError, ResponseError, ClientTimeoutError
-from interfaces.action import Example, Stop, Realign, Reboot, GetConfigFile
+from ixcom_interfaces.action import Example, Stop, Realign, Reboot, GetConfigFile
 
 from sensor_msgs.msg import Imu, NavSatStatus, NavSatFix, TimeReference, MagneticField
 from builtin_interfaces.msg import Time

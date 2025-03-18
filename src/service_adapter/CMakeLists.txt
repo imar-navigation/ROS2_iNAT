@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(service_adapter)
+project(ixcom_service_adapter)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(ROS_BUILD_TYPE Debug)
@@ -15,7 +15,7 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(interfaces REQUIRED)
+find_package(ixcom_interfaces REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -30,7 +30,7 @@ ament_target_dependencies(sub
   sensor_msgs
   geometry_msgs
   nav_msgs
-  interfaces)
+  ixcom_interfaces)
 
 install(TARGETS
   sub

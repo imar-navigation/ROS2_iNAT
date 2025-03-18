@@ -1,7 +1,7 @@
-ixcom_driver_lifecycle_node:
+/ixcom/ixcom_driver_lifecycle_node:
   ros__parameters:
     ip:
-      address: 192.168.4.48
+      address: 192.168.4.214
     serial:
       ignore: true
       port: 1
@@ -18,7 +18,7 @@ ixcom_driver_lifecycle_node:
     magnetometer_scale_factor: 1.0000000116860974e-07
     topics:
       Imu:
-        frequency_hz: 0
+        frequency_hz: 1
         remap_to: ""
       NavSatStatus:
         frequency_hz: 0
@@ -36,12 +36,12 @@ ixcom_driver_lifecycle_node:
         frequency_hz: 0
         remap_to: ""
       Odometry:
-        frequency_hz: 0
+        frequency_hz: 1
         remap_to: ""
       PoseWithCovarianceStamped:
-        frequency_hz: 0
+        frequency_hz: 1
         remap_to: ""
       TwistStamped:
-        frequency_hz: 2
+        frequency_hz: 1
         remap_to: ""
 

@@ -7,14 +7,14 @@
 #include <ixcom/command_handler.h>
 // #include <ixcom/message_handler.h>
 #include <ixcom/response_handler.h>
-#include "interfaces/srv/ext_aid_pos_llh.hpp"
-#include "interfaces/srv/ext_aid_pos_ecef.hpp"
-#include "interfaces/srv/ext_aid_pos_utm.hpp"
-#include "interfaces/srv/ext_aid_pos_mgrs.hpp"
-#include "interfaces/srv/ext_aid_hdg.hpp"
-#include "interfaces/srv/ext_aid_vel.hpp"
-#include "interfaces/srv/ext_aid_vel_body.hpp"
-#include "interfaces/srv/ext_aid_height.hpp"
+#include "ixcom_interfaces/srv/ext_aid_pos_llh.hpp"
+#include "ixcom_interfaces/srv/ext_aid_pos_ecef.hpp"
+#include "ixcom_interfaces/srv/ext_aid_pos_utm.hpp"
+#include "ixcom_interfaces/srv/ext_aid_pos_mgrs.hpp"
+#include "ixcom_interfaces/srv/ext_aid_hdg.hpp"
+#include "ixcom_interfaces/srv/ext_aid_vel.hpp"
+#include "ixcom_interfaces/srv/ext_aid_vel_body.hpp"
+#include "ixcom_interfaces/srv/ext_aid_height.hpp"
 #include <condition_variable>
 #include <mutex>
 
@@ -49,14 +49,14 @@ private:
     const std::string SRV_EXTVELBODY {"ext_velocity_body"};
     const std::string SRV_EXTHEIGHT {"ext_height"};
 
-    using extaid_posllh_msg = interfaces::srv::ExtAidPosLlh;
-    using extaid_posecef_msg = interfaces::srv::ExtAidPosEcef;
-    using extaid_posutm_msg = interfaces::srv::ExtAidPosUtm;
-    using extaid_posmgrs_msg = interfaces::srv::ExtAidPosMgrs;
-    using extaid_hdg_msg = interfaces::srv::ExtAidHdg;
-    using extaid_vel_msg = interfaces::srv::ExtAidVel;
-    using extaid_velbody_msg = interfaces::srv::ExtAidVelBody;
-    using extaid_height_msg = interfaces::srv::ExtAidHeight;
+    using extaid_posllh_msg = ixcom_interfaces::srv::ExtAidPosLlh;
+    using extaid_posecef_msg = ixcom_interfaces::srv::ExtAidPosEcef;
+    using extaid_posutm_msg = ixcom_interfaces::srv::ExtAidPosUtm;
+    using extaid_posmgrs_msg = ixcom_interfaces::srv::ExtAidPosMgrs;
+    using extaid_hdg_msg = ixcom_interfaces::srv::ExtAidHdg;
+    using extaid_vel_msg = ixcom_interfaces::srv::ExtAidVel;
+    using extaid_velbody_msg = ixcom_interfaces::srv::ExtAidVelBody;
+    using extaid_height_msg = ixcom_interfaces::srv::ExtAidHeight;
 
     void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
     void handle_response(XCOMResp response) override;

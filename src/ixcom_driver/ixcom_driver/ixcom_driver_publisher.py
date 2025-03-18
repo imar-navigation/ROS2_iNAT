@@ -22,7 +22,7 @@ from .mypy.magneticfield import MagneticField_
 from .mypy.odometry import Odometry_
 from .mypy.posewithcovariancestamped import PoseWithCovarianceStamped_
 from .mypy.twiststamped import TwistStamped_
-from interfaces.action import Example, Stop, Realign, Reboot, GetConfigFile
+from ixcom_interfaces.action import Example, Stop, Realign, Reboot, GetConfigFile
 # from rclpy.qos import qos_profile_sensor_data, qos_profile_system_default
 from rclpy.qos import *
 
