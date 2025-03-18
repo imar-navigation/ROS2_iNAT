@@ -124,7 +124,7 @@ The configuration file has currently the following structure.
         remap_to: ""
 
 ```
-- The first two lines are required for the _ROS2_ environment to know that this node and this configuration file belong togehter.
+- The first line names the node (`/ixcom_driver_lifecycle_node`) that uses this configuration and the namespace (/ixcom) this configuration is valid in.
 - `ip`  
   contains the connection data of an _iNAT_
 - `serial`  
@@ -579,7 +579,7 @@ The _ixcom_driver_ configuration is located in `src/ixcom_driver/params/config.j
 
 _NOTE:_ If a namespace is used, the argument `--ros-args -r __ns:=/your_ns` must be passed.
 
-## Publishers 
+## Publishers
 
 Publishers with the following topics using standard _ROS2_ messages are implemented:  
   `/Imu:                         sensor_msgs/msg/Imu`  
