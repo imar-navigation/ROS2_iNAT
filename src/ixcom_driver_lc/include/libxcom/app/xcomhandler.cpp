@@ -23,11 +23,11 @@ XcomHandler::XcomHandler(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
       serial_baud_(serial_baud),
       serial_enable_(serial_enable){}
 
-void XcomHandler::handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) {
+void XcomHandler::handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) noexcept {
 //    std::cout << "Command received" << "\n";
 }
 
-void XcomHandler::handle_response(XCOMResp response) {
+void XcomHandler::handle_response(XCOMResp response) noexcept {
 
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
@@ -46,6 +46,7 @@ void XcomHandler::handle_response(XCOMResp response) {
             _xcom.send_message(_xcom.get_generic_param<XCOMParSYS_MAINTIMING>());
             _xcom.send_message(_xcom.get_generic_param<XCOMParSYS_PRESCALER>());
             _xcom.send_message(_xcom.get_generic_param<XCOMParDAT_VEL>());
+            _xcom.send_message(_xcom.get_generic_param<XCOMParDAT_IMU>());
             auto cmd_add_gnsssol = _xcom.get_xcomcmd_enablelog(XCOM_MSGID_GNSSSOL, XComLogTrigger::XCOM_CMDLOG_TRIG_EVENT, 1);
             _xcom.send_message(cmd_add_gnsssol);
         }
@@ -216,7 +217,31 @@ void XcomHandler::handle_xcom_param(const XCOMParDAT_VEL& param) {
                                         | static_cast<uint16_t>(CompleteStatus::VELMODE));
 }
 
-void XcomHandler::handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) {
+void XcomHandler::handle_xcom_param(const XCOMParDAT_IMU& param) {
+    imu_mode_ = static_cast<XCOM_PARDAT_IMU_Mode>(param.mode);
+
+    if(imu_mode_ != XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMURAW) {
+        RCLCPP_INFO(node_->get_logger(), "%s", "setting IMU output mode to IMURAW");
+        auto p_set = _xcom.get_generic_param<XCOMParDAT_IMU>();
+        p_set.param_header.param_id = XCOMPAR_PARDAT_IMU;
+        p_set.param_header.is_request = 0;
+        p_set.mode = XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMURAW;
+        _xcom.send_message(p_set);
+
+        // doublecheck
+        auto p_get = _xcom.get_generic_param<XCOMParDAT_IMU>();
+        p_get.param_header.param_id = XCOMPAR_PARDAT_IMU;
+        _xcom.send_message(p_get);
+    } else {
+        RCLCPP_INFO(node_->get_logger(), "%s", "IMU output mode is set to IMURAW");
+    }
+
+    complete_status_ =
+            static_cast<CompleteStatus>(static_cast<uint16_t>(complete_status_)
+                                        | static_cast<uint16_t>(CompleteStatus::IMUMODE));
+}
+
+void XcomHandler::handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) noexcept {
 
     // needed for leap seconds if not configured in config file
     if(msg.posvel_type != GnssPosVelType::NONE) {
@@ -236,7 +261,7 @@ void XcomHandler::handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) {
     }
 }
 
-void XcomHandler::handle_xcom_msg(const XCOMmsg_GNSSTIME &msg) {
+void XcomHandler::handle_xcom_msg(const XCOMmsg_GNSSTIME &msg) noexcept {
     leap_seconds_ = std::abs(round(msg.utc_offset));
     RCLCPP_INFO(node_->get_logger(), "%s", ("got leap seconds from iNAT: " + std::to_string(leap_seconds_)).c_str());
     complete_status_
@@ -244,12 +269,13 @@ void XcomHandler::handle_xcom_msg(const XCOMmsg_GNSSTIME &msg) {
                                           | static_cast<uint16_t>(CompleteStatus::LEAPSECONDS));
 }
 
-void XcomHandler::handle_xcom_msg(const XCOMmsg_SYSSTAT& msg) {
+void XcomHandler::handle_xcom_msg(const XCOMmsg_SYSSTAT& msg) noexcept {
     auto data = xcom::XComState::process_msg_sysstat(_xcom.get_payload(), _xcom.get_payload_length());
     if(data.has_value()) {
         if(data.value().status_remaining_aligntime.has_value()) {
-            if(data.value().status_remaining_aligntime.value() > 0) {
-                RCLCPP_INFO(node_->get_logger(), "%s", "waiting for alignment...");
+            int val = data.value().status_remaining_aligntime.value();
+            if(val > 0) {
+                RCLCPP_INFO(node_->get_logger(), "%s %d", "waiting for alignment ... ", val);
             } else {
                 RCLCPP_INFO(node_->get_logger(), "%s", "alignment completed");
                 complete_status_

@@ -58,8 +58,8 @@ private:
     using extaid_velbody_msg = ixcom_interfaces::srv::ExtAidVelBody;
     using extaid_height_msg = ixcom_interfaces::srv::ExtAidHeight;
 
-    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
+    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) noexcept override;
+    void handle_response(XCOMResp response) noexcept override;
     // void handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) override;
 
     //    std::string log_msg(const std::string &s);

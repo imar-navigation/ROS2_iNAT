@@ -32,12 +32,14 @@ from rclpy.qos import *
 
 class DataSubscriber(Node):
 
-    def __init__(self, measure_frequency=False):
+    def __init__(self, measure_frequency=False, namespace=''):
         # f = open('config.json', 'r')
         # device = json.load(f)
         # topic = device['topic']
         # topic = self.get_parameter('topic').get_parameter_value().string_value
-        super().__init__('ixcom_driver_sub')
+        # self.namespace = '' if namespace == '' else f'{namespace}/'
+        self.namespace = namespace
+        super().__init__('ixcom_driver_sub', namespace=self.namespace)
 
         self.qos = None
         # self.qos = qos_profile_sensor_data
@@ -471,9 +473,11 @@ def main():
 
     parser = argparse.ArgumentParser(description='ROS2 iXCOM Driver')
     parser.add_argument('-f', '--measure_frequency',  action='store_true', default=False, help='measure frequencies of incoming topics')
+    parser.add_argument('-ns', '--namespace', type=str, help='node namspace', default='')
     args = parser.parse_args()
 
-    dSub = DataSubscriber(args.measure_frequency)
+    dSub = DataSubscriber(args.measure_frequency, args.namespace)
+    # dSub = DataSubscriber()
     try:
         # print('getting config file...')
         dSub.get_config_file(0)

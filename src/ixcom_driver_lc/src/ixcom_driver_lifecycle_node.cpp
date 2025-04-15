@@ -126,7 +126,8 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
             sleeper.sleep();
         if(build_topic_posewithcovariancestamped())
             sleeper.sleep();
-        build_topic_twiststamped();
+        if(build_topic_twiststamped())
+            sleeper.sleep();
 
         return CallbackReturn::SUCCESS;
     } else {

@@ -119,7 +119,7 @@ void Odometry::init() {
     }
 }
 
-void Odometry::handle_response(XCOMResp response) {
+void Odometry::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -183,17 +183,17 @@ void Odometry::handle_response(XCOMResp response) {
     }
 }
 
-void Odometry::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
+void Odometry::handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept {
     msg_INSSOL_age_ = 0;
     updateINSSOL(msg);
 }
 
-void Odometry::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) {
+void Odometry::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) noexcept {
     msg_IMUCORR_age_ = 0;
     updateIMUCORR(msg);
 }
 
-void Odometry::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) {
+void Odometry::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept {
     msg_EKFSTDDEV_age_ = 0;
     updateEKFSTDDEV(msg);
 }

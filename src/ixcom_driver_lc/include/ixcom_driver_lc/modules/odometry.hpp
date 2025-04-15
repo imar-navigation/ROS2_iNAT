@@ -48,10 +48,10 @@ private:
     using Point = geometry_msgs::msg::Point;
 
     //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
-    void handle_xcom_msg(const XCOMmsg_INSSOL &msg) override;
-    void handle_xcom_msg(const XCOMmsg_IMUCORR &msg) override;
-    void handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) override;
+    void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_IMUCORR &msg) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept override;
 
     void init();
 

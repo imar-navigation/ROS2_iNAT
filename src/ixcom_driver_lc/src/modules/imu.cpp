@@ -115,7 +115,7 @@ void IMU::init() {
     }
 }
 
-void IMU::handle_response(XCOMResp response) {
+void IMU::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -182,7 +182,7 @@ void IMU::handle_response(XCOMResp response) {
     }
 }
 
-void IMU::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
+void IMU::handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept {
 
     // t_inssol_ = t_inssol_upd_;
     // t_inssol_upd_ = std::chrono::high_resolution_clock::now();
@@ -193,7 +193,7 @@ void IMU::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
     updateINSSOL(msg);
 }
 
-void IMU::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) {
+void IMU::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) noexcept {
 
     // t_imucorr_ = t_imucorr_upd_;
     // t_imucorr_upd_ = std::chrono::high_resolution_clock::now();
@@ -204,7 +204,7 @@ void IMU::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) {
     updateIMUCORR(msg);
 }
 
-void IMU::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) {
+void IMU::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept {
 
     // t_ekfstddev_ = t_ekfstddev_upd_;
     // t_ekfstddev_upd_ = std::chrono::high_resolution_clock::now();
@@ -264,6 +264,8 @@ void IMU::updateINSSOL(const XCOMmsg_INSSOL &msg) {
     imu_msg_.linear_acceleration.x = msg.accel[0];
     imu_msg_.linear_acceleration.y = msg.accel[1];
     imu_msg_.linear_acceleration.z = msg.accel[2];
+
+    // std::cout << "data selection: " << std::to_string(msg.data_selection) << std::endl;
 
     insSolDataIsSet_ = true;
 }

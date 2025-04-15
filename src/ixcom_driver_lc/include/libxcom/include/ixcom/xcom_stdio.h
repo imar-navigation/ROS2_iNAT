@@ -54,11 +54,19 @@ public:
 };
 class FileReader : public xcom::IReader {
 public:
+    explicit FileReader(std::string&& input_file) noexcept
+        : InputFile(input_file) {}
+    explicit FileReader(std::string& input_file) noexcept
+        : InputFile(std::move(input_file)) {}
     explicit FileReader(const std::string& input_file) noexcept
-        : _input_file(input_file) {}
-    ~FileReader() override { std::fclose(_stream); }
+        : InputFile(input_file) {}
+    ~FileReader() override {
+        if(_stream != nullptr) {
+            std::fclose(_stream);
+        }
+    }
     bool initialize() noexcept override {
-        _stream = std::fopen(_input_file.c_str(), "rb");
+        _stream = std::fopen(InputFile.data(), "rb");
         if(_stream == nullptr) {
             return false;
         }
@@ -68,14 +76,22 @@ public:
         return static_cast<int32_t>(std::fread(buffer, sizeof(buffer[0]), buffer_length, _stream));
     }
 private:
-    const std::string& _input_file;
+    const std::string InputFile;
     std::FILE* _stream = nullptr;
 };
 class FileWriter : public xcom::IWriter {
 public:
-    explicit FileWriter(std::string output_file) noexcept
-        : OutputFile(std::move(output_file)) {}
-    ~FileWriter() override { std::fclose(_stream); }
+    explicit FileWriter(std::string&& input_file) noexcept
+        : OutputFile(input_file) {}
+    explicit FileWriter(std::string& input_file) noexcept
+        : OutputFile(std::move(input_file)) {}
+    explicit FileWriter(const std::string& input_file) noexcept
+        : OutputFile(input_file) {}
+    ~FileWriter() override {
+        if(_stream != nullptr) {
+            std::fclose(_stream);
+        }
+    }
     bool initialize() noexcept override {
         _stream = std::fopen(OutputFile.c_str(), "wb");
         if(_stream == nullptr) {

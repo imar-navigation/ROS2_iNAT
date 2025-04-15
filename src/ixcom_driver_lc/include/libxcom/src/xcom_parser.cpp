@@ -20,10 +20,10 @@ void XComParser::init_parser() noexcept {
     _rx_state.rx_cpy_idx    = 0;
     _rx_state.rx_idx        = 0;
     _rx_state.bytes_to_read = 1;
-    std::memset(reinterpret_cast<void*>(_rx_state.payload), 0, MaxMessageSize);
+    std::memset(_rx_state.payload, 0, MaxMessageSize);
 }
 XComParser::ParserCode XComParser::process_byte(uint8_t rxByte) noexcept {
-    XComParser::ParserCode ret_val = XComParser::ParserCode::Running;
+    auto ret_val = ParserCode::Running;
     if(_rx_state.rx_cpy_idx < MaxMessageSize) {
         _rx_state.payload[_rx_state.rx_cpy_idx] = rxByte;
         _rx_state.rx_cpy_idx++;
@@ -67,14 +67,8 @@ XComParser::ParserCode XComParser::process_byte(uint8_t rxByte) noexcept {
             }
             break;
         case XComPayload:
-            if((++_rx_state.rx_idx >= (_rx_state.msg_length - 2 - 6))) {
+            if(++_rx_state.rx_idx >= (_rx_state.msg_length - 2 - 6)) {
                 _rx_state.state = XComCrcLsb;
-            }
-            if(_rx_state.rx_idx >= MaxMessageSize) {
-                _rx_state.state      = XComSync;
-                _rx_state.rx_cpy_idx = 0;
-                _rx_state.rx_idx     = 0;
-                ret_val              = XComParser::ParserCode::InvalidLength;
             }
             break;
         case XComCrcLsb:
@@ -97,7 +91,7 @@ XComParser::ParserCode XComParser::process_byte(uint8_t rxByte) noexcept {
     }
     return ret_val;
 }
-bool XComParser::is_cmd_open(int& channel) const noexcept {
+bool XComParser::is_cmd_open(uint16_t& channel) const noexcept {
     const auto* cmd_id      = reinterpret_cast<const uint16_t*>(&_rx_state.payload[sizeof(XCOMHeader)]);
     const auto* cmd         = reinterpret_cast<const uint16_t*>(&_rx_state.payload[sizeof(XCOMHeader) + 4]);
     const auto* cmd_channel = reinterpret_cast<const uint16_t*>(&_rx_state.payload[sizeof(XCOMHeader) + 6]);
@@ -107,22 +101,14 @@ bool XComParser::is_cmd_open(int& channel) const noexcept {
     if(_rx_state.msg_id == XCOM_MSGID_COMMAND) {
         if(*cmd_id == XCOM_CMDID_XCOM) {
             if(*cmd == XCOM_CMDXCOM_OPEN) {
-                channel = static_cast<int>(*cmd_channel);
+                channel = *cmd_channel;
                 return true;
-            } else {
-                channel = -1;
-                return false;
             }
-        } else {
-            channel = -1;
-            return false;
         }
-    } else {
-        channel = -1;
-        return false;
     }
+    return false;
 }
-bool XComParser::is_cmd_close(int channel) const noexcept {
+bool XComParser::is_cmd_close(uint16_t channel) const noexcept {
     const auto* cmd_id      = reinterpret_cast<const uint16_t*>(&_rx_state.payload[sizeof(XCOMHeader)]);
     const auto* cmd         = reinterpret_cast<const uint16_t*>(&_rx_state.payload[sizeof(XCOMHeader) + 4]);
     const auto* cmd_channel = reinterpret_cast<const uint16_t*>(&_rx_state.payload[sizeof(XCOMHeader) + 6]);
@@ -132,16 +118,11 @@ bool XComParser::is_cmd_close(int channel) const noexcept {
     if(_rx_state.msg_id == XCOM_MSGID_COMMAND) {
         if(*cmd_id == XCOM_CMDID_XCOM) {
             if(*cmd == XCOM_CMDXCOM_CLOSE) {
-                return channel == static_cast<int>(*cmd_channel);
-            } else {
-                return false;
+                return channel == *cmd_channel;
             }
-        } else {
-            return false;
         }
-    } else {
-        return false;
     }
+    return false;
 }
 bool XComParser::is_param() const noexcept { return _rx_state.msg_id == XCOM_MSGID_PARAMETER; }
 bool XComParser::is_cmd() const noexcept { return _rx_state.msg_id == XCOM_MSGID_COMMAND; }
@@ -169,4 +150,5 @@ bool XComParser::is_param(const uint8_t* payload) noexcept { return static_cast<
 bool XComParser::is_msg() const noexcept { return (_rx_state.msg_id < XCOM_MSGID_COMMAND); }
 void XComParser::set_sync_byte(uint8_t sync_byte) noexcept { _sync_byte = sync_byte; }
 uint8_t XComParser::get_sync_byte() const noexcept { return _sync_byte; }
+void XComParser::reinit() noexcept { init_parser(); }
 }  // namespace xcom

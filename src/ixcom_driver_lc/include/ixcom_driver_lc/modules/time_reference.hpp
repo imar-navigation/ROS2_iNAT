@@ -40,8 +40,8 @@ private:
     using TimeReferenceMsg = sensor_msgs::msg::TimeReference;
 
     //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
-    void handle_xcom_msg(const XCOMmsg_SYSSTAT &msg) override;
+    void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_SYSSTAT &msg) noexcept override;
 
     void init();
     void updateSYSSTAT(const XCOMmsg_SYSSTAT &msg);

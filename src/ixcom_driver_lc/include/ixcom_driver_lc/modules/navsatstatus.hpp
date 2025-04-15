@@ -41,8 +41,8 @@ private:
     using NavSatStatusMsg = sensor_msgs::msg::NavSatStatus;
 
 //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
-    void handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) override;
+    void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) noexcept override;
     void handle_xcom_param(const XCOMParGNSS_LOCKOUTSYSTEM& param) override;
 
     void init();

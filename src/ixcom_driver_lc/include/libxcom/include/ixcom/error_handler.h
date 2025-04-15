@@ -21,19 +21,18 @@ using ErrorCode = XComParser::ParserCode;
 template<typename ClassT, typename ArgT>
 using CallbackErrMemFn = void (ClassT::*)(const ArgT&);
 template<typename MsgT, typename ClassT, CallbackErrMemFn<ClassT, MsgT> Func>
-inline void xcom_err_cb_passthrough(const ErrorCode& error_code, void* context) {
+inline void xcom_err_cb_passthrough(const ErrorCode& error_code, void* context) noexcept {
     assert(nullptr != context);
     auto instance = static_cast<ClassT*>(context);
-    // auto val = reinterpret_cast<MsgT *>(msg);
     ((*instance).*(Func))(error_code);
 }
 class ErrorCallbackInterface {
 public:
     ErrorCallbackInterface()          = default;
     virtual ~ErrorCallbackInterface() = default;
-    virtual void handle_xcom_error(const ErrorCode& ec) = 0;
+    virtual void handle_xcom_error(const ErrorCode& ec) noexcept = 0;
 protected:
-    void register_callback(XComState* state, xcom_callbacks_node_t nodes[]) {
+    void register_callback(XComState* state, xcom_callbacks_node_t nodes[]) noexcept {
         state->register_error_callback(
             &xcom_err_cb_passthrough<ErrorCode, ErrorCallbackInterface, &ErrorCallbackInterface::handle_xcom_error>, this, &nodes[0]);
     }

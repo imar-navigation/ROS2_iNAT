@@ -240,7 +240,7 @@ void SrvExtAid::get_extaid_vel_msg(const std::shared_ptr<extaid_vel_msg::Request
 
     RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTVEL.c_str(), "request received");
 
-    auto cmd = xcom_.get_xcomcmd_extaid_vel(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
+    auto cmd = xcom_.get_xcomcmd_extaid_vel_ned(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                             request->velocity, request->velocity_stddev);
     cmd.header.frame_counter = updateFrameCounter(extaidItems_.vel.frame_counter);
     xcom_.send_message(cmd);
@@ -257,7 +257,7 @@ void SrvExtAid::get_extaid_velbody_msg(const std::shared_ptr<extaid_velbody_msg:
 
     RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTVELBODY.c_str(), "request received");
 
-    auto cmd = xcom_.get_xcomcmd_extaid_velbody(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
+    auto cmd = xcom_.get_xcomcmd_extaid_vel_body(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                                 request->velocity, request->velocity_stddev,
                                                 request->lever_arm, request->lever_arm_stddev);
     cmd.header.frame_counter = updateFrameCounter(extaidItems_.vel_body.frame_counter);
@@ -287,11 +287,11 @@ void SrvExtAid::get_extaid_height_msg(const std::shared_ptr<extaid_height_msg::R
     response->success = extaidItems_.height.success;
 }
 
-void SrvExtAid::handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) {
+void SrvExtAid::handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) noexcept {
        std::cout << "Command received" << cmd_id << "\n";
 }
 
-void SrvExtAid::handle_response(XCOMResp response) {
+void SrvExtAid::handle_response(XCOMResp response) noexcept {
 
     // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid", "response: ", response);
 

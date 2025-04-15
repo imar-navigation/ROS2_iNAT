@@ -42,8 +42,8 @@ private:
     using MagneticFieldMsg = sensor_msgs::msg::MagneticField;
 
     //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
-    void handle_xcom_msg(const XCOMmsg_MAGDATA& msg) override;
+    void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_MAGDATA& msg) noexcept override;
     void handle_xcom_param(const XCOMParEKF_MAGATTAID& param) override;
 
     void init();

@@ -1,7 +1,7 @@
 /*.*******************************************************************
  FILENAME: xcom.h
  **********************************************************************
- *  PROJECT: ROS2_ROS2_iNAT
+ *  PROJECT: ROS2_iNAT
  *
  *
  *---------------------------------------------------------------------
@@ -12,11 +12,13 @@
  ---------------------------------------------------------------------*/
 #ifndef LIB_IXCOM_X_COM_H
 #define LIB_IXCOM_X_COM_H
-#include "../../src/parameter_traits.h"
+#include "ixcom/parameter_traits.h"
 #include <array>
 #include <ixcom/crc16.h>
 #include <ixcom/xcom_parser.h>
 #include <optional>
+#include <tuple>
+#include <vector>
 #ifndef UNUSED
 #define UNUSED(x) (void)(x)
 #endif
@@ -38,7 +40,8 @@ enum class CallBackType {
     Parameter,
     Error,
     Command,
-    Response
+    Response,
+    MessageGeneric
 };
 typedef struct xcom_msg_callbacks_node {
     uint16_t msg_id;
@@ -50,11 +53,12 @@ typedef struct xcom_msg_callbacks_node {
 } xcom_callbacks_node_t;
 class XComState {
     using ErrorCode = XComParser::ParserCode;
-    typedef void (*xcom_msg_callback_t)(uint8_t msg[], void* context);
-    typedef void (*xcom_param_callback_t)(uint8_t msg[], void* context);
-    typedef void (*xcom_command_callback_t)(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context);
-    typedef void (*xcom_response_callback_t)(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context);
-    typedef void (*xcom_error_callback_t)(const ErrorCode& error_code, void* context);
+    typedef void (*xcom_msg_callback_t)(uint8_t msg[], void* context) noexcept;
+    typedef void (*xcom_generic_msg_callback_t)(XComMessageID id, uint8_t msg[], std::size_t length, void* context) noexcept;
+    typedef void (*xcom_param_callback_t)(uint8_t msg[], void* context) noexcept;
+    typedef void (*xcom_command_callback_t)(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context) noexcept;
+    typedef void (*xcom_response_callback_t)(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context) noexcept;
+    typedef void (*xcom_error_callback_t)(const ErrorCode& error_code, void* context) noexcept;
 public:
     XComState() noexcept          = default;
     virtual ~XComState() noexcept = default;
@@ -67,6 +71,8 @@ public:
     };
     ReturnCode process() noexcept;
     int register_message_callback(uint8_t msg_id, xcom_msg_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept;
+    int register_generic_message_callback(XComMessageID msg_id, xcom_generic_msg_callback_t cb, void* context,
+                                          xcom_callbacks_node_t* node) noexcept;
     int register_parameter_callback(uint16_t param_id, xcom_param_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept;
     int register_command_callback(xcom_command_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept;
     int register_response_callback(xcom_response_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept;
@@ -84,7 +90,7 @@ public:
     [[nodiscard]] uint8_t get_sync_byte() const noexcept;
     struct system_status {
         uint32_t mode          = 0;
-        uint32_t system_status = 0;
+        uint32_t status_system = 0;
         std::optional<uint32_t> status_imu{};
         std::optional<uint32_t> status_gnss{};
         std::optional<uint32_t> status_mag{};
@@ -93,6 +99,7 @@ public:
         std::optional<uint32_t> status_ekfgeneral{};
         std::optional<std::array<uint32_t, 4>> status_addimu{};
         std::optional<float> status_remaining_aligntime{};
+        std::optional<uint32_t> status_system2{};
         uint16_t global_status = 0;
     };
     static std::optional<system_status> process_msg_sysstat(const uint8_t* data, std::size_t len);
@@ -103,32 +110,32 @@ public:
     XCOMCmd_LOG get_xcomcmd_enablelog(XComMessageID id, XComLogTrigger trigger, uint16_t divider);
     XCOMCmd_CONF get_cmd_save_config() noexcept;
     XCOMCmd_XCOM get_cmd_reboot() noexcept;
-    XCOMCmd_EXTAID_POSLLH get_xcomcmd_extaid_posllh(const double& timestamp, uint16_t timemode,
-                                                    const std::array<double, 3>& pos, const std::array<double, 3>& pos_stddev,
-                                                    const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev,
-                                                    uint32_t enable_msl_alt);
-    XCOMCmd_EXTAID_POSECEF get_xcomcmd_extaid_posecef(const double& timestamp, uint16_t timemode,
-                                                      const std::array<double, 3>& pos, const std::array<double, 3>& pos_stddev,
-                                                      const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev);
-    XCOMCmd_EXTAID_POSUTM get_xcomcmd_extaid_posutm(const double& timestamp, uint16_t timemode,
-                                                    int32_t zone, uint8_t north_hp,
-                                                    const double& easting, const double& northing, const double& altitude,
-                                                    const std::array<double, 3>& pos_stddev,
-                                                    const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev);
-    XCOMCmd_EXTAID_POSMGRS get_xcomcmd_extaid_posmgrs(const double& timestamp, uint16_t timemode,
-                                                      int8_t mgrs[XCOM_EXTAID_POSMGRS_MAX_LENGTH],
-                                                      const double& alt, const std::array<double, 3>& pos_stddev,
-                                                      const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev);
-    XCOMCmd_EXTAID_HDG get_xcomcmd_extaid_hdg(const double& timestamp, uint16_t timemode,
-                                              const double& heading, const double& heading_stddev);
-    XCOMCmd_EXTAID_VEL get_xcomcmd_extaid_vel(const double& timestamp, uint16_t timemode,
-                                              const std::array<double, 3>& vel, const std::array<double, 3>& vel_stddev);
-    XCOMCmd_EXTAID_VELBODY get_xcomcmd_extaid_velbody(const double& timestamp, uint16_t timemode,
-                                                      const std::array<double, 3>& vel, const std::array<double, 3>& vel_stddev,
-                                                      const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev);
-    XCOMCmd_EXTAID_HEIGHT get_xcomcmd_extaid_height(const double& timestamp, uint16_t timemode,
-                                                    const double& height, const double& height_stddev);
+    XCOMCmdEKF_STOREPOS get_cmd_storepos() noexcept;
     XCOMCmdEKF_ALIGNCOMPLETE align_complete() noexcept;
+    XCOMCmdEKF_STARTALIGN align_start() noexcept;
+    XCOMCmd_EXTAID_POSLLH get_xcomcmd_extaid_posllh(const double& timestamp, uint16_t timemode, const std::array<double, 3>& pos,
+                                                    const std::array<double, 3>& pos_stddev, const std::array<double, 3>& leverarm,
+                                                    const std::array<double, 3>& leverarm_stddev, uint32_t enable_msl_alt);
+    XCOMCmd_EXTAID_POSECEF get_xcomcmd_extaid_posecef(const double& timestamp, uint16_t timemode, const std::array<double, 3>& pos,
+                                                      const std::array<double, 3>& pos_stddev, const std::array<double, 3>& leverarm,
+                                                      const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_POSUTM get_xcomcmd_extaid_posutm(const double& timestamp, uint16_t timemode, int32_t zone, uint8_t north_hp,
+                                                    const double& easting, const double& northing, const double& altitude,
+                                                    const std::array<double, 3>& pos_stddev, const std::array<double, 3>& leverarm,
+                                                    const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_POSMGRS get_xcomcmd_extaid_posmgrs(const double& timestamp, uint16_t timemode,
+                                                      int8_t mgrs[XCOM_EXTAID_POSMGRS_MAX_LENGTH], const double& alt,
+                                                      const std::array<double, 3>& pos_stddev, const std::array<double, 3>& leverarm,
+                                                      const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_HDG get_xcomcmd_extaid_hdg(const double& timestamp, uint16_t timemode, const double& heading,
+                                              const double& heading_stddev);
+    XCOMCmd_EXTAID_VEL get_xcomcmd_extaid_vel_ned(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                  const std::array<double, 3>& vel_stddev);
+    XCOMCmd_EXTAID_VELBODY get_xcomcmd_extaid_vel_body(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                       const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
+                                                       const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_HEIGHT get_xcomcmd_extaid_height(const double& timestamp, uint16_t timemode, const double& height,
+                                                    const double& height_stddev);
     // XCOM parameter
     template<typename ParamType>
     ParamType get_generic_param() {
@@ -155,7 +162,7 @@ public:
         complete_message(frame);
         return frame;
     }
-    XCOMParEKF_STARTUPV2 initialize_ekf(const std::array<double, 3> pos, const std::array<float, 3> pos_stddev, const float& hdg,
+    XCOMParEKF_STARTUPV2 initialize_ekf(const std::array<double, 3>& pos, const std::array<float, 3> pos_stddev, const float& hdg,
                                         const float& hdg_stddev, const std::array<float, 3> la, const std::array<float, 3> la_stddev,
                                         uint8_t position_mode, uint8_t heading_mode, bool start_alignment) {
         auto frame                    = get_generic_param<XCOMParEKF_STARTUPV2>();
@@ -237,13 +244,13 @@ private:
     ReturnCode _rc          = ReturnCode::Ok;
     Crc16 _crc16;
     static void state_init(xcom_state_t& state) noexcept;
-    static void process_message(xcom_state_t& s, uint8_t msg_id, uint8_t payload[]) noexcept;
+    static void process_message(xcom_state_t& s, uint8_t msg_id, uint8_t payload[], std::size_t length) noexcept;
     static void process_parameter(xcom_state_t& s, uint16_t param_id, uint8_t payload[]) noexcept;
     static void process_command(xcom_state_t& s, uint16_t cmd_id, std::size_t payload_length, uint8_t payload[]) noexcept;
     static void process_response(xcom_state_t& s, uint16_t cmd_id, std::size_t payload_length, uint8_t payload[]) noexcept;
     static void process_error(xcom_state_t& s, XComParser::ParserCode ec) noexcept;
-    template<typename T>
-    int register_callback(T id, xcom_msg_callback_t cb, void* context, xcom_callbacks_node_t* node, CallBackType cb_type) noexcept;
+    template<typename T, typename CallbackType>
+    int register_callback(T id, CallbackType cb, void* context, xcom_callbacks_node_t* node, CallBackType cb_type) noexcept;
 };
 }  // namespace xcom
 #endif  // LIB_IXCOM_X_COM_H

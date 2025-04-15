@@ -116,7 +116,7 @@ void NavINS::init() {
     }
 }
 
-void NavINS::handle_response(XCOMResp response) {
+void NavINS::handle_response(XCOMResp response) noexcept {
 
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
@@ -183,17 +183,17 @@ void NavINS::handle_response(XCOMResp response) {
     }
 }
 
-void NavINS::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
+void NavINS::handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept {
     msg_INSSOL_age_ = 0;
     updateINSSOL(msg);
 }
 
-void NavINS::handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) {
+void NavINS::handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) noexcept {
     msg_GNSSSOL_age_ = 0;
     updateGNSSSOL(msg);
 }
 
-void NavINS::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) {
+void NavINS::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept {
     msg_EKFSTDDEV_age_ = 0;
     updateEKFSTDDEV(msg);
 }

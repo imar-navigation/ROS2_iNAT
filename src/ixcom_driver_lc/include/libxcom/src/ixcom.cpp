@@ -1,7 +1,7 @@
 /*.*******************************************************************
  FILENAME: xcom.cc
  **********************************************************************
- *  PROJECT: ROS2_ROS2_iNAT
+ *  PROJECT: ROS2_iNAT
  *
  *
  *---------------------------------------------------------------------
@@ -27,7 +27,7 @@ XComState::ReturnCode XComState::process() noexcept {
             auto rc = _parser.process_byte(_buf[idx]);
             if(rc == XComParser::ParserCode::Ok) {
                 if(_parser.is_msg()) {
-                    process_message(_state, _parser.get_msg_id(), _parser.get_payload());
+                    process_message(_state, _parser.get_msg_id(), _parser.get_payload(), _parser.get_payload_length());
                 } else if(_parser.is_param()) {
                     process_parameter(_state, _parser.get_param_id(), _parser.get_payload());
                 } else if(_parser.is_cmd()) {
@@ -56,17 +56,24 @@ void XComState::state_init(xcom_state_t& state) noexcept { state.xcom_msg_callba
 int XComState::register_message_callback(uint8_t msg_id, xcom_msg_callback_t cb, void* context, xcom_callbacks_node_t* node) noexcept {
     return register_callback<uint8_t>(msg_id, cb, context, node, CallBackType::Message);
 }
-void XComState::process_message(xcom_state_t& s, uint8_t msg_id, uint8_t* payload) noexcept {
-    xcom_callbacks_node_t* node;
-    for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
+int XComState::register_generic_message_callback(XComMessageID msg_id, xcom_generic_msg_callback_t cb, void* context,
+                                                 xcom_callbacks_node_t* node) noexcept {
+    return register_callback<XComMessageID>(msg_id, cb, context, node, CallBackType::MessageGeneric);
+}
+void XComState::process_message(xcom_state_t& s, const uint8_t msg_id, uint8_t* payload, std::size_t length) noexcept {
+    for(const auto* node = s.xcom_msg_callbacks_head; node; node = node->next) {
         if((node->msg_id == msg_id) && (node->param_id == XCOMPAR_INVALID)) {
-            reinterpret_cast<xcom_msg_callback_t>(node->cb)(payload, node->context);
+            if(node->cb_type == CallBackType::Message) {
+                reinterpret_cast<xcom_msg_callback_t>(node->cb)(payload, node->context);
+            }
+            if(node->cb_type == CallBackType::MessageGeneric) {
+                reinterpret_cast<xcom_generic_msg_callback_t>(node->cb)(static_cast<XComMessageID>(msg_id), payload, length, node->context);
+            }
         }
     }
 }
 void XComState::process_parameter(XComState::xcom_state_t& s, uint16_t param_id, uint8_t* payload) noexcept {
-    xcom_callbacks_node_t* node;
-    for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
+    for(const auto* node = s.xcom_msg_callbacks_head; node; node = node->next) {
         if((node->param_id == param_id) && (node->msg_id == XCOM_MSGID_PARAMETER)) {
             reinterpret_cast<xcom_param_callback_t>(node->cb)(payload, node->context);
         }
@@ -79,16 +86,15 @@ int XComState::register_parameter_callback(uint16_t param_id, XComState::xcom_pa
 void XComState::enable_forwarding() noexcept { _enable_forwarding = true; }
 void XComState::disable_forwarding() noexcept { _enable_forwarding = false; }
 void XComState::skip_frame() noexcept { _skip_frame = true; }
-template<typename T>
-int XComState::register_callback(T id, XComState::xcom_msg_callback_t cb, void* context, xcom_callbacks_node_t* node,
-                                 CallBackType cb_type) noexcept {
+template<typename T, typename CallbackType>
+int XComState::register_callback(T id, CallbackType cb, void* context, xcom_callbacks_node_t* node, CallBackType cb_type) noexcept {
     if(cb == nullptr) {
         return -1;
     }
     if(node == nullptr) {
         return -1;
     }
-    if(cb_type == CallBackType::Message) {
+    if(cb_type == CallBackType::Message || cb_type == CallBackType::MessageGeneric) {
         for(xcom_callbacks_node_t* n = _state.xcom_msg_callbacks_head; n; n = n->next) {
             if((n == node) || ((n->cb == cb) && (n->msg_id == id) && (n->context == context))) {
                 return -1;
@@ -129,24 +135,21 @@ int XComState::register_error_callback(XComState::xcom_error_callback_t cb, void
     return register_callback<uint16_t>(XCOMPAR_INVALID, reinterpret_cast<xcom_msg_callback_t>(cb), context, node, CallBackType::Error);
 }
 void XComState::process_error(XComState::xcom_state_t& s, XComParser::ParserCode ec) noexcept {  // NOLINT
-    xcom_callbacks_node_t* node;
-    for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
+    for(const auto* node = s.xcom_msg_callbacks_head; node; node = node->next) {
         if(node->cb_type == CallBackType::Error) {
             reinterpret_cast<xcom_error_callback_t>(node->cb)(ec, node->context);
         }
     }
 }
 void XComState::process_command(XComState::xcom_state_t& s, uint16_t cmd_id, std::size_t payload_length, uint8_t* payload) noexcept {
-    xcom_callbacks_node_t* node;
-    for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
+    for(const auto* node = s.xcom_msg_callbacks_head; node; node = node->next) {
         if(node->cb_type == CallBackType::Command) {
             reinterpret_cast<xcom_command_callback_t>(node->cb)(cmd_id, payload_length, payload, node->context);
         }
     }
 }
 void XComState::process_response(XComState::xcom_state_t& s, uint16_t cmd_id, std::size_t payload_length, uint8_t* payload) noexcept {
-    xcom_callbacks_node_t* node;
-    for(node = s.xcom_msg_callbacks_head; node; node = node->next) {
+    for(const auto* node = s.xcom_msg_callbacks_head; node; node = node->next) {
         if(node->cb_type == CallBackType::Response) {
             reinterpret_cast<xcom_response_callback_t>(node->cb)(cmd_id, payload_length, payload, node->context);
         }
@@ -268,151 +271,12 @@ XCOMCmd_XCOM XComState::get_cmd_reboot() noexcept {
     complete_message(frame);
     return frame;
 }
-XCOMCmd_EXTAID_POSLLH XComState::get_xcomcmd_extaid_posllh(const double& timestamp, uint16_t timemode,
-                                                           const std::array<double, 3>& pos, const std::array<double, 3>& pos_stddev,
-                                                           const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev,
-                                                           uint32_t enable_msl_alt) {
-    XCOMCmd_EXTAID_POSLLH frame{};
+XCOMCmdEKF_STOREPOS XComState::get_cmd_storepos() noexcept {
+    XCOMCmdEKF_STOREPOS frame{};
     build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
-    frame.cmd_header.cmd_id = XCOM_CMDID_EXTAID;
-    frame.cmd_header.specific = 0;
-    frame.command_parameter_id = XCOM_CMDEXTAID_POS_LLH;
-    frame.time_stamp = timestamp;
-    frame.time_mode = timemode;
-    for(int i = 0; i < 3; i++) {
-        frame.position[i] = pos[i];
-        frame.position_stddev[i] = pos_stddev[i];
-        frame.lever_arm[i] = leverarm[i];
-        frame.lever_arm_stddev[i] = leverarm_stddev[i];
-    }
-    frame.enable_msl_altitude = enable_msl_alt;
-    return frame;
-}
-XCOMCmd_EXTAID_POSECEF XComState::get_xcomcmd_extaid_posecef(const double& timestamp, uint16_t timemode,
-                                                             const std::array<double, 3>& pos, const std::array<double, 3>& pos_stddev,
-                                                             const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev) {
-    XCOMCmd_EXTAID_POSECEF frame{};
-    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
-    frame.cmd_header.cmd_id = XCOM_CMDID_EXTAID;
-    frame.cmd_header.specific = 0;
-    frame.command_parameter_id = XCOM_CMDEXTAID_POS_ECEF;
-    frame.time_stamp = timestamp;
-    frame.time_mode = timemode;
-    for(int i = 0; i < 3; i++) {
-        frame.position[i] = pos[i];
-        frame.position_stddev[i] = pos_stddev[i];
-        frame.lever_arm[i] = leverarm[i];
-        frame.lever_arm_stddev[i] = leverarm_stddev[i];
-    }
-    complete_message(frame);
-    return frame;
-}
-XCOMCmd_EXTAID_POSUTM XComState::get_xcomcmd_extaid_posutm(const double& timestamp, uint16_t timemode,
-                                                           int32_t zone, uint8_t north_hp,
-                                                           const double& easting, const double& northing, const double& altitude,
-                                                           const std::array<double, 3>& pos_stddev,
-                                                           const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev) {
-    XCOMCmd_EXTAID_POSUTM frame{};
-    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
-    frame.cmd_header.cmd_id = XCOM_CMDID_EXTAID;
-    frame.cmd_header.specific = 0;
-    frame.command_parameter_id = XCOM_CMDEXTAID_POS_UTM;
-    frame.time_stamp = timestamp;
-    frame.time_mode = timemode;
-    frame.zone = zone;
-    frame.north_hp = north_hp;
-    frame.easting = easting;
-    frame.northing = northing;
-    frame.altitude = altitude;
-    for(int i = 0; i < 3; i++) {
-        frame.position_stddev[i] = pos_stddev[i];
-        frame.lever_arm[i] = leverarm[i];
-        frame.lever_arm_stddev[i] = leverarm_stddev[i];
-    }
-    complete_message(frame);
-    return frame;
-}
-XCOMCmd_EXTAID_POSMGRS XComState::get_xcomcmd_extaid_posmgrs(const double& timestamp, uint16_t timemode,
-                                                             int8_t mgrs[XCOM_EXTAID_POSMGRS_MAX_LENGTH],
-                                                             const double& alt, const std::array<double, 3>& pos_stddev,
-                                                             const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev) {
-    XCOMCmd_EXTAID_POSMGRS frame{};
-    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
-    frame.cmd_header.cmd_id = XCOM_CMDID_EXTAID;
-    frame.cmd_header.specific = 0;
-    frame.command_parameter_id = XCOM_CMDEXTAID_POS_MGRS;
-    frame.time_stamp = timestamp;
-    frame.time_mode = timemode;
-    frame.altitude = alt;
-    std::copy(mgrs, mgrs + XCOM_EXTAID_POSMGRS_MAX_LENGTH, frame.mgrs);
-    for(int i = 0; i < 3; i++) {
-        frame.position_stddev[i] = pos_stddev[i];
-        frame.lever_arm[i] = leverarm[i];
-        frame.lever_arm_stddev[i] = leverarm_stddev[i];
-    }
-    complete_message(frame);
-    return frame;
-}
-XCOMCmd_EXTAID_HDG XComState::get_xcomcmd_extaid_hdg(const double& timestamp, uint16_t timemode,
-                                                     const double& heading, const double& heading_stddev) {
-    XCOMCmd_EXTAID_HDG frame{};
-    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
-    frame.cmd_header.cmd_id = XCOM_CMDID_EXTAID;
-    frame.cmd_header.specific = 0;
-    frame.command_parameter_id = XCOM_CMDEXTAID_HDG;
-    frame.time_stamp = timestamp;
-    frame.time_mode = timemode;
-    frame.heading = heading;
-    frame.heading_stddev = heading_stddev;
-    complete_message(frame);
-    return frame;
-}
-XCOMCmd_EXTAID_VEL XComState::get_xcomcmd_extaid_vel(const double& timestamp, uint16_t timemode,
-                                                     const std::array<double, 3>& vel, const std::array<double, 3>& vel_stddev) {
-    XCOMCmd_EXTAID_VEL frame{};
-    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
-    frame.cmd_header.cmd_id = XCOM_CMDID_EXTAID;
-    frame.cmd_header.specific = 0;
-    frame.command_parameter_id = XCOM_CMDEXTAID_VEL_NED;
-    frame.time_stamp = timestamp;
-    frame.time_mode = timemode;
-    for(int i = 0; i < 3; i++) {
-        frame.velocity[i] = vel[i];
-        frame.velocity_stddev[i] = vel_stddev[i];
-    }
-    complete_message(frame);
-    return frame;
-}
-XCOMCmd_EXTAID_VELBODY XComState::get_xcomcmd_extaid_velbody(const double& timestamp, uint16_t timemode,
-                                                             const std::array<double, 3>& vel, const std::array<double, 3>& vel_stddev,
-                                                             const std::array<double, 3>& leverarm, const std::array<double, 3>& leverarm_stddev) {
-    XCOMCmd_EXTAID_VELBODY frame{};
-    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
-    frame.cmd_header.cmd_id = XCOM_CMDID_EXTAID;
-    frame.cmd_header.specific = 0;
-    frame.command_parameter_id = XCOM_CMDEXTAID_VEL_BODY;
-    frame.time_stamp = timestamp;
-    frame.time_mode = timemode;
-    for(int i = 0; i < 3; i++) {
-        frame.velocity[i] = vel[i];
-        frame.velocity_stddev[i] = vel_stddev[i];
-        frame.lever_arm[i] = leverarm[i];
-        frame.lever_arm_stddev[i] = leverarm_stddev[i];
-    }
-    complete_message(frame);
-    return frame;
-}
-XCOMCmd_EXTAID_HEIGHT XComState::get_xcomcmd_extaid_height(const double& timestamp, uint16_t timemode,
-                                                           const double& height, const double& height_stddev) {
-    XCOMCmd_EXTAID_HEIGHT frame{};
-    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
-    frame.cmd_header.cmd_id = XCOM_CMDID_EXTAID;
-    frame.cmd_header.specific = 0;
-    frame.command_parameter_id = XCOM_CMDEXTAID_HGT;
-    frame.time_stamp = timestamp;
-    frame.time_mode = timemode;
-    frame.height = height;
-    frame.height_stddev = height_stddev;
+    frame.cmd_header.cmd_id        = XCOM_CMDID_EKF;
+    frame.cmd_header.specific      = 0;
+    frame.ekf_arguments.ekf_cmd_id = XCOM_CMDEKF_STOREPOS;
     complete_message(frame);
     return frame;
 }
@@ -428,8 +292,8 @@ std::optional<XComState::system_status> XComState::process_msg_sysstat(const uin
     auto idx     = sizeof(XCOMHeader);
     sysstat.mode = *reinterpret_cast<const uint32_t*>(&data[idx]);
     idx += sizeof(sysstat.mode);
-    sysstat.system_status = *reinterpret_cast<const uint32_t*>(&data[idx]);
-    idx += sizeof(sysstat.system_status);
+    sysstat.status_system = *reinterpret_cast<const uint32_t*>(&data[idx]);
+    idx += sizeof(sysstat.status_system);
     if(sysstat.mode & PARDAT_SYSSTAT_MASK_IMU) {
         sysstat.status_imu.emplace(*reinterpret_cast<const uint32_t*>(&data[idx]));
         idx += sizeof(uint32_t);
@@ -472,6 +336,11 @@ std::optional<XComState::system_status> XComState::process_msg_sysstat(const uin
     }
     if(sysstat.mode & PARDAT_SYSSTAT_MASK_REMALIGNTIME) {
         sysstat.status_remaining_aligntime.emplace(*reinterpret_cast<const float*>(&data[idx]));
+        idx += sizeof(float);
+    }
+    if(sysstat.mode & PARDAT_SYSSTAT_MASK_SYSSTAT2) {
+        sysstat.status_system2.emplace(*reinterpret_cast<const uint32_t*>(&data[idx]));
+        idx += sizeof(uint32_t);
     }
     sysstat.global_status = *reinterpret_cast<const uint32_t*>(&data[len - sizeof(XCOMFooter)]);
     return sysstat;
@@ -485,6 +354,164 @@ XCOMCmdEKF_ALIGNCOMPLETE XComState::align_complete() noexcept {
     frame.cmd_header.specific               = 0;
     frame.ekf_arguments.ekf_cmd_id          = XCOM_CMDEKF_ALIGNCOMPLETE;
     frame.ekf_arguments.number_of_arguments = 0U;
+    complete_message(frame);
+    return frame;
+}
+XCOMCmdEKF_STARTALIGN XComState::align_start() noexcept {
+    XCOMCmdEKF_STARTALIGN frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id                 = XCOM_CMDID_EKF;
+    frame.cmd_header.specific               = 0;
+    frame.ekf_arguments.ekf_cmd_id          = XCOM_CMDEKF_STARTALIGN;
+    frame.ekf_arguments.number_of_arguments = 0U;
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_POSLLH XComState::get_xcomcmd_extaid_posllh(const double& timestamp, uint16_t timemode, const std::array<double, 3>& pos,
+                                                           const std::array<double, 3>& pos_stddev, const std::array<double, 3>& leverarm,
+                                                           const std::array<double, 3>& leverarm_stddev, uint32_t enable_msl_alt) {
+    XCOMCmd_EXTAID_POSLLH frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_POS_LLH;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    for(int i = 0; i < 3; i++) {
+        frame.position[i]         = pos[i];
+        frame.position_stddev[i]  = pos_stddev[i];
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    frame.enable_msl_altitude = enable_msl_alt;
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_POSECEF XComState::get_xcomcmd_extaid_posecef(const double& timestamp, uint16_t timemode, const std::array<double, 3>& pos,
+                                                             const std::array<double, 3>& pos_stddev, const std::array<double, 3>& leverarm,
+                                                             const std::array<double, 3>& leverarm_stddev) {
+    XCOMCmd_EXTAID_POSECEF frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_POS_ECEF;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    for(int i = 0; i < 3; i++) {
+        frame.position[i]         = pos[i];
+        frame.position_stddev[i]  = pos_stddev[i];
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_POSUTM XComState::get_xcomcmd_extaid_posutm(const double& timestamp, uint16_t timemode, int32_t zone, uint8_t north_hp,
+                                                           const double& easting, const double& northing, const double& altitude,
+                                                           const std::array<double, 3>& pos_stddev, const std::array<double, 3>& leverarm,
+                                                           const std::array<double, 3>& leverarm_stddev) {
+    XCOMCmd_EXTAID_POSUTM frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_POS_UTM;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    frame.zone                 = zone;
+    frame.north_hp             = north_hp;
+    frame.easting              = easting;
+    frame.northing             = northing;
+    frame.altitude             = altitude;
+    for(int i = 0; i < 3; i++) {
+        frame.position_stddev[i]  = pos_stddev[i];
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_POSMGRS XComState::get_xcomcmd_extaid_posmgrs(const double& timestamp, uint16_t timemode,
+                                                             int8_t mgrs[XCOM_EXTAID_POSMGRS_MAX_LENGTH], const double& alt,
+                                                             const std::array<double, 3>& pos_stddev, const std::array<double, 3>& leverarm,
+                                                             const std::array<double, 3>& leverarm_stddev) {
+    XCOMCmd_EXTAID_POSMGRS frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_POS_MGRS;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    frame.altitude             = alt;
+    std::copy(mgrs, mgrs + XCOM_EXTAID_POSMGRS_MAX_LENGTH, frame.mgrs);
+    for(int i = 0; i < 3; i++) {
+        frame.position_stddev[i]  = pos_stddev[i];
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_HDG XComState::get_xcomcmd_extaid_hdg(const double& timestamp, uint16_t timemode, const double& heading,
+                                                     const double& heading_stddev) {
+    XCOMCmd_EXTAID_HDG frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_HDG;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    frame.heading              = heading;
+    frame.heading_stddev       = heading_stddev;
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_VEL XComState::get_xcomcmd_extaid_vel_ned(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                         const std::array<double, 3>& vel_stddev) {
+    XCOMCmd_EXTAID_VEL frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_VEL_NED;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    for(int i = 0; i < 3; i++) {
+        frame.velocity[i]        = vel[i];
+        frame.velocity_stddev[i] = vel_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_VELBODY XComState::get_xcomcmd_extaid_vel_body(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                              const std::array<double, 3>& vel_stddev,
+                                                              const std::array<double, 3>& leverarm,
+                                                              const std::array<double, 3>& leverarm_stddev) {
+    XCOMCmd_EXTAID_VELBODY frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_VEL_BODY;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    for(int i = 0; i < 3; i++) {
+        frame.velocity[i]         = vel[i];
+        frame.velocity_stddev[i]  = vel_stddev[i];
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_HEIGHT XComState::get_xcomcmd_extaid_height(const double& timestamp, uint16_t timemode, const double& height,
+                                                           const double& height_stddev) {
+    XCOMCmd_EXTAID_HEIGHT frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_HGT;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    frame.height               = height;
+    frame.height_stddev        = height_stddev;
     complete_message(frame);
     return frame;
 }

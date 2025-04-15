@@ -115,7 +115,7 @@ void PoseWithCovarianceStamped::init() {
     }
 }
 
-void PoseWithCovarianceStamped::handle_response(XCOMResp response) {
+void PoseWithCovarianceStamped::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -172,12 +172,12 @@ void PoseWithCovarianceStamped::handle_response(XCOMResp response) {
     }
 }
 
-void PoseWithCovarianceStamped::handle_xcom_msg(const XCOMmsg_INSSOLECEF &msg) {
+void PoseWithCovarianceStamped::handle_xcom_msg(const XCOMmsg_INSSOLECEF &msg) noexcept {
     msg_INSSOLECEF_age_ = 0;
     updateINSSOLECEF(msg);
 }
 
-void PoseWithCovarianceStamped::handle_xcom_msg(const XCOMmsg_EKFSTDDEVECEF &msg) {
+void PoseWithCovarianceStamped::handle_xcom_msg(const XCOMmsg_EKFSTDDEVECEF &msg) noexcept {
     msg_EKFSTDDEVECEF_age_ = 0;
     updateEKFSTDDEVECEF(msg);
 }

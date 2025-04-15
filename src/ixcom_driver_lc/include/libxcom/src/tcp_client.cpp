@@ -11,10 +11,14 @@
  *
  ---------------------------------------------------------------------*/
 #include "ixcom/tcp_client.h"
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#endif
 #include <cerrno>
 #include <ctime>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <utility>
 #ifndef EOK
@@ -54,7 +58,7 @@ int TcpClient::write_data(const uint8_t* tx_buffer, std::size_t length) const {
     if(_error) {
         return -1;
     }
-    return static_cast<int>(send(_sd, tx_buffer, length, 0));
+    return static_cast<int>(send(_sd, reinterpret_cast<const char*>(tx_buffer), length, 0));
 }
 bool TcpClient::close_connection() {
     _error = false;

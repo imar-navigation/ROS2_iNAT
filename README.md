@@ -155,7 +155,17 @@ The configuration file has currently the following structure.
   ```console
   ros2 run ixcom_driver sub
   ```
-  _NOTE:_ If a namespace is used, the argument `--ros-args -r __ns:=/your_ns` must be passed.
+  ```console
+  ros2 run ixcom_driver sub -h
+  usage: sub [-h] [-f] [-ns NAMESPACE]
+  ROS2 iXCOM Driver
+  options:
+    -h, --help            show this help message and exit
+    -f, --measure_frequency
+                          measure frequencies of incoming topics
+    -ns NAMESPACE, --namespace NAMESPACE
+                          node namspace
+  ```
 
 ## Publishers 
 
@@ -569,7 +579,17 @@ The _ixcom_driver_ configuration is located in `src/ixcom_driver/params/config.j
   ```console
   ros2 run ixcom_driver sub
   ```
-  When started with the optional argument `-f`, the outputs show the frequencies the topic messages arrive with at the subscriber.
+  ```console
+  ros2 run ixcom_driver sub -h
+  usage: sub [-h] [-f] [-ns NAMESPACE]
+  ROS2 iXCOM Driver
+  options:
+    -h, --help            show this help message and exit
+    -f, --measure_frequency
+                          measure frequencies of incoming topics
+    -ns NAMESPACE, --namespace NAMESPACE
+                          node namspace
+  ```
 
 - Run Action Client (optional):
   ```console

@@ -16,7 +16,7 @@
 #include <cassert>
 namespace xcom {
 template<typename ClassT>
-inline void xcom_command_cb_passthrough(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context) {
+inline void xcom_command_cb_passthrough(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context) noexcept {
     assert(nullptr != context);
     auto instance = static_cast<ClassT*>(context);
     instance->handle_command(command_id, frame_len, frame);
@@ -35,7 +35,7 @@ public:
     CommandHandler(CommandHandler&& other)           = delete;
     CommandHandler& operator=(const CommandHandler&) = delete;
     CommandHandler& operator=(CommandHandler&&)      = delete;
-    virtual void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t frame[]) = 0;
+    virtual void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t frame[]) noexcept = 0;
 };
 }  // namespace xcom
 #endif  // LIB_IXCOM_COMMAND_HANDLER_H

@@ -17,7 +17,7 @@
 #include <cstring>
 namespace xcom {
 template<typename ClassT>
-inline void xcom_response_cb_passthrough(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context) {
+inline void xcom_response_cb_passthrough(uint16_t command_id, std::size_t frame_len, uint8_t frame[], void* context) noexcept {
     UNUSED(command_id);
     UNUSED(frame_len);
     assert(nullptr != context);
@@ -40,7 +40,7 @@ public:
     ResponseHandler(ResponseHandler&& other)           = delete;
     ResponseHandler& operator=(const ResponseHandler&) = delete;
     ResponseHandler& operator=(ResponseHandler&&)      = delete;
-    virtual void handle_response(XCOMResp response) = 0;
+    virtual void handle_response(XCOMResp response) noexcept = 0;
 };
 }  // namespace xcom
 #endif  // LIB_IXCOM_RESPONSE_HANDLER_H

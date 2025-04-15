@@ -24,7 +24,8 @@ using XComParameters_XcomHandler = xcom::ParameterHandler<
                                     XCOMParDAT_SYSSTAT,
                                     XCOMParXCOM_SERIALPORT,     // linux firmware
                                     XCOMParXCOM_INTERFACE,      // qnx firmware
-                                    XCOMParDAT_VEL>;
+                                    XCOMParDAT_VEL,
+                                    XCOMParDAT_IMU>;
 class XcomHandler : public XComMessages_XcomHandler, XComParameters_XcomHandler, xcom::CommandHandler, xcom::ResponseHandler
 {
 public:
@@ -49,11 +50,11 @@ private:
     bool invalid_channel_ = false;
     bool _init_done = false;
 
-    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
-    void handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) override;
-    void handle_xcom_msg(const XCOMmsg_GNSSTIME &msg) override;
-    void handle_xcom_msg(const XCOMmsg_SYSSTAT &msg) override;
+    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) noexcept override;
+    void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_GNSSTIME &msg) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_SYSSTAT &msg) noexcept override;
     void handle_xcom_param(const XCOMParSYS_MAINTIMING& param) override;
     void handle_xcom_param(const XCOMParSYS_PRESCALER& param) override;
     void handle_xcom_param(const XCOMParSYS_FWVERSION& param) override;
@@ -61,6 +62,7 @@ private:
     void handle_xcom_param(const XCOMParXCOM_SERIALPORT& param) override;
     void handle_xcom_param(const XCOMParXCOM_INTERFACE& param) override;
     void handle_xcom_param(const XCOMParDAT_VEL& param) override;
+    void handle_xcom_param(const XCOMParDAT_IMU& param) override;
 
     void send_serial_config();
     void set_sysstat_mode();
@@ -77,6 +79,7 @@ private:
     int fwv_[3] = {0, 0, 0};
     int32_t leap_seconds_;
     XCOM_PARDAT_VEL_Mode vel_mode_;
+    XCOM_PARDAT_IMU_Mode imu_mode_;
     bool serial_ignore_;
     uint8_t serial_port_;
     uint32_t serial_baud_;
@@ -94,7 +97,8 @@ private:
         ALIGNMENT = 64,
         RESPONSES = 128,
         SYSSTAT = 256,
-        FULL = 511
+        IMUMODE = 512,
+        FULL = 1023
     };
     CompleteStatus complete_status_ = CompleteStatus::NONE;
 };

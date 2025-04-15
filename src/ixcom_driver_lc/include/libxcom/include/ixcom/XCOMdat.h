@@ -26,6 +26,7 @@
 #else
 #define XCOM_ENUM_EXT
 #endif
+#if !defined XCOM_DISABLE_STRUCT_PACKING
 #if defined __clang__ || defined __GNUC__ || defined __MINGW32__
 #define XCOM_STRUCT_PACK __attribute__((__packed__))
 #elif defined _MSC_VER
@@ -34,6 +35,7 @@
 #pragma pack(1)
 #else
 #error This compiler is currently not supported.
+#endif
 #endif
 /**
  * *****************************************************************************************************************************************
@@ -47,7 +49,6 @@
 #define XCOM_MAX_NUMBER_OF_ARINC825_FRAMES 32   /**< Max. number of supported ARINC825 frames */
 #define XCOM_MAX_CLIENT_SUPPORT            8    /**< Max. number of supported clients for MVT feature */
 #define XCOM_MAX_CLIENT_LOGS               8    /**< Max. number of supported logs per client (MVT) */
-#define XCOM_MAX_SATCHANNELS               128  /**< Max. number of supported satellite channels */
 #define XCOM_MAX_SERIAL_PORTS              6    /**< Max. number of serial ports */
 #define XCOM_INTERFACE_LAN                 0    /**< Needed for PARXCOM_NETCONFIG */
 #define XCOM_INTERFACE_USB                 1    /**< Needed for PARXCOM_NETCONFIG */
@@ -140,7 +141,10 @@ enum XCOMcmd_XCom {
     XCOM_CMDXCOM_SETTIME            = 0x0015,   /**< Set system time */
     XCOM_CMDXCOM_GYROCALIB          = 0x0016,   /**< Start gyro bias calibration */
     XCOM_CMDXCOM_LOGLISTPRESET      = 0x0017,   /**< This command configures one XCOM channel with a predefined loglist */
-    XCOM_CMDXCOM_MAX                = XCOM_CMDXCOM_LOGLISTPRESET
+    XCOM_CMDXCOM_DOWNLOADROOTFS     = 0x0018,   /**< This command loads the latest rootfs from version control system */
+    XCOM_CMDXCOM_DOWNLOADFIRMWARE   = 0x0019,   /**< This command loads the latest firmware executable from version control system */
+    XCOM_CMDXCOM_UPDATEFIRMWARE     = 0x001A,   /**< This command updates the current firmware executable */
+    XCOM_CMDXCOM_MAX                = XCOM_CMDXCOM_DOWNLOADROOTFS
 };
 /**
  * iXCOM LOG command:
@@ -240,9 +244,9 @@ enum XCOMcmd_Fpga {
     XCOM_CMDFPGA_SHUTDOWN           = 0x0004,   /**< Leaving operational mode and entering standby mode. If this command is received, all internal
                                                      components will powered down. */
     XCOM_CMDFPGA_POWERUP            = 0x0005,   /**< Leaving standby mode and entering operational mode. If this command is received, the system will
-                                                     perform an initial alignment and starts navigation. All internal components will be powered up*/
-    XCOM_CMDFPGA_FLUSHFRAM          = 0x0006,   /**< If the command is received, the system will flush data to the FRAM if possible */
-    XCOM_CMDFPGA_RESETSYNCCOUNTER   = 0x0007,   /**< Reset external synchronization counter value */
+                                                     perform an initial alignment and starts navigation. All internal components will be powered up. */
+    XCOM_CMDFPGA_FLUSHFRAM          = 0x0006,   /**< If the command is received, the system will flush data to the FRAM if possible. */
+    XCOM_CMDFPGA_RESETSYNCCOUNTER   = 0x0007,   /**< Reset external synchronization counter value. */
     XCOM_CMDFPGA_MAX                = XCOM_CMDFPGA_RESETSYNCCOUNTER
 };
 /**
@@ -290,6 +294,7 @@ enum XComParameterID {
     XCOMPAR_PAREKF_IMUCONFIG2       = 760,
     XCOMPAR_PARDAT_POS      = 800,
     XCOMPAR_PARDAT_VEL      = 801,
+    XCOMPAR_PARDAT_IMU      = 802,
     XCOMPAR_PARDAT_SYSSTAT  = 803,
     XCOMPAR_PARXCOM_SERIALPORT      = 902,
     XCOMPAR_PARXCOM_POSTPROC        = 908,
@@ -346,6 +351,18 @@ typedef union {
     XCOMSystemStatus bits;
     uint32_t value;
 } XCOMSystemStatusType;
+/**
+ * XCOM Extended System Status2
+ */
+typedef struct {
+    uint32_t MAINTIMING_ERROR : 1;   /**< IMU maintiming error */
+    uint32_t RTC_ERROR : 1;          /**< RTC time + data not invalid */
+    uint32_t reserced : 30;          /**< Reserved for further use */
+} XCOMSystemStatus2;
+typedef union {
+    XCOMSystemStatus2 bits;
+    uint32_t value;
+} XCOMSystemStatus2Type;
 /**
  * The extended Kalman filter aiding status contains information about alignment, measurement updates and outlier detection.
  */
@@ -483,6 +500,7 @@ enum XCOM_ENUM_EXT XCOMResp {
     DEPRECATED                  = 24,    /**< Parameter is deprecated */
     INVALIDPLUGINIDX            = 25,    /**< Invalid plugin index */
     CMDREJECTED                 = 26,    /**< Command was rejected due to a power error */
+    MAXLOGSLIMIT                = 27,    /**< Max number of logs per channel exceeded */
 };
 typedef struct XCOM_STRUCT_PACK {
     uint8_t sync;               /**< Synchronization character (is always set to 0x7E;XCOM_SYNC_BYTE) */
@@ -491,7 +509,7 @@ typedef struct XCOM_STRUCT_PACK {
     uint8_t frame_counter;      /**< The frame counter counts from 0 to 255 and starts at 0 again after it has reached 255. For messages,
                                      this can be used to detect lost messages. For parameters and commands, the system response to an
                                      input parameter or command will contain the same frame counter as the input. */
-    uint8_t trigger_source;     /**< See <iXCOM LOG command trigger type> */
+    uint8_t trigger_source;     /**< see XComLogTrigger */
     uint16_t msg_len;           /**< Length of the overall message (from sync byte to crc16 field), depends on the message log (number of bytes) */
     uint16_t gps_week;          /**< GPS week number */
     uint32_t gps_time_sec;      /**< GPS time of week - integer part in [sec] */
@@ -667,7 +685,8 @@ typedef struct XCOM_STRUCT_PACK {
     float altitude;          /**< Altitude/Height in [m]. The content (WGS or MSL or Baro based) can be selected via the PARDAT_POS
                                   parameter. The selected value is masked in the DATSEL field. */
     int16_t undulation;      /**< Relationship between the geoid and the ellipsoid in [cm]. */
-    uint16_t data_selection; /**< Data selection mask. This field contains the selected data sources for this message  */
+    uint16_t data_selection; /**< Data selection mask. This field contains the selected data sources for this
+                                  message (see XCOMINSSOL_DatSel in appendix)  */
     XCOMFooter footer;
 } XCOMmsg_INSSOL;
 /**
@@ -718,7 +737,7 @@ typedef struct XCOM_STRUCT_PACK {
  */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;  /**< XCOM header */
-    float field[3];     /**< Measured magnetic field along sensors x-, y- and z-axis */
+    float field[3];     /**< Measured magnetic field along sensors x-, y- and z-axis in [nT] */
     float heading;      /**< Obtained magnetic heading in [rad] */
     float bank;         /**< Magnetometer bank in [rad] */
     float elevation;    /**< Magnetometer elevation in [rad] */
@@ -735,8 +754,8 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header; /**< XCOM header */
     float pos[3];      /**< Standard deviation of estimated easting, northing and height in [m] */
     float vel[3];      /**< Standard deviation of estimated north, east and down velocity in [m/s] */
-    float tilt[3];     /**< Standard deviation of error tilt angles around north, east, and down axis. Down axis tilt stddev is equivalent
-                            to yaw angle stddev. [rad] */
+    float tilt[3];     /**< Standard deviation of estimated tilt around north, east and down axis in [rad]. Down axis tilt stddev is equivalent
+                            to yaw angle stddev. */
     float bias_acc[3]; /**< Standard deviation of estimated acceleration bias along IMU x-, y- and z-axis in [m/s2 ] */
     float bias_omg[3]; /**< Standard deviation of estimated angular rate bias along IMU x-, y- and z-axis in [rad/s] */
     float scf_acc[3];  /**< Standard deviation of estimated acceleration scale  factor along IMU x-, y- and z-axis */
@@ -745,8 +764,8 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMFooter footer;
 } XCOMmsg_EKFSTDDEV;
 /**
- * This message contains the estimated sensor errors by the extended Kalman filter in the ECEF frame. In addition to the standard deviations
- * reported in the EKFSTDDEV, estimated sensor nonorthogonality and misalignment standard deviations are included in this log.
+ * This message contains the sensor uncertainties estimated by the extended Kalman filter in the ECEF frame. In addition to the standard
+ * deviations reported in the EKFSTDDEV, estimated sensor nonorthogonality and misalignment standard deviations are included in this log.
  * #domain: public
  * #rate: ekf
  */
@@ -755,13 +774,13 @@ typedef struct XCOM_STRUCT_PACK {
     float pos[3];      /**< Standard deviation of estimated ECEF x, y and z in [m] */
     float vel[3];      /**< Standard deviation of estimated ECEF x, y and z velocity in  [m/s] */
     float tilt[3];     /**< Standard deviation of estimated tilt around north, east and down axis in [rad] */
-    float bias_acc[3]; /**< Standard deviation of estimated acceleration bias along IMU x-, y- and z-axis in [m/s2 ] */
+    float bias_acc[3]; /**< Standard deviation of estimated acceleration bias along IMU x-, y- and z-axis in [m/s2] */
     float bias_omg[3]; /**< Standard deviation of estimated angular rate bias along IMU x-, y- and z-axis in [rad/s] */
-    float ma_acc[9];   /**< Standard deviation of estimated acceleration misalignment along IMU x-, y- and z-axis */
-    float ma_omg[9];   /**< Standard deviation of estimated angular rate misalignment along IMU x-, y- and z-axis */
+    float ma_acc[9];   /**< Standard deviation of estimated acceleration misalignment along IMU x-, y- and z-axis in [rad] */
+    float ma_omg[9];   /**< Standard deviation of estimated angular rate misalignment along IMU x-, y- and z-axis in [rad] */
     float scf_odo;     /**< Standard deviation of the estimated odometer scale factor */
     float ma_odo[2];   /**< Standard deviation of estimated odometer misalignment around first and second axis perpendicular to odometer
-                          direction */
+                            direction in [rad] */
     XCOMFooter footer;
 } XCOMmsg_EKFSTDDEVECEF;
 /**
@@ -814,29 +833,31 @@ enum GnssPosVelType {
 };
 /* GNSS Status */
 typedef struct {
-    uint32_t InvalidFirmware : 1;          /**< Invalid firmware */
-    uint32_t RomStatus : 1;                /**< ROM status */
-    uint32_t SupplyVoltage : 1;            /**< Supply voltage status */
-    uint32_t PllRf1Error : 1;              /**< TrackingPLL RF1 Hardware Status - L1 */
-    uint32_t PllRf2Error : 1;              /**< TrackingPLL RF2 Hardware Status - L2 */
-    uint32_t SwRessourceLimit : 1;         /**< Software Resource Status */
-    uint32_t InvalidModel : 1;             /**< Model not valid */
-    uint32_t HwFailure : 1;                /**< Component hardware failure */
-    uint32_t TempError : 1;                /**< Temperature status */
-    uint32_t AntennaPowerStatus : 1;       /**< Antenna power status */
-    uint32_t PrimaryAntennaOpen : 1;       /**< Primary antenna open */
-    uint32_t PrimaryAntennaShorted : 1;    /**< Primary antenna shorted */
-    uint32_t CpuOverload : 1;              /**< CPU overload */
-    uint32_t Com1BufferOverrun : 1;        /**< COM1 buffer overrun */
-    uint32_t Com2BufferOverrun : 1;        /**< COM2 buffer overrun */
-    uint32_t Com3BufferOverrun : 1;        /**< COM3 buffer overrun */
-    uint32_t AlmanacFlag : 1;              /**< Almanac flag/UTC known */
-    uint32_t SolutionInvalid : 1;          /**< Position solution flag */
-    uint32_t VoltageSupply : 1;            /**< Power supply warning */
-    uint32_t UpdateInProgress : 1;         /**< Firmware update in progress */
-    uint32_t SolutionCodeType : 1;         /**< 0: Some data in PVT solution from C/A-code. 1: All data in PVT solution from P-code */
-    uint32_t SecondaryAntennaOpen : 1;     /**< Secondary antenna open */
-    uint32_t Reserved : 10;                /**< Reserved for further use */
+    uint32_t InvalidFirmware : 1;               /**< Invalid firmware */
+    uint32_t RomStatus : 1;                     /**< ROM status */
+    uint32_t SupplyVoltage : 1;                 /**< Supply voltage status */
+    uint32_t PllRf1Error : 1;                   /**< TrackingPLL RF1 Hardware Status - L1 */
+    uint32_t PllRf2Error : 1;                   /**< TrackingPLL RF2 Hardware Status - L2 */
+    uint32_t SwRessourceLimit : 1;              /**< Software Resource Status */
+    uint32_t InvalidModel : 1;                  /**< Model not valid */
+    uint32_t HwFailure : 1;                     /**< Component hardware failure */
+    uint32_t TempError : 1;                     /**< Temperature status */
+    uint32_t PrimaryAntennaPowerStatus : 1;     /**< Primary Antenna power status (0: Power ok; 1: Power not ok) */
+    uint32_t PrimaryAntennaOpen : 1;            /**< Primary antenna open */
+    uint32_t PrimaryAntennaShorted : 1;         /**< Primary antenna shorted */
+    uint32_t CpuOverload : 1;                   /**< CPU overload */
+    uint32_t Com1BufferOverrun : 1;             /**< COM1 buffer overrun */
+    uint32_t Com2BufferOverrun : 1;             /**< COM2 buffer overrun */
+    uint32_t Com3BufferOverrun : 1;             /**< COM3 buffer overrun */
+    uint32_t AlmanacFlag : 1;                   /**< Almanac flag/UTC known */
+    uint32_t SolutionInvalid : 1;               /**< Position solution flag */
+    uint32_t VoltageSupply : 1;                 /**< Power supply warning */
+    uint32_t UpdateInProgress : 1;              /**< Firmware update in progress */
+    uint32_t SolutionCodeType : 1;              /**< 0: Some data in PVT solution from C/A-code. 1: All data in PVT solution from P-code */
+    uint32_t SecondaryAntennaOpen : 1;          /**< Secondary antenna open */
+    uint32_t SecondaryAntennaShorted : 1;       /**< Secondary antenna shorted */
+    uint32_t SecondaryAntennaPowerStatus : 1;   /**< Secondary Antenna power status (0: Power ok; 1: Power not ok) */
+    uint32_t Reserved : 8;                      /**< Reserved for further use */
 } GnssStatusBits;
 typedef union {
     uint32_t value;
@@ -851,15 +872,15 @@ typedef struct XCOM_STRUCT_PACK {
     float v_ned[3];       /**< GNSS north, east and down velocity in [m/s] */
     float stddev_pos[3];  /**< Standard deviation of GNSS longitude, latitude and altitude in [m] */
     float stddev_vel[3];  /**< Standard deviation of GNSS north, east and down velocity in [m/s] */
-    uint16_t sol_status;  /**< GNSS Solution status */
-    uint16_t posvel_type; /**< GNSS position/velocity type */
+    uint16_t sol_status;  /**< GNSS Solution status (see GnssSolStatus in appendix) */
+    uint16_t posvel_type; /**< GNSS position/velocity type (see GnssPosVelType in appendix) */
     float pdop;           /**< Position Dilution Of Precision - uncertainty indicator for 3D parameters (latitude, longitude, height) */
     uint8_t sats_used;    /**< Number of satellites used in GNSS solution */
     uint8_t sats_tracked; /**< Number of satellites tracked */
     uint16_t station_id;  /**< Reference station ID of differential corrections */
     float diff_age;       /**< Differential age in [sec] - differential correction indicator */
     float sol_age;        /**< Solution age in [sec] */
-    GnssStatusType gnss_status; /**< GNSS receiver status */
+    GnssStatusType gnss_status; /**< GNSS receiver status (see GNSS Status) */
     XCOMFooter footer;
 } XCOMmsg_GNSSSOL;
 /**
@@ -885,7 +906,7 @@ typedef struct XCOM_STRUCT_PACK {
     uint8_t utc_hour;    /**< UTC hour (0-23). If UTC time is unknown, the value is 0 */
     uint8_t utc_min;     /**< UTC min (0-59). If UTC time is unknown, the value is 0 */
     uint32_t utc_ms;     /**< UTC milliseconds (0-60999). Maximum of 60999 when leap second is applied. */
-    uint32_t utc_status; /**< UTC Status */
+    uint32_t utc_status; /**< UTC Status (see XCOMMSG_GNSSTIME_STATUS_* in appendix) */
     XCOMFooter footer;
 } XCOMmsg_GNSSTIME;
 /**
@@ -967,10 +988,10 @@ typedef struct XCOM_STRUCT_PACK {
  * #name: XCOMCmd_LOGLISTPRESET
  */
 enum XCOM_ENUM_EXT XCOMLoglistPreset {
-    Rawdata,        /**< IMU/GNSS/Odometer rawdata (usefully for post-processing without having an INS online solution) */
-    NavSolution,    /**< INS online solution without rawdata acquisition  */
-    Support,        /**< Combination of Rawdata and NavSolution */
-    Qualification   /**< Similar to Rawdata but with additional hardware monitoring messages */
+    Rawdata = 0,        /**< IMU/GNSS/Odometer rawdata (usefully for post-processing without having an INS online solution) */
+    NavSolution = 1,    /**< INS online solution without rawdata acquisition  */
+    Support = 2,        /**< Combination of Rawdata and NavSolution */
+    Qualification = 3   /**< Similar to Rawdata but with additional hardware monitoring messages */
 };
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
@@ -989,7 +1010,7 @@ typedef struct XCOM_STRUCT_PACK {
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMCmdHeader cmd_header;   /**< XCOM command header */
-    uint32_t conf_cmd;          /**< see XCOMcmd_Conf */
+    uint32_t conf_cmd;          /**< see ixcomCommandParameterConf */
     XCOMFooter footer;
 } XCOMCmd_CONF;
 /**
@@ -1000,7 +1021,7 @@ typedef struct XCOM_STRUCT_PACK {
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMCmdHeader cmd_header;   /**< XCOM command header */
-    uint16_t fpga_cmd;          /**< see XCOMcmd_Ekf */
+    uint16_t fpga_cmd;          /**< see XCOMcmd_Fpga */
     uint16_t param;
     XCOMFooter footer;
 } XCOMCmd_FPGA;
@@ -1017,7 +1038,7 @@ typedef struct XCOM_STRUCT_PACK {
 /**
  * iXCOM EKF command:
  * -------------------
- * Set of commands to save current position/heading and to start and alignment.
+ * Set of commands to save the current position/heading and to start an alignment.
  * #name: XCOMCmd_EKF
  */
 typedef struct XCOM_STRUCT_PACK {
@@ -1027,7 +1048,7 @@ typedef struct XCOM_STRUCT_PACK {
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMCmdHeader cmd_header;   /**< XCOM command header */
-    uint16_t ekf_cmd;           /**< see XCOMcmd_EKF */
+    uint16_t ekf_cmd;           /**< see ixcomCommandParameterEkf */
     uint16_t number_of_param;   /**< Number of parameter */
 } XCOMCmd_EKF;
 /**
@@ -1349,10 +1370,9 @@ typedef struct XCOM_STRUCT_PACK {
     uint16_t reserved2;         /**< Reserved for further use */
     XCOMFooter footer;
 } XCOMParGNSS_LOCKOUTSYSTEM;
-#define PARODO_MODE2_MAX_ODOMETERS  3
 /**
  * This parameter can be used to define the initialization behavior of the  Kalman filter. A state chart detailing the navigation
- * startup process is available in appendix of DOC141126064.
+ * startup process is available in appendix.
  * #domain: public
  * #scope: read and write
  * #name: XCOMParEKF_STARTUPV2
@@ -1401,17 +1421,18 @@ typedef struct XCOM_STRUCT_PACK {
     float inithdg_stdddev;      /**< Standard deviation of initial heading in [rad] */
     float lever_arm[3];         /**< Lever arm in x-, y- and z-direction in [m] */
     float lever_arm_stddev[3];  /**< Lever arm standard deviation in x-, y- and z-direction in [m] */
-    uint8_t position_mode;      /**< Position initialization mode */
-    uint8_t hdg_mode;           /**< Heading initialization mode */
+    uint8_t position_mode;      /**< Position initialization mode (see PAREKF_STARTUPV2_POSMODE_* in appendix). */
+    uint8_t hdg_mode;           /**< Heading initialization mode (see PAREKF_STARTUPV2_HDGMODE_* in appendix). */
     uint16_t gnss_timeout;      /**< GNSS timeout in [sec] Set to ’0’ to wait forever */
-    uint8_t enable_alt_msl;     /**< Alternate Mean Sea */
+    uint8_t enable_alt_msl;     /**< Alternative Mean Sea Level (see PAREKF_STARTUPV2_ALTMSL_* in appendix). */
     uint8_t realignment;        /**< 0: Store parameters without execution of an alignment;
                                      1: Start alignment immediately with the transmitted alignment parameters */
     uint8_t forced_inmotion;    /**< During alignment, system is
                                      0: Static;
                                      1: In-motion */
     uint8_t automatic_restart;  /**< The levelling will be restarted if movement of the system is detected during the levelling
-                                     phase. The fine alignment will be finished if movement of the system is detected */
+                                     phase. The fine alignment will be finished if movement of the system is detected
+                                     (see PAREKF_STARTUPV2_RESTART_* in appendix). */
     XCOMFooter footer;
 } XCOMParEKF_STARTUPV2;
 /**
@@ -1434,8 +1455,8 @@ typedef struct XCOM_STRUCT_PACK {
     float hdg_stddev;           /**< Standard deviation of the magnetometer heading aiding in [rad] */
     float latency;              /**< Latency of magnetometer measurement in [s] */
     float ins_yaw_thr;          /**< Threshold of the integrated heading solution (used for automatic aiding mode) in [rad] */
-    uint8_t aiding_mode;        /**< Configures the aiding behavior. */
-    uint8_t update_mode;        /**< EKF update mode */
+    uint8_t aiding_mode;        /**< Configures the aiding behavior (see EKF_DUALANTAID_MODE_* in appendix). */
+    uint8_t update_mode;        /**< EKF update mode (see EKF_MAGATTAID_MODE_* in appendix) */
     uint16_t aiding_interval;   /**< Magnetometer aiding interval in [s] */
     float mag_field_stddev[3];  /**< Magnetic field standard deviation in [mG] */
     XCOMFooter footer;
@@ -1452,8 +1473,8 @@ typedef struct XCOM_STRUCT_PACK {
     double offset_rw[3];             /**< Bias random walk for x-, y- and z-axis in accelerometers: [m/s3/sqrt(Hz)] gyroscopes: [rad/s2/sqrt(Hz)] */
     double scalefactor_stddev[3];    /**< Scale factor standard deviation for x-, y- and z-axis */
     double scalefactor_rw[3];        /**< Scale factor random walk for x-, y- and z-axis in: accelerometers: [1/s/sqrt(Hz)]; gyroscopes: [1/s/sqrt(Hz)] */
-    double ma_stddev;                /**< Misalignment standard deviation in: accelerometers: [m]; gyroscopes: [rad] */
-    double ma_rw;                    /**< Misalignment random walk in: accelerometers: [m/s2/sqrt(Hz)]; gyroscopes: [rad/s/Hz] */
+    double ma_stddev;                /**< Misalignment standard deviation in [rad] */
+    double ma_rw;                    /**< Misalignment random walk in [rad] */
     double quantization[3];          /**< Quantization for x-, y- and z-axis */
 } XCOMparEKF_IMUCONFIGtype2;
 typedef struct XCOM_STRUCT_PACK {
@@ -1478,7 +1499,7 @@ typedef struct XCOM_STRUCT_PACK {
  */
 enum XCOM_PARDAT_POS_PosMode {
     XCOM_PARDAT_POS_Pos_WGS84 = 0, /**< The position fields of the INSSOL message shall contain the position in WGS84 frame */
-    XCOM_PARDAT_POS_Pos_ECEF  = 1  /**< The position fields of the INSSOL message shall contain the position in ECEF´ frame */
+    XCOM_PARDAT_POS_Pos_ECEF  = 1  /**< The position fields of the INSSOL message shall contain the position in ECEF frame */
 };
 enum XCOM_PARDAT_POS_AltMode {
     XCOM_PARDAT_POS_Alt_WGS84 = 0, /**< The altitude field of the INSSOL message shall contain the height in WGS84 frame */
@@ -1488,8 +1509,8 @@ enum XCOM_PARDAT_POS_AltMode {
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMParHeader param_header; /**< XCOM parameter header */
-    uint16_t position_mode;     /**< Position output mode */
-    uint16_t altitude_mode;     /**< Altitude output mode */
+    uint16_t position_mode;     /**< Position output mode (see XCOM_PARDAT_POS_Pos_* in appendix) */
+    uint16_t altitude_mode;     /**< Altitude output mode (see XCOM_PARDAT_POS_Alt_* in appendix) */
     XCOMFooter footer;
 } XCOMParDAT_POS;
 /**
@@ -1507,9 +1528,28 @@ enum XCOM_PARDAT_VEL_Mode {
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMParHeader param_header; /**< XCOM parameter header */
-    uint32_t mode;              /**< Velocity output mode */
+    uint32_t mode;              /**< Velocity output mode (see XCOM_PARDAT_VEL_* in appendix) */
     XCOMFooter footer;
 } XCOMParDAT_VEL;
+/**
+ * This parameter defines the kind of inertial data of the INSSOL message.
+ * #scope: read and write
+ * #domain: public
+ * #name: XCOMParDAT_IMU
+ */
+enum XCOM_PARDAT_IMU_Mode {
+    XCOM_PARDAT_IMU_IMURAW          = 0,    /**< Calibrated IMU data */
+    XCOM_PARDAT_IMU_IMUCORR         = 1,    /**< Calibrated IMU data, additionally corrected for bias, scale factor and earth rate */
+    XCOM_PARDAT_IMU_IMUCOMP         = 2,    /**< Calibrated IMU data, corrected for bias and scale factor; additionally compensated for earth rate and gravity */
+    XCOM_PARDAT_IMU_IMUCORRFILTERED = 3,    /**< Calibrated IMU data, additionally corrected for bias, scale factor and earth rate */
+    XCOM_PARDAT_IMU_IMUCOMPFILTERED = 4     /**< Calibrated IMU data, corrected for bias and scale factor; additionally compensated for earth rate and gravity */
+};
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;          /**< XCOM header */
+    XCOMParHeader param_header; /**< XCOM parameter header */
+    uint32_t mode;              /**< Mode selection (see XCOM_PARDAT_IMU_* in appendix) */
+    XCOMFooter footer;
+} XCOMParDAT_IMU;
 /**
  * This parameter defines the content of the SYS_STAT message.
  * #scope: read and write
@@ -1523,14 +1563,14 @@ typedef struct XCOM_STRUCT_PACK {
 #define PARDAT_SYSSTAT_MASK_EKFAIDING    0x00000010 /**< EKF aiding status */
 #define PARDAT_SYSSTAT_MASK_EKFGENERAL   0x00000020 /**< EKF general status */
 #define PARDAT_SYSSTAT_MASK_ADDSTATUS    0x00000040 /**< Additional IMU status information */
-#define PARDAT_SYSSTAT_MASK_SERVICE      0x00000080 /**< Service status information (deprecated) */
+#define PARDAT_SYSSTAT_MASK_SERVICE      0x00000080 /**< Service status information (@deprecated) */
 #define PARDAT_SYSSTAT_MASK_REMALIGNTIME 0x00000100 /**< Remaining alignment time */
 #define PARDAT_SYSSTAT_MASK_SYSSTAT2     0x00000200 /**< Extended system status */
 #define PARDAT_SYSSTAT2_MAINTIMING       0x00000001 /**< System maintiming error  */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMParHeader param_header; /**< XCOM parameter header */
-    uint32_t mode;              /**< Bitmask for system status message */
+    uint32_t mode;              /**< Bitmask for system status message (see PARDAT_SYSSTAT_MASK_* in appendix). */
     XCOMFooter footer;
 } XCOMParDAT_SYSSTAT;
 /**
@@ -1553,8 +1593,8 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMParHeader param_header; /**< XCOM parameter header */
     uint8_t port;               /**< Port number */
-    uint8_t port_mode;          /**< Port mode (see PARXCOM_INTERFACE_MODE_*) */
-    uint8_t port_level;         /**< Interface level (see PARXCOM_INTERFACE_LEVEL_*) */
+    uint8_t port_mode;          /**< Port mode (see PARXCOM_INTERFACE_MODE_* in appendix) */
+    uint8_t port_level;         /**< Interface level (see PARXCOM_INTERFACE_LEVEL_* in appendix) */
     uint8_t available;          /**< Port available (depending on hardware platform) */
     uint32_t baud;              /**< Baudrate */
     uint8_t reserved1[8];       /**< Additional options (depending on 'port_mode') */
@@ -1649,6 +1689,7 @@ typedef union {
 } XCOMDbxDbInputStatusType;
 #define XCOMPAR_PLUGINID_DBXDBIN XCOM_PLUGINID_DBXDBIN
 #define XCOMPAR_PLUGINID_DBXDBCONF XCOM_PLUGINID_DBXDBCONF
+#if !defined XCOM_DISABLE_STRUCT_PACKING
 #if defined __clang__ || defined __GNUC__ || defined __MINGW32__
 #undef XCOM_STRUCT_PACK
 #elif defined _MSC_VER
@@ -1656,6 +1697,7 @@ typedef union {
 #undef XCOM_STRUCT_PACK
 #else
 #error This compiler is currently not supported.
+#endif
 #endif
 // NOLINTEND
 // clang-format on

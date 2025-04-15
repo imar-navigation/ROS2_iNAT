@@ -44,9 +44,9 @@ private:
     using PoseWithCovarianceStampedMsg = geometry_msgs::msg::PoseWithCovarianceStamped;
 
     //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
-    void handle_xcom_msg(const XCOMmsg_INSSOLECEF &msg) override;
-    void handle_xcom_msg(const XCOMmsg_EKFSTDDEVECEF &msg) override;
+    void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_INSSOLECEF &msg) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_EKFSTDDEVECEF &msg) noexcept override;
 
     void init();
     void updateINSSOLECEF(const XCOMmsg_INSSOLECEF &msg);
