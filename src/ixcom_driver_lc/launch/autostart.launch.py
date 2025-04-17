@@ -5,6 +5,7 @@ from launch.actions import Shutdown
 from launch.events.matchers import matches_action
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import LifecycleNode
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.event_handlers.on_state_transition import OnStateTransition
 from launch_ros.events.lifecycle.change_state import ChangeState
 import lifecycle_msgs.msg
@@ -14,10 +15,20 @@ def generate_launch_description():
 
     namespace = LaunchConfiguration('namespace')
     publisher_config_file = LaunchConfiguration('publisher_config_file')
-    print("Launching with publisher config: {}".format(publisher_config_file))
+
+    namespace_arg = DeclareLaunchArgument(
+        'namespace', default_value='ixcom', description='Top-level namespace')
+
+    pub_config_arg = DeclareLaunchArgument('publisher_config_file',
+                                           default_value=get_package_share_directory(
+                                               'ixcom_driver_lc')
+                                           + '/params/publisher_config.yml',
+                                           description='Path to a parameter file that will be passed '
+                                           'to the ixcom_driver_lc_node')
+    
     # adapter_config_file = LaunchConfiguration('adapter_config_file')
 
-    #ixcom_driver_lc_node = LifecycleNode(
+    # ixcom_driver_lc_node = LifecycleNode(
     #    package='ixcom_driver_lc',
     #    executable='ixcom_driver_lifecycle_node',
     #    namespace=namespace,
@@ -29,19 +40,19 @@ def generate_launch_description():
     #    ],
     #    arguments=['--ros-args', '--log-level', 'INFO'],
     #    on_exit=Shutdown()
-    #)
+    # )
 
     ixcom_driver_lc_node = LifecycleNode(
-	package="ixcom_driver_lc",
-	executable="ixcom_driver_lifecycle_node",
-	namespace=namespace,
-	name="ixcom_driver_lifecycle_node",
-	output="screen",
-	parameters=[
-		publisher_config_file
-	],
-	arguments=['--ros-args', '--log-level', 'INFO'],
-	on_exit=Shutdown()
+        package="ixcom_driver_lc",
+        executable="ixcom_driver_lifecycle_node",
+        namespace=namespace,
+        name="ixcom_driver_lifecycle_node",
+        output="screen",
+        parameters=[
+                publisher_config_file
+        ],
+        arguments=['--ros-args', '--log-level', 'INFO'],
+        on_exit=Shutdown()
     )
 
     # Changes the lifecycle state of the ixcom_driver_lc_node to configure
@@ -100,19 +111,17 @@ def generate_launch_description():
 
     return LaunchDescription([
         # Declare the launch arguments
-        DeclareLaunchArgument('namespace', default_value='ixcom', description='Top-level namespace'),
-        DeclareLaunchArgument('publisher_config_file',
-                              default_value=get_package_share_directory('ixcom_driver_lc')
-                              + '/params/publisher_config.yml',
-                              description='Path to a parameter file that will be passed '
-                                          'to the ixcom_driver_lc_node'),
-        #DeclareLaunchArgument('adapter_config_file',
+
+        # DeclareLaunchArgument('adapter_config_file',
         #                      default_value=get_package_share_directory('ixcom_driver_lc')
         #                      + '/params/adapter_config.yml',
         #                      description='Path to the service adapter parameter file that will'
         #                                  'be passed to the ixcom_driver_lc_node'),
         # Add the ixcom_driver_lc_node, as well as the necessary event handlers for automated
         # lifecycle state transitioning
+        namespace_arg,
+        pub_config_arg,
+        LogInfo(msg=['ixcom_driver_lc_node is started with following parameter file: ', publisher_config_file]),
         ixcom_driver_lc_node,
         ixcom_driver_lc_configure_event,
         ixcom_driver_lc_inactive_state_handler,
