@@ -1,4 +1,4 @@
-/ixcom/ixcom_driver_lifecycle_node:
+/**:
   ros__parameters:
     ip:
       address: 192.168.4.214
