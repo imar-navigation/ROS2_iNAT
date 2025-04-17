@@ -14,6 +14,7 @@ def generate_launch_description():
 
     namespace = LaunchConfiguration('namespace')
     publisher_config_file = LaunchConfiguration('publisher_config_file')
+    print("Launching with publisher config: {}".format(publisher_config_file))
     # adapter_config_file = LaunchConfiguration('adapter_config_file')
 
     #ixcom_driver_lc_node = LifecycleNode(
