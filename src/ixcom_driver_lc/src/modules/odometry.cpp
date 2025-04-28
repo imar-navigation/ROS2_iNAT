@@ -38,6 +38,7 @@ Odometry::Odometry(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
     mltp_(mltp),
     qos_(qos),
     tf2_(tf2) {
+    setLocalTangentialPlane();
     std::thread th(&Odometry::init, this);
     th.detach();
 }
@@ -218,22 +219,25 @@ bool Odometry::success() {
 
 void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
 
-    if (!mltp_.enable && !got_valid_ins_) {
-        ltp_reference_ = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
-        got_valid_ins_ = true;
+    if(!reference_is_set_) {
+        ref_ = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
+        if(mltp_.enable) {
+            ref_.x -= ltp_reference_.x;
+            ref_.y -= ltp_reference_.y;
+            ref_.z -= ltp_reference_.z; 
+        }
+        reference_is_set_ = true;
     }
 
-    Point tmp = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
-    tmp.x -= ltp_reference_.x;
-    tmp.y -= ltp_reference_.y;
-    tmp.z -= ltp_reference_.z;
-    odometry_msg_.pose.pose.position = ecef2enu(tmp, msg.pos[0], msg.pos[1]);
+    if(reference_is_set_) {
+        odometry_msg_.pose.pose.position = ecef2enu(ref_, msg.pos[0], msg.pos[1]);
 
-    tf2::Quaternion q;
-    q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
-    odometry_msg_.pose.pose.orientation = tf2::toMsg(q);
+        tf2::Quaternion q;
+        q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
+        odometry_msg_.pose.pose.orientation = tf2::toMsg(q);
 
-    insSolDataIsSet_ = true;
+        insSolDataIsSet_ = true;
+    }
 }
 
 void Odometry::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
@@ -302,6 +306,10 @@ void Odometry::setLocalTangentialPlane() {
         ltp_reference_.x = mltp_.lon;
         ltp_reference_.y = mltp_.lat;
         ltp_reference_.z = mltp_.alt;
+    } else {
+        ltp_reference_.x = 0.0;
+        ltp_reference_.y = 0.0;
+        ltp_reference_.z = 0.0;
     }
 }
 

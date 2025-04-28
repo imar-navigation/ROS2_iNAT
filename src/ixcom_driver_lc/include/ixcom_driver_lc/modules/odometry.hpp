@@ -74,7 +74,8 @@ private:
     int32_t setup_freq_ = 0;
     size_t num_of_subscribers_ = 0;
     std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
-    bool got_valid_ins_ = false;
+    Point ref_;
+    bool reference_is_set_ = false;
     Point ltp_reference_;
     Point lla2ecef(float longitutde, float latitude, float altitude);
     Point ecef2enu(Point point, double longitude, double latitude);
