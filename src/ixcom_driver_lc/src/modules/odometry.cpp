@@ -128,7 +128,7 @@ void Odometry::handle_response(XCOMResp response) noexcept {
 
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(),
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
-
+            
             odometry_msg_.header.frame_id = "enu";
             odometry_msg_.child_frame_id = "inat_enclosure";
 
@@ -167,6 +167,7 @@ void Odometry::handle_response(XCOMResp response) noexcept {
                              + " Hz").c_str());
             }
 
+            broadcast_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
             pub_ = node_->create_publisher<OdometryMsg>(topic_name_, qos_);
             success_ = true;
         }
@@ -224,9 +225,15 @@ void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
         if(mltp_.enable) {
             ref_.x -= ltp_reference_.x;
             ref_.y -= ltp_reference_.y;
-            ref_.z -= ltp_reference_.z; 
+            ref_.z -= ltp_reference_.z;
         }
         reference_is_set_ = true;
+
+        tfs_msg_.header.frame_id = node_->get_namespace() + std::string("_earth");
+        tfs_msg_.child_frame_id = node_->get_namespace() + std::string("_odom");
+        tfs_msg_.transform.translation.x = ref_.x;
+        tfs_msg_.transform.translation.y = ref_.y;
+        tfs_msg_.transform.translation.z = ref_.z;
     }
 
     if(reference_is_set_) {
@@ -261,7 +268,17 @@ void Odometry::updateIMUCORR(const XCOMmsg_IMUCORR &msg) {
     imuCorrDataIsSet_ = true;
 
     gps_time_ = UpdateGPSTime(msg.header, leap_seconds_);
+    broadcast();
     publish();
+}
+
+void Odometry::broadcast() {
+    if(bc_cnt_ < BC_CNT_MAX) {
+        tfs_msg_.header.stamp = (timestamp_mode_ == Config::TimestampMode::GPS) ? gps_time_ : node_->now();
+        broadcast_->sendTransform(tfs_msg_);
+        // std::cout << "broadcast " << std::to_string(bc_cnt_) << tfs_msg_.header.frame_id << std::endl;
+        bc_cnt_++;
+    }
 }
 
 void Odometry::publish() {

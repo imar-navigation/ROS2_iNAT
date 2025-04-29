@@ -14,6 +14,7 @@
 #include <ixcom/parameter_handler.h>
 #include <ixcom_driver_lc/ixcom_driver_conf.hpp>
 #include <ixcom_driver_lc/modules/transform.hpp>
+#include <tf2_ros/static_transform_broadcaster.h>
 
 using XComMessages_Odo = xcom::MessageHandler<
                                     XCOMmsg_INSSOL,
@@ -46,6 +47,11 @@ public:
 private:
     using OdometryMsg = nav_msgs::msg::Odometry;
     using Point = geometry_msgs::msg::Point;
+    using TransformStampedMsg = geometry_msgs::msg::TransformStamped;
+    std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcast_;
+    TransformStampedMsg tfs_msg_;
+    uint8_t bc_cnt_ = 0;
+    uint8_t BC_CNT_MAX = 1;
 
     //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
     void handle_response(XCOMResp response) noexcept override;
@@ -59,6 +65,7 @@ private:
     void updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg);
     void updateIMUCORR(const XCOMmsg_IMUCORR &msg);
 
+    void broadcast();
     void publish();
 
     void frq_mon();
