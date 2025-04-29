@@ -7,10 +7,10 @@
 
 int main(int argc, char ** argv) {
 
-	rclcpp::init(argc, argv);
-	DriverNode::SharedPtr node = std::make_shared<DriverNode>();
-	rclcpp::spin(node->get_node_base_interface());
-	return 0;
+    rclcpp::init(argc, argv);
+    DriverNode::SharedPtr node = std::make_shared<DriverNode>();
+    rclcpp::spin(node->get_node_base_interface());
+    return 0;
 }
 
 DriverNode::DriverNode() : rclcpp_lifecycle::LifecycleNode("ixcom_driver_lc", rclcpp::NodeOptions().allow_undeclared_parameters(true)) {
@@ -26,6 +26,9 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
     LifecycleNode::on_configure(state);
 
     get_parameters();
+
+    // std::string s = conf_->use_adapter_ ? "true" : "false";
+    // RCLCPP_INFO(get_logger(), "%s", ("* * *   USE ADAPTER: " + s).c_str());
 
     RCLCPP_INFO(get_logger(), "%s", ("configured QoS: " + conf_->qos_type_).c_str());
 
@@ -123,7 +126,8 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
             sleeper.sleep();
         if(build_topic_posewithcovariancestamped())
             sleeper.sleep();
-        build_topic_twiststamped();
+        if(build_topic_twiststamped())
+            sleeper.sleep();
 
         return CallbackReturn::SUCCESS;
     } else {
@@ -134,6 +138,8 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
 
 void DriverNode::declare_parameters() {
     conf_ = std::make_unique<Config>();
+
+    // declare_parameter<bool>(conf_->PAR_USE_ADAPTER, false);
 
     declare_parameter<std::string>(conf_->PAR_IP_ADDRESS, std::string("192.168.1.30"));
     declare_parameter<int32_t>(conf_->PAR_IP_PORT, 3000);
@@ -170,6 +176,9 @@ void DriverNode::declare_parameters() {
 }
 
 void DriverNode::get_parameters() {
+
+    // get_parameter(conf_->PAR_USE_ADAPTER, conf_->use_adapter_);
+
     get_parameter(conf_->PAR_IP_ADDRESS, conf_->ip_address_);
     get_parameter(conf_->PAR_IP_PORT, conf_->ip_port_);
     get_parameter(conf_->PAR_SERIAL_IGNORE, conf_->serial_ignore_);
@@ -568,7 +577,7 @@ bool DriverNode::build_topic_twiststamped() {
 
 DriverNode::CallbackReturn DriverNode::on_activate(const rclcpp_lifecycle::State& state) {
 
-	// Activate all manages lifecycle entities (namely the lifecycle publishers)
+    // Activate all manages lifecycle entities (namely the lifecycle publishers)
     LifecycleNode::on_activate(state);
 
     bool activeTopicsPresent = false;
@@ -739,32 +748,32 @@ DriverNode::CallbackReturn DriverNode::on_activate(const rclcpp_lifecycle::State
         RCLCPP_INFO(get_logger(), "%s", "no topics configured");
     }
 
-	return CallbackReturn::SUCCESS;
+    return CallbackReturn::SUCCESS;
 }
 
 DriverNode::CallbackReturn DriverNode::on_deactivate(const rclcpp_lifecycle::State& state) {
 
 //    std::cout << "on_deactivate" << std::endl;
-	LifecycleNode::on_deactivate(state);
-	return CallbackReturn::SUCCESS;
+    LifecycleNode::on_deactivate(state);
+    return CallbackReturn::SUCCESS;
 }
 
 DriverNode::CallbackReturn DriverNode::on_cleanup(const rclcpp_lifecycle::State& state) {
 
-	LifecycleNode::on_cleanup(state);
+    LifecycleNode::on_cleanup(state);
 
-	clearModules();
+    clearModules();
 
-	return CallbackReturn::SUCCESS;
+    return CallbackReturn::SUCCESS;
 }
 
 DriverNode::CallbackReturn DriverNode::on_shutdown(const rclcpp_lifecycle::State& state) {
 
-	LifecycleNode::on_shutdown(state);
+    LifecycleNode::on_shutdown(state);
 
-	clearModules();
+    clearModules();
 
-	return CallbackReturn::SUCCESS;
+    return CallbackReturn::SUCCESS;
 }
 
 void DriverNode::clearModules() {

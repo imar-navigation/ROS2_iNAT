@@ -40,8 +40,8 @@ private:
     using TFMsg = tf2_msgs::msg::TFMessage;
 
 //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
-    void handle_xcom_msg(const XCOMmsg_GNSSLEVERARM &msg) override;
+    void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_GNSSLEVERARM &msg) noexcept override;
 
     void init();
 

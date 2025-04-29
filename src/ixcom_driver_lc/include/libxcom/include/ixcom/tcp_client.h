@@ -13,7 +13,12 @@
 #ifndef INAT_THIRD_PARTY_LIBXCOM_SRC_TCP_CLIENT_H
 #define INAT_THIRD_PARTY_LIBXCOM_SRC_TCP_CLIENT_H
 #include <ixcom/ixcom.h>
+#ifdef _WIN32
+#include <io.h>
+#include <ws2tcpip.h>
+#else
 #include <netinet/in.h>
+#endif
 #include <string>
 #include <sys/time.h>
 namespace xcom {

@@ -38,6 +38,7 @@ Odometry::Odometry(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
     mltp_(mltp),
     qos_(qos),
     tf2_(tf2) {
+    setLocalTangentialPlane();
     std::thread th(&Odometry::init, this);
     th.detach();
 }
@@ -119,7 +120,7 @@ void Odometry::init() {
     }
 }
 
-void Odometry::handle_response(XCOMResp response) {
+void Odometry::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -127,7 +128,7 @@ void Odometry::handle_response(XCOMResp response) {
 
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(),
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
-
+            
             odometry_msg_.header.frame_id = "enu";
             odometry_msg_.child_frame_id = "inat_enclosure";
 
@@ -166,6 +167,7 @@ void Odometry::handle_response(XCOMResp response) {
                              + " Hz").c_str());
             }
 
+            broadcast_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
             pub_ = node_->create_publisher<OdometryMsg>(topic_name_, qos_);
             success_ = true;
         }
@@ -183,17 +185,17 @@ void Odometry::handle_response(XCOMResp response) {
     }
 }
 
-void Odometry::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
+void Odometry::handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept {
     msg_INSSOL_age_ = 0;
     updateINSSOL(msg);
 }
 
-void Odometry::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) {
+void Odometry::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) noexcept {
     msg_IMUCORR_age_ = 0;
     updateIMUCORR(msg);
 }
 
-void Odometry::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) {
+void Odometry::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept {
     msg_EKFSTDDEV_age_ = 0;
     updateEKFSTDDEV(msg);
 }
@@ -218,22 +220,31 @@ bool Odometry::success() {
 
 void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
 
-    if (!mltp_.enable && !got_valid_ins_) {
-        ltp_reference_ = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
-        got_valid_ins_ = true;
+    if(!reference_is_set_) {
+        ref_ = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
+        if(mltp_.enable) {
+            ref_.x -= ltp_reference_.x;
+            ref_.y -= ltp_reference_.y;
+            ref_.z -= ltp_reference_.z;
+        }
+        reference_is_set_ = true;
+
+        tfs_msg_.header.frame_id = node_->get_namespace() + std::string("_earth");
+        tfs_msg_.child_frame_id = node_->get_namespace() + std::string("_odom");
+        tfs_msg_.transform.translation.x = ref_.x;
+        tfs_msg_.transform.translation.y = ref_.y;
+        tfs_msg_.transform.translation.z = ref_.z;
     }
 
-    Point tmp = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
-    tmp.x -= ltp_reference_.x;
-    tmp.y -= ltp_reference_.y;
-    tmp.z -= ltp_reference_.z;
-    odometry_msg_.pose.pose.position = ecef2enu(tmp, msg.pos[0], msg.pos[1]);
+    if(reference_is_set_) {
+        odometry_msg_.pose.pose.position = ecef2enu(ref_, msg.pos[0], msg.pos[1]);
 
-    tf2::Quaternion q;
-    q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
-    odometry_msg_.pose.pose.orientation = tf2::toMsg(q);
+        tf2::Quaternion q;
+        q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
+        odometry_msg_.pose.pose.orientation = tf2::toMsg(q);
 
-    insSolDataIsSet_ = true;
+        insSolDataIsSet_ = true;
+    }
 }
 
 void Odometry::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
@@ -257,7 +268,17 @@ void Odometry::updateIMUCORR(const XCOMmsg_IMUCORR &msg) {
     imuCorrDataIsSet_ = true;
 
     gps_time_ = UpdateGPSTime(msg.header, leap_seconds_);
+    broadcast();
     publish();
+}
+
+void Odometry::broadcast() {
+    if(bc_cnt_ < BC_CNT_MAX) {
+        tfs_msg_.header.stamp = (timestamp_mode_ == Config::TimestampMode::GPS) ? gps_time_ : node_->now();
+        broadcast_->sendTransform(tfs_msg_);
+        // std::cout << "broadcast " << std::to_string(bc_cnt_) << tfs_msg_.header.frame_id << std::endl;
+        bc_cnt_++;
+    }
 }
 
 void Odometry::publish() {
@@ -302,6 +323,10 @@ void Odometry::setLocalTangentialPlane() {
         ltp_reference_.x = mltp_.lon;
         ltp_reference_.y = mltp_.lat;
         ltp_reference_.z = mltp_.alt;
+    } else {
+        ltp_reference_.x = 0.0;
+        ltp_reference_.y = 0.0;
+        ltp_reference_.z = 0.0;
     }
 }
 

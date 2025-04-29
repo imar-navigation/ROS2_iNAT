@@ -115,7 +115,7 @@ void IMU::init() {
     }
 }
 
-void IMU::handle_response(XCOMResp response) {
+void IMU::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -137,17 +137,17 @@ void IMU::handle_response(XCOMResp response) {
             auto cmd_add_inssol = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_INSSOL, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, div1);
             xcom_.send_message(cmd_add_inssol);
 
-            uint16_t div2 = calculateDividerForRate(topic_freq_, maintiming_, prescaler_);
-            msg_IMUCORR_frq_ = calculateRateForDivider(div2, maintiming_, prescaler_);
-            auto cmd_add_imucorr = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_IMUCORR, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, div2);
-            xcom_.send_message(cmd_add_imucorr);
+            // uint16_t div2 = calculateDividerForRate(topic_freq_, maintiming_, prescaler_);
+            // msg_IMUCORR_frq_ = calculateRateForDivider(div2, maintiming_, prescaler_);
+            // auto cmd_add_imucorr = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_IMUCORR, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, div2);
+            // xcom_.send_message(cmd_add_imucorr);
 
             uint16_t div3 = calculateDividerForRate(((topic_freq_ > Config::FRQ_EKF) ? (Config::FRQ_EKF) : (topic_freq_)), maintiming_, prescaler_);
             msg_EKFSTDDEV_frq_ = calculateRateForDivider(div3, maintiming_, prescaler_);
             auto cmd_add_ekfstddev = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_EKFSTDDEV, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, div3);
             xcom_.send_message(cmd_add_ekfstddev);
 
-            setup_freq_ = calculateRateForDivider(std::min({div1, div2, div3}), maintiming_, prescaler_);
+            setup_freq_ = calculateRateForDivider(std::min({div1, div3}), maintiming_, prescaler_);
             time_delta_ = static_cast<uint64_t>(1.0 / double(setup_freq_) * 1e6);
             // std::cout << "set time delta: " << std::to_string(time_delta_) << std::endl;
 
@@ -182,7 +182,7 @@ void IMU::handle_response(XCOMResp response) {
     }
 }
 
-void IMU::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
+void IMU::handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept {
 
     // t_inssol_ = t_inssol_upd_;
     // t_inssol_upd_ = std::chrono::high_resolution_clock::now();
@@ -193,18 +193,18 @@ void IMU::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
     updateINSSOL(msg);
 }
 
-void IMU::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) {
+// void IMU::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) noexcept {
 
-    // t_imucorr_ = t_imucorr_upd_;
-    // t_imucorr_upd_ = std::chrono::high_resolution_clock::now();
-    // auto d = std::chrono::duration_cast<std::chrono::microseconds>(t_imucorr_upd_ - t_imucorr_).count();
-    // std::cout << "duration imucorr: " << std::to_string(d) << std::endl;
+//     // t_imucorr_ = t_imucorr_upd_;
+//     // t_imucorr_upd_ = std::chrono::high_resolution_clock::now();
+//     // auto d = std::chrono::duration_cast<std::chrono::microseconds>(t_imucorr_upd_ - t_imucorr_).count();
+//     // std::cout << "duration imucorr: " << std::to_string(d) << std::endl;
 
-    msg_IMUCORR_age_ = 0;
-    updateIMUCORR(msg);
-}
+//     msg_IMUCORR_age_ = 0;
+//     updateIMUCORR(msg);
+// }
 
-void IMU::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) {
+void IMU::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept {
 
     // t_ekfstddev_ = t_ekfstddev_upd_;
     // t_ekfstddev_upd_ = std::chrono::high_resolution_clock::now();
@@ -257,13 +257,19 @@ void IMU::setParData(const XCOMParEKF_IMUCONFIG2& param) {
 
 void IMU::updateINSSOL(const XCOMmsg_INSSOL &msg) {
 
-	tf2::Quaternion q;
+    tf2::Quaternion q;
     q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
-	imu_msg_.orientation = tf2::toMsg(q);
+    imu_msg_.orientation = tf2::toMsg(q);
 
     imu_msg_.linear_acceleration.x = msg.accel[0];
     imu_msg_.linear_acceleration.y = msg.accel[1];
     imu_msg_.linear_acceleration.z = msg.accel[2];
+
+    imu_msg_.angular_velocity.x = msg.gyro[0];
+    imu_msg_.angular_velocity.y = msg.gyro[1];
+    imu_msg_.angular_velocity.z = msg.gyro[2];
+
+    // std::cout << "data selection: " << std::to_string(msg.data_selection) << std::endl;
 
     insSolDataIsSet_ = true;
 }
@@ -281,24 +287,24 @@ void IMU::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
     ekfDataIsSet_ = true;
 }
 
-void IMU::updateIMUCORR(const XCOMmsg_IMUCORR &msg) {
+// void IMU::updateIMUCORR(const XCOMmsg_IMUCORR &msg) {
 
-    imu_msg_.angular_velocity.x = msg.omg[0];
-    imu_msg_.angular_velocity.y = msg.omg[1];
-    imu_msg_.angular_velocity.z = msg.omg[2];
+//     imu_msg_.angular_velocity.x = msg.omg[0];
+//     imu_msg_.angular_velocity.y = msg.omg[1];
+//     imu_msg_.angular_velocity.z = msg.omg[2];
 
-    imuCorrDataIsSet_ = true;
+//     imuCorrDataIsSet_ = true;
 
-    gps_time_ = UpdateGPSTime(msg.header, leap_seconds_);
-    publish();
-}
+//     gps_time_ = UpdateGPSTime(msg.header, leap_seconds_);
+//     publish();
+// }
 
 
 void IMU::publish() {
 
     // pub_age_ = 0;
-	
-    if(!(parDataIsSet_ && insSolDataIsSet_ && ekfDataIsSet_ && imuCorrDataIsSet_)) {
+    
+    if(!(parDataIsSet_ && insSolDataIsSet_ && ekfDataIsSet_)) {
         return;
     }
 
@@ -408,13 +414,13 @@ void IMU::frq_mon() {
             msg_INSSOL_ok = true;
             RCLCPP_INFO(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "receiving iNAT data", "XCOMmsg_INSSOL");
         }
-        if(msg_IMUCORR_ok && (msg_IMUCORR_age_ > xcom_age_max_)) {
-            msg_IMUCORR_ok = false;
-            RCLCPP_ERROR(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "missing iNAT data", "XCOMmsg_IMUCORR");
-        } else if(!msg_IMUCORR_ok && !(msg_IMUCORR_age_ > xcom_age_max_)) {
-            msg_IMUCORR_ok = true;
-            RCLCPP_INFO(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "receiving iNAT data", "XCOMmsg_IMUCORR");
-        }
+        // if(msg_IMUCORR_ok && (msg_IMUCORR_age_ > xcom_age_max_)) {
+        //     msg_IMUCORR_ok = false;
+        //     RCLCPP_ERROR(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "missing iNAT data", "XCOMmsg_IMUCORR");
+        // } else if(!msg_IMUCORR_ok && !(msg_IMUCORR_age_ > xcom_age_max_)) {
+        //     msg_IMUCORR_ok = true;
+        //     RCLCPP_INFO(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "receiving iNAT data", "XCOMmsg_IMUCORR");
+        // }
         if(msg_EKFSTDDEV_ok && (msg_EKFSTDDEV_age_ > xcom_age_max_)) {
             msg_EKFSTDDEV_ok = false;
             RCLCPP_ERROR(node_->get_logger(), "[%s] %s (%s)", topic_name_.c_str(), "missing iNAT data", "XCOMmsg_EKFSTDDEV");
@@ -441,14 +447,14 @@ void IMU::frq_mon() {
             }
             msg_INSSOL_c_ = 0;
         }
-        if(msg_IMUCORR_c_ > (mon_frq_ / msg_IMUCORR_frq_)) {
-            if(msg_IMUCORR_age_ == age_max_val_) {
-                msg_IMUCORR_age_ = xcom_age_max_ + 1;
-            } else {
-                msg_IMUCORR_age_++;
-            }
-            msg_IMUCORR_c_ = 0;
-        }
+        // if(msg_IMUCORR_c_ > (mon_frq_ / msg_IMUCORR_frq_)) {
+        //     if(msg_IMUCORR_age_ == age_max_val_) {
+        //         msg_IMUCORR_age_ = xcom_age_max_ + 1;
+        //     } else {
+        //         msg_IMUCORR_age_++;
+        //     }
+        //     msg_IMUCORR_c_ = 0;
+        // }
         if(msg_EKFSTDDEV_c_ > (mon_frq_ / msg_EKFSTDDEV_frq_)) {
             if(msg_EKFSTDDEV_age_ == age_max_val_) {
                 msg_EKFSTDDEV_age_ = xcom_age_max_ + 1;
@@ -460,7 +466,7 @@ void IMU::frq_mon() {
 
         par_IMUCONFIG2_c_++;
         msg_INSSOL_c_++;
-        msg_IMUCORR_c_++;
+        // msg_IMUCORR_c_++;
         msg_EKFSTDDEV_c_++;
 
         // std::this_thread::sleep_for(std::chrono::milliseconds(10));

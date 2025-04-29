@@ -118,7 +118,7 @@ void MagneticField::init() {
     }
 }
 
-void MagneticField::handle_response(XCOMResp response) {
+void MagneticField::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -173,7 +173,7 @@ void MagneticField::handle_response(XCOMResp response) {
     }
 }
 
-void MagneticField::handle_xcom_msg(const XCOMmsg_MAGDATA &msg) {
+void MagneticField::handle_xcom_msg(const XCOMmsg_MAGDATA &msg) noexcept {
     msg_MAGDATA_age_ = 0;
     updateMAGDATA(msg);
 }

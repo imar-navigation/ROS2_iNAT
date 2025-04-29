@@ -15,7 +15,6 @@
 
 using XComMessages_Imu = xcom::MessageHandler<
                                     XCOMmsg_INSSOL,
-                                    XCOMmsg_IMUCORR,
                                     XCOMmsg_EKFSTDDEV>;
 using XComParameters_Imu = xcom::ParameterHandler<XCOMParEKF_IMUCONFIG2>;
 
@@ -46,10 +45,10 @@ private:
     using ImuMsg = sensor_msgs::msg::Imu;
 
 //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
-    void handle_response(XCOMResp response) override;
-    void handle_xcom_msg(const XCOMmsg_INSSOL &msg) override;
-    void handle_xcom_msg(const XCOMmsg_IMUCORR &msg) override;
-    void handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) override;
+    void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept override;
+    // void handle_xcom_msg(const XCOMmsg_IMUCORR &msg) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept override;
     void handle_xcom_param(const XCOMParEKF_IMUCONFIG2& param) override;
 
     void init();
@@ -57,7 +56,7 @@ private:
     void setParData(const XCOMParEKF_IMUCONFIG2& param);
     void updateINSSOL(const XCOMmsg_INSSOL &msg);
     void updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg);
-    void updateIMUCORR(const XCOMmsg_IMUCORR &msg);
+    // void updateIMUCORR(const XCOMmsg_IMUCORR &msg);
 
     void publish();
 
@@ -69,7 +68,7 @@ private:
     bool parDataIsSet_ = false;
     bool insSolDataIsSet_ = false;
     bool ekfDataIsSet_ = false;
-    bool imuCorrDataIsSet_ = false;
+    // bool imuCorrDataIsSet_ = false;
     bool active_ = false;
     int32_t setup_freq_ = 0;
 
@@ -86,7 +85,7 @@ private:
     int32_t ip_port_;
     const std::string &topic_name_;
     int32_t topic_freq_;
-	Config::TimestampMode timestamp_mode_;
+    Config::TimestampMode timestamp_mode_;
     int32_t leap_seconds_;
     uint16_t maintiming_;
     uint16_t prescaler_;
@@ -111,9 +110,9 @@ private:
     uint16_t msg_INSSOL_frq_ = 0;
     std::atomic_uint32_t msg_INSSOL_age_ = ATOMIC_VAR_INIT(0);
     uint32_t msg_INSSOL_c_ = 0;
-    uint16_t msg_IMUCORR_frq_ = 0;
-    std::atomic_uint32_t msg_IMUCORR_age_ = ATOMIC_VAR_INIT(0);
-    uint32_t msg_IMUCORR_c_ = 0;
+    // uint16_t msg_IMUCORR_frq_ = 0;
+    // std::atomic_uint32_t msg_IMUCORR_age_ = ATOMIC_VAR_INIT(0);
+    // uint32_t msg_IMUCORR_c_ = 0;
     uint16_t msg_EKFSTDDEV_frq_ = 0;
     std::atomic_uint32_t msg_EKFSTDDEV_age_ = ATOMIC_VAR_INIT(0);
     uint32_t msg_EKFSTDDEV_c_ = 0;

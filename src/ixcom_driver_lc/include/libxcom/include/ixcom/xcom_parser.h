@@ -27,8 +27,8 @@ public:
         InvalidLength
     };
     ParserCode process_byte(uint8_t rxByte) noexcept;
-    bool is_cmd_open(int& channel) const noexcept;
-    [[nodiscard]] bool is_cmd_close(int channel) const noexcept;
+    [[nodiscard]] bool is_cmd_open(uint16_t& channel) const noexcept;
+    [[nodiscard]] bool is_cmd_close(uint16_t channel) const noexcept;
     [[nodiscard]] bool is_param() const noexcept;
     [[nodiscard]] uint16_t get_param_id() const noexcept;
     static uint16_t get_param_id(const uint8_t* payload) noexcept;
@@ -42,6 +42,7 @@ public:
     [[nodiscard]] uint8_t get_msg_id() const noexcept;
     void set_sync_byte(uint8_t sync_byte) noexcept;
     [[nodiscard]] uint8_t get_sync_byte() const noexcept;
+    void reinit() noexcept;
 private:
     static constexpr int MaxMessageSize = XCOM_MAX_MESSAGE_LENGTH;
     typedef enum {

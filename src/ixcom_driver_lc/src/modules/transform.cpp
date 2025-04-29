@@ -100,7 +100,7 @@ void TransformStamped::init() {
 
 //void TransformStamped::handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) {}
 
-void TransformStamped::handle_response(XCOMResp response) {
+void TransformStamped::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -137,7 +137,7 @@ void TransformStamped::handle_response(XCOMResp response) {
     }
 }
 
-void TransformStamped::handle_xcom_msg(const XCOMmsg_GNSSLEVERARM &msg) {
+void TransformStamped::handle_xcom_msg(const XCOMmsg_GNSSLEVERARM &msg) noexcept {
     updateGNSSLEVERARM(msg);
 }
 

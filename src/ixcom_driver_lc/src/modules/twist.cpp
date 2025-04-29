@@ -120,7 +120,7 @@ void TwistStamped::init() {
     }
 }
 
-void TwistStamped::handle_response(XCOMResp response) {
+void TwistStamped::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -183,17 +183,17 @@ void TwistStamped::handle_response(XCOMResp response) {
     }
 }
 
-void TwistStamped::handle_xcom_msg(const XCOMmsg_INSSOL &msg) {
+void TwistStamped::handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept {
     msg_INSSOL_age_ = 0;
     updateINSSOL(msg);
 }
 
-void TwistStamped::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) {
+void TwistStamped::handle_xcom_msg(const XCOMmsg_IMUCORR &msg) noexcept {
     msg_IMUCORR_age_ = 0;
     updateIMUCORR(msg);
 }
 
-void TwistStamped::handle_xcom_msg(const XCOMmsg_INSDCM &msg) {
+void TwistStamped::handle_xcom_msg(const XCOMmsg_INSDCM &msg) noexcept {
     msg_INSDCM_age_ = 0;
     updateINSDCM(msg);
 }

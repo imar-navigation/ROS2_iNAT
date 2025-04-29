@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
-project(ixcom_interfaces)
+project(ixcom_service_adapter)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+set(ROS_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,29 +11,30 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(ixcom_interfaces REQUIRED)
+# uncomment the following section in order to fill in
+# further dependencies manually.
+# find_package(<dependency> REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Num.msg"
-  "msg/Sphere.msg"
-  "msg/Array.msg"
-  "srv/AddThreeInts.srv"
-  "srv/ExtAidPosLlh.srv"
-  "srv/ExtAidPosEcef.srv"
-  "srv/ExtAidPosUtm.srv"
-  "srv/ExtAidPosMgrs.srv"
-  "srv/ExtAidHdg.srv"
-  "srv/ExtAidVel.srv"
-  "srv/ExtAidVelBody.srv"
-  "srv/ExtAidHeight.srv"
-  "action/Example.action"
-  "action/Stop.action"
-  "action/Realign.action"
-  "action/Reboot.action"
-  "action/GetConfigFile.action"
-  DEPENDENCIES geometry_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
+include_directories(
+        include/
 )
+
+add_executable(sub src/service_adapter.cpp)
+ament_target_dependencies(sub
+  rclcpp
+  sensor_msgs
+  geometry_msgs
+  nav_msgs
+  ixcom_interfaces)
+
+install(TARGETS
+  sub
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -43,5 +48,4 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_export_dependencies(rosidl_default_runtime)
 ament_package()

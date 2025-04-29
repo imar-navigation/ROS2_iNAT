@@ -17,27 +17,29 @@ import argparse
 
 from std_msgs.msg import String
 from std_msgs.msg import Float64MultiArray
-from interfaces.msg import Num
-from interfaces.msg import Sphere
-from interfaces.msg import Array
+from ixcom_interfaces.msg import Num
+from ixcom_interfaces.msg import Sphere
+from ixcom_interfaces.msg import Array
 
 from sensor_msgs.msg import Imu, NavSatStatus, NavSatFix, TimeReference, MagneticField
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped, TwistStamped
 from tf2_msgs.msg import TFMessage
 
-from interfaces.action import GetConfigFile
+from ixcom_interfaces.action import GetConfigFile
 from rclpy.qos import *
 
 
 class DataSubscriber(Node):
 
-    def __init__(self, measure_frequency=False):
+    def __init__(self, measure_frequency=False, namespace=''):
         # f = open('config.json', 'r')
         # device = json.load(f)
         # topic = device['topic']
         # topic = self.get_parameter('topic').get_parameter_value().string_value
-        super().__init__('ixcom_driver_sub')
+        # self.namespace = '' if namespace == '' else f'{namespace}/'
+        self.namespace = namespace
+        super().__init__('ixcom_driver_sub', namespace=self.namespace)
 
         self.qos = None
         # self.qos = qos_profile_sensor_data
@@ -375,15 +377,15 @@ class DataSubscriber(Node):
         else:
             self.get_logger().info(f'ODO ({msg.header.frame_id}) '
                                    f'Timestamp: {msg.header.stamp.sec}.{msg.header.stamp.nanosec}'
-                                   # f'x: {msg.pose.pose.position.x} '
-                                   # f'y: {msg.pose.pose.position.y} '
-                                   # f'z: {msg.pose.pose.position.z} '
-                                   # f'tlx: {msg.twist.twist.linear.x} '
-                                   # f'tly: {msg.twist.twist.linear.y} '
-                                   # f'tlz: {msg.twist.twist.linear.z} '
-                                   # f'tax: {msg.twist.twist.angular.x} '
-                                   # f'tay: {msg.twist.twist.angular.y} '
-                                   # f'taz: {msg.twist.twist.angular.z} '
+                                   f'x: {msg.pose.pose.position.x} '
+                                   f'y: {msg.pose.pose.position.y} '
+                                   f'z: {msg.pose.pose.position.z} '
+                                   f'tlx: {msg.twist.twist.linear.x} '
+                                   f'tly: {msg.twist.twist.linear.y} '
+                                   f'tlz: {msg.twist.twist.linear.z} '
+                                   f'tax: {msg.twist.twist.angular.x} '
+                                   f'tay: {msg.twist.twist.angular.y} '
+                                   f'taz: {msg.twist.twist.angular.z} '
                                    )
             # try:
             #     add_utc = 0
@@ -471,9 +473,11 @@ def main():
 
     parser = argparse.ArgumentParser(description='ROS2 iXCOM Driver')
     parser.add_argument('-f', '--measure_frequency',  action='store_true', default=False, help='measure frequencies of incoming topics')
+    parser.add_argument('-ns', '--namespace', type=str, help='node namspace', default='')
     args = parser.parse_args()
 
-    dSub = DataSubscriber(args.measure_frequency)
+    dSub = DataSubscriber(args.measure_frequency, args.namespace)
+    # dSub = DataSubscriber()
     try:
         # print('getting config file...')
         dSub.get_config_file(0)

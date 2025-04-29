@@ -115,7 +115,7 @@ void TimeReference::init() {
     }
 }
 
-void TimeReference::handle_response(XCOMResp response) {
+void TimeReference::handle_response(XCOMResp response) noexcept {
     if(response == XCOMResp::OK) {
         invalid_channel_ = false;
 
@@ -168,7 +168,7 @@ void TimeReference::handle_response(XCOMResp response) {
     }
 }
 
-void TimeReference::handle_xcom_msg(const XCOMmsg_SYSSTAT &msg) {
+void TimeReference::handle_xcom_msg(const XCOMmsg_SYSSTAT &msg) noexcept {
     msg_SYSSTAT_age_ = 0;
     updateSYSSTAT(msg);
 }

@@ -12,15 +12,15 @@
  ---------------------------------------------------------------------*/
 #ifndef LIB_IXCOM_PARAMETER_HANDLER_H
 #define LIB_IXCOM_PARAMETER_HANDLER_H
-#include "../../src/parameter_traits.h"
 #include "ixcom.h"
+#include "ixcom/parameter_traits.h"
 #include <cassert>
 namespace xcom {
 class XComState;
 template<typename ClassT, typename ArgT>
 using CallbackParamMemFn = void (ClassT::*)(const ArgT&);
 template<typename ParamT, typename ClassT, CallbackParamMemFn<ClassT, ParamT> Func>
-inline void xcom_param_cb_passthrough(uint8_t* param, void* context) {  // NOLINT
+inline void xcom_param_cb_passthrough(uint8_t* param, void* context) noexcept {  // NOLINT
     assert(nullptr != context);
     auto instance = static_cast<ClassT*>(context);
     auto val      = reinterpret_cast<ParamT*>(param);
@@ -32,9 +32,9 @@ public:
     ParamCallbackInterface()           = default;
     ~ParamCallbackInterface() override = default;
     using ParamCallbackInterface<OtherTypes...>::handle_xcom_param;
-    virtual void handle_xcom_param(const ParamType& msg) = 0;
+    virtual void handle_xcom_param(const ParamType& msg) = 0;  // NOLINT
 protected:
-    void register_callback(XComState* state, xcom_callbacks_node_t nodes[]) {  // NOLINT
+    void register_callback(XComState* state, xcom_callbacks_node_t nodes[]) noexcept {  // NOLINT
         state->register_parameter_callback(
             ParameterTraits<ParamType>::Id,
             &xcom_param_cb_passthrough<ParamType, ParamCallbackInterface, &ParamCallbackInterface::handle_xcom_param>, this, &nodes[0]);
@@ -48,7 +48,7 @@ public:
     virtual ~ParamCallbackInterface() = default;
     virtual void handle_xcom_param(const ParamType& param) = 0;
 protected:
-    void register_callback(XComState* state, xcom_callbacks_node_t nodes[]) {
+    void register_callback(XComState* state, xcom_callbacks_node_t nodes[]) noexcept {  // NOLINT
         state->register_parameter_callback(
             ParameterTraits<ParamType>::Id,
             &xcom_param_cb_passthrough<ParamType, ParamCallbackInterface, &ParamCallbackInterface::handle_xcom_param>, this, &nodes[0]);
