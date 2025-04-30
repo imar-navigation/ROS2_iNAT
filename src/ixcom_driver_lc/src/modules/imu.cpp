@@ -184,6 +184,8 @@ void IMU::handle_response(XCOMResp response) noexcept {
 
 void IMU::handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept {
 
+    // std::cout << "INSSOL came" << std::endl;
+
     // t_inssol_ = t_inssol_upd_;
     // t_inssol_upd_ = std::chrono::high_resolution_clock::now();
     // auto d = std::chrono::duration_cast<std::chrono::microseconds>(t_inssol_upd_ - t_inssol_).count();
@@ -206,6 +208,8 @@ void IMU::handle_xcom_msg(const XCOMmsg_INSSOL &msg) noexcept {
 
 void IMU::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept {
 
+    // std::cout << "EKFSTDDEV came" << std::endl;
+
     // t_ekfstddev_ = t_ekfstddev_upd_;
     // t_ekfstddev_upd_ = std::chrono::high_resolution_clock::now();
     // auto d = std::chrono::duration_cast<std::chrono::microseconds>(t_ekfstddev_upd_ - t_ekfstddev_).count();
@@ -216,6 +220,9 @@ void IMU::handle_xcom_msg(const XCOMmsg_EKFSTDDEV &msg) noexcept {
 }
 
 void IMU::handle_xcom_param(const XCOMParEKF_IMUCONFIG2& param) {
+
+    // std::cout << "IMUCONFIG2 came" << std::endl;
+
     par_IMUCONFIG2_age_ = 0;
     setParData(param);
 }
@@ -272,6 +279,9 @@ void IMU::updateINSSOL(const XCOMmsg_INSSOL &msg) {
     // std::cout << "data selection: " << std::to_string(msg.data_selection) << std::endl;
 
     insSolDataIsSet_ = true;
+
+    gps_time_ = UpdateGPSTime(msg.header, leap_seconds_);
+    publish();
 }
 
 void IMU::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
@@ -301,6 +311,8 @@ void IMU::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
 
 
 void IMU::publish() {
+
+    // std::cout << "trying to publish" << std::endl;
 
     // pub_age_ = 0;
     
@@ -337,6 +349,7 @@ void IMU::publish() {
         // auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 
         // std::cout << "imu publish: " << std::to_string(d) << std::endl;
+        // std::cout << "imu published" << std::endl;
     }
 }
 

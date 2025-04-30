@@ -234,6 +234,10 @@ void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
         tfs_msg_.transform.translation.x = ref_.x;
         tfs_msg_.transform.translation.y = ref_.y;
         tfs_msg_.transform.translation.z = ref_.z;
+        // tfs_msg_.transform.rotation.w =;
+        // tfs_msg_.transform.rotation.x =;
+        // tfs_msg_.transform.rotation.y =;
+        // tfs_msg_.transform.rotation.z =;
     }
 
     if(reference_is_set_) {

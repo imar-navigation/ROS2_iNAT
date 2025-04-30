@@ -71,7 +71,7 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
     uint16_t channel = 0;
     bool exit = false;
     while(!exit) {
-        RCLCPP_INFO(get_logger(), "%s", ("connecting to iNAT @: "
+        RCLCPP_INFO(get_logger(), "%s", ("connecting to iNAT @ "
                                          + conf_->ip_address_ + ":"
                                          + std::to_string(conf_->ip_port_)
                                          + " channel " + std::to_string(channel)
