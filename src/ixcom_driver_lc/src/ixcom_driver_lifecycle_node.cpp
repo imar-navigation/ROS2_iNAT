@@ -27,6 +27,8 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
 
     get_parameters();
 
+    RCLCPP_INFO(this->get_logger(), "iNAT IP address: %s", conf_->ip_address_.c_str());
+
     // std::string s = conf_->use_adapter_ ? "true" : "false";
     // RCLCPP_INFO(get_logger(), "%s", ("* * *   USE ADAPTER: " + s).c_str());
 
