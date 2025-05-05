@@ -81,10 +81,16 @@ private:
     int32_t setup_freq_ = 0;
     size_t num_of_subscribers_ = 0;
     std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
-    Point ref_;
+    struct Pos {
+        double lon;
+        double lat;
+        float alt;
+    };
+    Pos ref_;
+    // Point ref_;
     bool reference_is_set_ = false;
-    Point ltp_reference_;
-    Point lla2ecef(float longitutde, float latitude, float altitude);
+    Pos ltp_reference_;
+    Point lla2ecef(double longitutde, double latitude, float altitude);
     Point ecef2enu(Point point, double longitude, double latitude);
     void setLocalTangentialPlane();
 //    rclcpp_lifecycle::LifecyclePublisher<ImuMsg>::SharedPtr pub_;

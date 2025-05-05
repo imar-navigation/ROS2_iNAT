@@ -220,20 +220,44 @@ bool Odometry::success() {
 
 void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
 
+    // if(!mltp_.enable && !reference_is_set_) {
+    //     ltp_reference_ = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
+    //     reference_is_set_ = true;
+    // }
+
+    // Point tmp = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
+    // tmp.x -= ltp_reference_.x;
+    // tmp.y -= ltp_reference_.y;
+    // tmp.z -= ltp_reference_.z;
+    // odometry_msg_.pose.pose.position = ecef2enu(tmp, msg.pos[0], msg.pos[1]);
+
+    // tf2::Quaternion q;
+    // q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
+    // odometry_msg_.pose.pose.orientation = tf2::toMsg(q);
+
+    // insSolDataIsSet_ = true;
+
     if(!reference_is_set_) {
-        ref_ = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
         if(mltp_.enable) {
-            ref_.x -= ltp_reference_.x;
-            ref_.y -= ltp_reference_.y;
-            ref_.z -= ltp_reference_.z;
+            ref_.lon = ltp_reference_.lon;     // longitude
+            ref_.lat = ltp_reference_.lat;     // latitude
+            ref_.alt = ltp_reference_.alt;     // altitude
+        } else {
+            ref_.lon = msg.pos[0];
+            ref_.lat = msg.pos[1];
+            ref_.alt = msg.altitude;
         }
         reference_is_set_ = true;
 
         tfs_msg_.header.frame_id = node_->get_namespace() + std::string("_earth");
         tfs_msg_.child_frame_id = node_->get_namespace() + std::string("_odom");
-        tfs_msg_.transform.translation.x = ref_.x;
-        tfs_msg_.transform.translation.y = ref_.y;
-        tfs_msg_.transform.translation.z = ref_.z;
+        Point ref_ecef = lla2ecef(ref_.lon, ref_.lat, ref_.alt);
+        tfs_msg_.transform.translation.x = ref_ecef.x;
+        tfs_msg_.transform.translation.y = ref_ecef.y;
+        tfs_msg_.transform.translation.z = ref_ecef.z;
+        // tfs_msg_.transform.translation.x = ref_.x;
+        // tfs_msg_.transform.translation.y = ref_.y;
+        // tfs_msg_.transform.translation.z = ref_.z;
         // tfs_msg_.transform.rotation.w =;
         // tfs_msg_.transform.rotation.x =;
         // tfs_msg_.transform.rotation.y =;
@@ -241,7 +265,16 @@ void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
     }
 
     if(reference_is_set_) {
-        odometry_msg_.pose.pose.position = ecef2enu(ref_, msg.pos[0], msg.pos[1]);
+
+        // std::cout << "ref: " << ref_.x << " / " << ref_.y << " / " << ref_.z << std::endl;
+
+        // odometry_msg_.pose.pose.position = ecef2enu(ref_, msg.pos[0], msg.pos[1]);
+        Point tmp = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
+        Point ref_ecef = lla2ecef(ref_.lon, ref_.lat, ref_.alt);
+        tmp.x -= ref_ecef.x;
+        tmp.y -= ref_ecef.y;
+        tmp.z -= ref_ecef.z;
+        odometry_msg_.pose.pose.position = ecef2enu(tmp, ref_.lon, ref_.lat);
 
         tf2::Quaternion q;
         q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
@@ -250,6 +283,60 @@ void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
         insSolDataIsSet_ = true;
     }
 }
+// void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
+
+//     if(!reference_is_set_) {
+//         ref_ = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
+//         if(mltp_.enable) {
+//             ref_.x -= ltp_reference_.x;
+//             ref_.y -= ltp_reference_.y;
+//             ref_.z -= ltp_reference_.z;
+//         }
+//         reference_is_set_ = true;
+
+//         tfs_msg_.header.frame_id = node_->get_namespace() + std::string("_earth");
+//         tfs_msg_.child_frame_id = node_->get_namespace() + std::string("_odom");
+//         tfs_msg_.transform.translation.x = ref_.x;
+//         tfs_msg_.transform.translation.y = ref_.y;
+//         tfs_msg_.transform.translation.z = ref_.z;
+//         // tfs_msg_.transform.rotation.w =;
+//         // tfs_msg_.transform.rotation.x =;
+//         // tfs_msg_.transform.rotation.y =;
+//         // tfs_msg_.transform.rotation.z =;
+//     }
+
+//     if(reference_is_set_) {
+
+//         // std::cout << "ref: " << ref_.x << " / " << ref_.y << " / " << ref_.z << std::endl;
+
+//         odometry_msg_.pose.pose.position = ecef2enu(ref_, msg.pos[0], msg.pos[1]);
+
+//         tf2::Quaternion q;
+//         q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
+//         odometry_msg_.pose.pose.orientation = tf2::toMsg(q);
+
+//         insSolDataIsSet_ = true;
+//     }
+// }
+// void Odometry::updateINSSOL(const XCOMmsg_INSSOL &msg) {
+
+//     if(!mltp_.enable && !reference_is_set_) {
+//         ltp_reference_ = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
+//         reference_is_set_ = true;
+//     }
+
+//     Point tmp = lla2ecef(msg.pos[0], msg.pos[1], msg.altitude);
+//     tmp.x -= ltp_reference_.x;
+//     tmp.y -= ltp_reference_.y;
+//     tmp.z -= ltp_reference_.z;
+//     odometry_msg_.pose.pose.position = ecef2enu(tmp, msg.pos[0], msg.pos[1]);
+
+//     tf2::Quaternion q;
+//     q.setRPY(msg.rpy[0], msg.rpy[1], msg.rpy[2]);
+//     odometry_msg_.pose.pose.orientation = tf2::toMsg(q);
+
+//     insSolDataIsSet_ = true;
+// }
 
 void Odometry::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
 
@@ -324,17 +411,17 @@ void Odometry::publish() {
 
 void Odometry::setLocalTangentialPlane() {
     if(mltp_.enable) {
-        ltp_reference_.x = mltp_.lon;
-        ltp_reference_.y = mltp_.lat;
-        ltp_reference_.z = mltp_.alt;
+        ltp_reference_.lon = mltp_.lon;
+        ltp_reference_.lat = mltp_.lat;
+        ltp_reference_.alt = mltp_.alt;
     } else {
-        ltp_reference_.x = 0.0;
-        ltp_reference_.y = 0.0;
-        ltp_reference_.z = 0.0;
+        ltp_reference_.lon = 0.0;
+        ltp_reference_.lat = 0.0;
+        ltp_reference_.alt = 0.0;
     }
 }
 
-Odometry::Point Odometry::lla2ecef(float longitutde, float latitude, float altitude) {
+Odometry::Point Odometry::lla2ecef(double longitutde, double latitude, float altitude) {
     // Implementation based on https://en.wikipedia.org/wiki/Geographic_coordinate_conversion#From_geodetic_to_ECEF_coordinates
     constexpr static double SEMIMAJOR_AXIS = 6378137.0;
     constexpr static double SEMIMINOR_AXIS = 6356752.31424518;
@@ -364,6 +451,11 @@ Odometry::Point Odometry::ecef2enu(Point p, double longitude, double latitude) {
     enu.x = -sin(longitude) * p.x + cos(longitude) * p.y;
     enu.y = -sin(latitude) * cos(longitude) * p.x - sin(latitude) * sin(longitude) * p.y + cos(latitude) * p.z;
     enu.z = cos(latitude) * cos(longitude) * p.x + cos(latitude) * sin(longitude) * p.y + sin(latitude) * p.z;
+
+    std::cout << "converted:" << std::endl;
+    std::cout << "point: " << p.x << " / " << p.y << " / " << p.z << std::endl;
+    std::cout << "ref (lon / lat): " << longitude << " / " << latitude << std::endl;
+    std::cout << "result enu: " << enu.x << " / " << enu.y << " / " << enu.z << std::endl;
 
     return enu;
 }
