@@ -19,7 +19,7 @@
     magnetometer_scale_factor: 1.0000000116860974e-07
     topics:
       Imu:
-        frequency_hz: 10
+        frequency_hz: 0
         remap_to: ""
       NavSatStatus:
         frequency_hz: 0
@@ -37,6 +37,7 @@
         frequency_hz: 0
         remap_to: ""
       Odometry:
+        frame_id: "enu"
         frequency_hz: 10
         remap_to: ""
       PoseWithCovarianceStamped:

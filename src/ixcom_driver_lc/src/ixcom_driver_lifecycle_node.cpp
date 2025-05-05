@@ -171,6 +171,7 @@ void DriverNode::declare_parameters() {
     declare_parameter<std::string>(conf_->PAR_MAGFIELD_REMAP_TO, std::string(""));
     declare_parameter<int32_t>(conf_->PAR_ODOMETRY_FRQ, 0);
     declare_parameter<std::string>(conf_->PAR_ODOMETRY_REMAP_TO, std::string(""));
+    declare_parameter<std::string>(conf_->PAR_ODOMETRY_FRAME_ID, std::string("enu"));
     declare_parameter<int32_t>(conf_->PAR_POSECOVSTAMPED_FRQ, 0);
     declare_parameter<std::string>(conf_->PAR_POSECOVSTAMPED_REMAP_TO, std::string(""));
     declare_parameter<int32_t>(conf_->PAR_TWISTSTAMPED_FRQ, 0);
@@ -211,6 +212,7 @@ void DriverNode::get_parameters() {
     get_parameter(conf_->PAR_MAGFIELD_REMAP_TO, conf_->magneticfield_remap_);
     get_parameter(conf_->PAR_ODOMETRY_FRQ, conf_->odometry_frq_);
     get_parameter(conf_->PAR_ODOMETRY_REMAP_TO, conf_->odometry_remap_);
+    get_parameter(conf_->PAR_ODOMETRY_FRAME_ID, conf_->odometry_frame_id_);
     get_parameter(conf_->PAR_POSECOVSTAMPED_FRQ, conf_->posewithcovariancestamped_frq_);
     get_parameter(conf_->PAR_POSECOVSTAMPED_REMAP_TO, conf_->posewithcovariancestamped_remap_);
     get_parameter(conf_->PAR_TWISTSTAMPED_FRQ, conf_->twiststamped_frq_);
@@ -490,6 +492,7 @@ bool DriverNode::build_topic_odometry() {
                                                    transformstamped_,
                                                    conf_->odometry_frq_,
                                                    odometry_topic_name_,
+                                                   conf_->odometry_frame_id_,
                                                    conf_->ip_address_,
                                                    conf_->ip_port_,
                                                    conf_->timestamp_mode_,

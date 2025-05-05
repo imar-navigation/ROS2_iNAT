@@ -101,6 +101,8 @@ struct Config
     int32_t odometry_frq_;
     const std::string PAR_ODOMETRY_REMAP_TO = "topics." + TOPICNAME_ODOMETRY + ".remap_to";
     std::string odometry_remap_;
+    const std::string PAR_ODOMETRY_FRAME_ID = "topics." + TOPICNAME_ODOMETRY + ".frame_id";
+    std::string odometry_frame_id_;
 
     const std::string TOPICNAME_POSECOVSTAMPED = "PoseWithCovarianceStamped";
     const std::string PAR_POSECOVSTAMPED_FRQ = "topics." + TOPICNAME_POSECOVSTAMPED + ".frequency_hz";

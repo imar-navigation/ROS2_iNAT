@@ -13,6 +13,7 @@ Odometry::Odometry(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
                    TransformStamped::SharedPtr tf2,
                    int32_t topic_freq,
                    const std::string &topic_name,
+                   const std::string &frame_id,
                    const std::string &ip_address,
                    int32_t ip_port,
                    Config::TimestampMode timestamp_mode,
@@ -30,6 +31,7 @@ Odometry::Odometry(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
     ip_address_(ip_address),
     ip_port_(ip_port),
     topic_name_(topic_name),
+    frame_id_(frame_id),
     topic_freq_(topic_freq),
     timestamp_mode_(timestamp_mode),
     leap_seconds_(leap_seconds),
@@ -129,7 +131,8 @@ void Odometry::handle_response(XCOMResp response) noexcept {
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(),
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
             
-            odometry_msg_.header.frame_id = "enu";
+            // odometry_msg_.header.frame_id = "enu";
+            odometry_msg_.header.frame_id = frame_id_;
             odometry_msg_.child_frame_id = "inat_enclosure";
 
             auto cmd_clearall = xcom_.get_xcomcmd_clearall();
@@ -452,10 +455,10 @@ Odometry::Point Odometry::ecef2enu(Point p, double longitude, double latitude) {
     enu.y = -sin(latitude) * cos(longitude) * p.x - sin(latitude) * sin(longitude) * p.y + cos(latitude) * p.z;
     enu.z = cos(latitude) * cos(longitude) * p.x + cos(latitude) * sin(longitude) * p.y + sin(latitude) * p.z;
 
-    std::cout << "converted:" << std::endl;
-    std::cout << "point: " << p.x << " / " << p.y << " / " << p.z << std::endl;
-    std::cout << "ref (lon / lat): " << longitude << " / " << latitude << std::endl;
-    std::cout << "result enu: " << enu.x << " / " << enu.y << " / " << enu.z << std::endl;
+    // std::cout << "converted:" << std::endl;
+    // std::cout << "point: " << p.x << " / " << p.y << " / " << p.z << std::endl;
+    // std::cout << "ref (lon / lat): " << longitude << " / " << latitude << std::endl;
+    // std::cout << "result enu: " << enu.x << " / " << enu.y << " / " << enu.z << std::endl;
 
     return enu;
 }

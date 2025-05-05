@@ -29,6 +29,7 @@ public:
              TransformStamped::SharedPtr tf2,
              int32_t topic_freq,
              const std::string &topic_name,
+             const std::string &frame_id,
              const std::string &ip_address,
              int32_t ip_port,
              Config::TimestampMode timestamp_mode,
@@ -103,6 +104,7 @@ private:
     const std::string &ip_address_;
     int32_t ip_port_;
     const std::string &topic_name_;
+    const std::string &frame_id_;
     int32_t topic_freq_;
     Config::TimestampMode timestamp_mode_;
     int32_t leap_seconds_;
