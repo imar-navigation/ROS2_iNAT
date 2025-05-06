@@ -52,7 +52,7 @@ private:
     std::shared_ptr<tf2_ros::StaticTransformBroadcaster> broadcast_;
     TransformStampedMsg tfs_msg_;
     uint8_t bc_cnt_ = 0;
-    uint8_t BC_CNT_MAX = 1;
+    const uint8_t BC_CNT_MAX = 1;
 
     //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
     void handle_response(XCOMResp response) noexcept override;

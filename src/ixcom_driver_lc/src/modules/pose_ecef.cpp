@@ -253,7 +253,7 @@ void PoseWithCovarianceStamped::publish()
             num_of_subscribers_ = n;
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), ("current number of subscriptions: " + std::to_string(num_of_subscribers_)).c_str());
         } else if(n < num_of_subscribers_) {
-            RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "+ a listener leaved");
+            RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "† a listener leaved");
             num_of_subscribers_ = n;
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), ("current number of subscriptions: " + std::to_string(num_of_subscribers_)).c_str());
         }

@@ -75,7 +75,8 @@ The configuration file has currently the following structure.
 
 
 ```yaml
-/ixcom/ixcom_driver_lifecycle_node:
+/ixcom/ixcom_driver_lifecycle_node:     # used by ixcom_driver_lifecycle_node in the namespace ixcom
+# /**:                                  # one fits all
   ros__parameters:
     ip:
       address: 192.168.1.30
@@ -114,6 +115,7 @@ The configuration file has currently the following structure.
         frequency_hz: 0
         remap_to: ""
       Odometry:
+        frame_id: "enu"
         frequency_hz: 250
         remap_to: ""
       PoseWithCovarianceStamped:
@@ -137,6 +139,7 @@ The configuration file has currently the following structure.
   set current leap seconds here if GNSS is not available or set to 0 otherwise
 - `topics`  
   activate topics using a value `> 0` for `frequency_hz` and an optionally different topic name as a value for `remap_to`
+- the `frame_id` of the topic `Odometry` is configurable
 
 ## Run
 
