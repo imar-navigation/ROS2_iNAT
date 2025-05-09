@@ -286,13 +286,17 @@ void IMU::updateINSSOL(const XCOMmsg_INSSOL &msg) {
 
 void IMU::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
 
-    if(msg.footer.global_status.bits.ALIGNMODE == XCOMGlobalStatusAlignmode::AlignmentComplete) {
-        imu_msg_.orientation_covariance[0] = msg.tilt[0] * msg.tilt[0];
-    } else {
-        imu_msg_.orientation_covariance[0] = -1.0;
-        imu_msg_.orientation_covariance[4] = msg.tilt[1] * msg.tilt[1];
-        imu_msg_.orientation_covariance[8] = msg.tilt[2] * msg.tilt[2];
-    }
+    imu_msg_.orientation_covariance[0] = msg.tilt[0] * msg.tilt[0];
+    imu_msg_.orientation_covariance[4] = msg.tilt[1] * msg.tilt[1];
+    imu_msg_.orientation_covariance[8] = msg.tilt[2] * msg.tilt[2];
+
+    // if(msg.footer.global_status.bits.ALIGNMODE == XCOMGlobalStatusAlignmode::AlignmentComplete) {
+    //     imu_msg_.orientation_covariance[0] = msg.tilt[0] * msg.tilt[0];
+    // } else {
+    //     imu_msg_.orientation_covariance[0] = -1.0;
+    //     imu_msg_.orientation_covariance[4] = msg.tilt[1] * msg.tilt[1];
+    //     imu_msg_.orientation_covariance[8] = msg.tilt[2] * msg.tilt[2];
+    // }
 
     ekfDataIsSet_ = true;
 }
