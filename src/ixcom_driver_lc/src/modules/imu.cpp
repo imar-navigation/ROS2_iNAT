@@ -297,7 +297,7 @@ void IMU::updateEKFSTDDEV(const XCOMmsg_EKFSTDDEV &msg) {
     //     imu_msg_.orientation_covariance[4] = msg.tilt[1] * msg.tilt[1];
     //     imu_msg_.orientation_covariance[8] = msg.tilt[2] * msg.tilt[2];
     // }
-
+    
     ekfDataIsSet_ = true;
 }
 
