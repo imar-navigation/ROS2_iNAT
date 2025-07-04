@@ -58,7 +58,7 @@ The node info shows the implemented features (not configured topics are not visi
 ## Build
 
 ```console
-git clone git@gitlab.my.imar.de:automotive/okular/ixcom-ros2-driver.git ixcom-ros2-driver
+git clone git@github.com:imar-navigation/ROS2_iNAT.git ixcom-ros2-driver
 cd ixcom-ros2-driver
 colcon build
 or
@@ -512,7 +512,7 @@ The node info shows the implemented features (not configured topics are not visi
 ## Build
 
 ```console
-git clone git@gitlab.my.imar.de:automotive/okular/ixcom-ros2-driver.git ixcom-ros2-driver
+git clone git@github.com:imar-navigation/ROS2_iNAT.git ixcom-ros2-driver
 cd ixcom-ros2-driver
 colcon build
 or
