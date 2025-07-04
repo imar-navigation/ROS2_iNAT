@@ -1,7 +1,7 @@
 /*.*******************************************************************
  FILENAME: xcom.cc
  **********************************************************************
- *  PROJECT: ROS2_iNAT
+ *  PROJECT: iXCOM_SDK
  *
  *
  *---------------------------------------------------------------------
@@ -344,6 +344,26 @@ std::optional<XComState::system_status> XComState::process_msg_sysstat(const uin
     }
     sysstat.global_status = *reinterpret_cast<const uint32_t*>(&data[len - sizeof(XCOMFooter)]);
     return sysstat;
+}
+std::tuple<std::vector<XCOMmsg_CANGATEWAY_MsgType>, XCOMGlobalStatus> XComState::process_cangateway(const XCOMmsg_CANGATEWAY& msg) {
+    auto buffer_idx               = 0;
+    const auto payload_length     = (msg.header.msg_len - sizeof(XCOMHeader) - sizeof(XCOMCanGatewayHeader) - sizeof(XCOMFooter));
+    constexpr auto CanFrameLength = sizeof(XCOMmsg_CANGATEWAY_MsgType);
+    const auto number_of_elements = payload_length / CanFrameLength;
+    std::vector<XCOMmsg_CANGATEWAY_MsgType> can_frames{};
+    can_frames.reserve(number_of_elements);
+    for(std::size_t idx = 0; idx < number_of_elements; idx++) {
+        XCOMmsg_CANGATEWAY_MsgType can_frame{};
+        memcpy(&can_frame, &msg.buffer[buffer_idx], sizeof(XCOMmsg_CANGATEWAY_MsgType));
+        can_frames.emplace_back(can_frame);
+        buffer_idx += sizeof(XCOMmsg_CANGATEWAY_MsgType);
+    }
+    union {
+        XCOMGlobalStatus bits;
+        uint16_t value;
+    } global_status{};
+    memcpy(&global_status.value, &msg.buffer[buffer_idx], sizeof(uint16_t));
+    return {can_frames, global_status.bits};
 }
 void XComState::set_sync_byte(uint8_t sync_byte) noexcept { _parser.set_sync_byte(sync_byte); }
 uint8_t XComState::get_sync_byte() const noexcept { return _parser.get_sync_byte(); }

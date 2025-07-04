@@ -109,9 +109,10 @@ void TransformStamped::handle_response(XCOMResp response) noexcept {
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", "tf2",
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
 
-            tfs_msg_1_.header.frame_id = tfs_msg_2_.header.frame_id = "inat_enclosure";
-            tfs_msg_1_.child_frame_id = "primary_gnss_ant";
-            tfs_msg_2_.child_frame_id = "secondary_gnss_ant";
+                        //node_->get_namespace() + std::string("_earth");
+            tfs_msg_1_.header.frame_id = tfs_msg_2_.header.frame_id = node_->get_namespace() + std::string("_inat_enclosure");
+            tfs_msg_1_.child_frame_id = node_->get_namespace() + std::string("_primary_gnss_ant");
+            tfs_msg_2_.child_frame_id = node_->get_namespace() + std::string("_secondary_gnss_ant");
 
             auto cmd_clearall = xcom_.get_xcomcmd_clearall();
             xcom_.send_message(cmd_clearall);
