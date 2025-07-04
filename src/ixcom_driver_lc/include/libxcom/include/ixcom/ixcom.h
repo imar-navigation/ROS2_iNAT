@@ -1,7 +1,7 @@
 /*.*******************************************************************
  FILENAME: xcom.h
  **********************************************************************
- *  PROJECT: ROS2_iNAT
+ *  PROJECT: iXCOM_SDK
  *
  *
  *---------------------------------------------------------------------
@@ -103,6 +103,7 @@ public:
         uint16_t global_status = 0;
     };
     static std::optional<system_status> process_msg_sysstat(const uint8_t* data, std::size_t len);
+    static std::tuple<std::vector<XCOMmsg_CANGATEWAY_MsgType>, XCOMGlobalStatus> process_cangateway(const XCOMmsg_CANGATEWAY& msg);
     // XCOM commands
     XCOMCmd_XCOM get_xcomcmd_open(uint16_t channel);
     XCOMCmd_XCOM get_xcomcmd_close(uint16_t channel);
