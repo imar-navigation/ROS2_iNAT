@@ -16,6 +16,7 @@ TransformStamped::TransformStamped(rclcpp_lifecycle::LifecycleNode::SharedPtr no
                                    uint16_t maintiming,
                                    uint16_t prescaler) :
     MessageHandler(&state),
+    ParameterHandler(&state),
 //    xcom::CommandHandler(&state),
     xcom::ResponseHandler(&state),
     ip_address_(ip_address),
@@ -105,7 +106,7 @@ void TransformStamped::handle_response(XCOMResp response) noexcept {
         invalid_channel_ = false;
 
         if(!init_done_) {
-
+            connected_ = true;
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", "tf2",
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
 
@@ -113,16 +114,25 @@ void TransformStamped::handle_response(XCOMResp response) noexcept {
             tfs_msg_1_.header.frame_id = tfs_msg_2_.header.frame_id = node_->get_namespace() + std::string("_inat_enclosure");
             tfs_msg_1_.child_frame_id = node_->get_namespace() + std::string("_primary_gnss_ant");
             tfs_msg_2_.child_frame_id = node_->get_namespace() + std::string("_secondary_gnss_ant");
+            tfs_msg_enc_vehicle_.child_frame_id =
+                node_->get_namespace() + std::string("_inat_output_frame");
 
             auto cmd_clearall = xcom_.get_xcomcmd_clearall();
             xcom_.send_message(cmd_clearall);
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+            // Get rotation between INS enclosure and vehicle frame
+            // RCLCPP_INFO(node_->get_logger(),
+            //             "requesting rotation between INS enclosure and vehicle frame");
+            auto cmd_add_ins_enclosure = xcom_.get_generic_param<XCOMParIMU_MISALIGN>();
+            xcom_.send_message(cmd_add_ins_enclosure);
 
             int divider = (prescaler_ > 0) ? (maintiming_ / prescaler_) : 250;  // 1 Hz
             auto cmd_add_gnsssol = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_GNSSLEVERARM, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, divider);
             xcom_.send_message(cmd_add_gnsssol);
 
             broadcast_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
+            success_ = true;
         }
         init_done_ = true;
     } else {
@@ -142,8 +152,16 @@ void TransformStamped::handle_xcom_msg(const XCOMmsg_GNSSLEVERARM &msg) noexcept
     updateGNSSLEVERARM(msg);
 }
 
+void TransformStamped::handle_xcom_param(const XCOMParIMU_MISALIGN& par) noexcept {
+    updateIMUMISALIGN(par);
+}
+
 void TransformStamped::activate() {
     active_ = true;
+}
+
+bool TransformStamped::connected() {
+    return connected_;
 }
 
 bool TransformStamped::success() {
@@ -182,10 +200,27 @@ void TransformStamped::updateGNSSLEVERARM(const XCOMmsg_GNSSLEVERARM& msg) {
         data_updated_ = true;
     }
 
-    if(data_updated_ || subscriber_added_) {
-        gps_time_ = UpdateGPSTime(msg.header, leap_seconds_);
-        broadcast();
+    if(pardata_is_set_) {   // don't broadcast before data is complete (i.e. before misalignment data is set)
+        if(data_updated_ || subscriber_added_) {
+            gps_time_ = UpdateGPSTime(msg.header, leap_seconds_);
+            broadcast();
+        }
     }
+}
+
+void TransformStamped::updateIMUMISALIGN(const XCOMParIMU_MISALIGN& par) {
+    float rot_xyz[3] = {par.xyz[0], par.xyz[1], par.xyz[2]};
+    RCLCPP_INFO(node_->get_logger(),
+                "Rotation between INS enclosure and vehicle frame: [%f, %f, %f]", rot_xyz[0],
+                rot_xyz[1], rot_xyz[2]);
+    tf2::Quaternion q;
+    q.setRPY(rot_xyz[0], rot_xyz[1], rot_xyz[2]);
+    q = q.inverse();  // Invert the rotation to get the vehicle frame in the INS enclosure frame
+    tfs_msg_enc_vehicle_.transform.rotation.x = q.x();
+    tfs_msg_enc_vehicle_.transform.rotation.y = q.y();
+    tfs_msg_enc_vehicle_.transform.rotation.z = q.z();
+    tfs_msg_enc_vehicle_.transform.rotation.w = q.w();
+    pardata_is_set_ = true;
 }
 
 void TransformStamped::subscriberAdded() {
@@ -198,6 +233,7 @@ void TransformStamped::broadcast() {
     tfs_msg_2_.header.stamp = (timestamp_mode_ == Config::TimestampMode::GPS) ? gps_time_ : node_->now();
     tf_msg_.transforms.push_back(tfs_msg_1_);
     tf_msg_.transforms.push_back(tfs_msg_2_);
+    tf_msg_.transforms.push_back(tfs_msg_enc_vehicle_);
 
     if(active_) {
         data_updated_ = false;

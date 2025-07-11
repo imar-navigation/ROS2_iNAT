@@ -352,6 +352,10 @@ bool XcomHandler::invalidChannel() {
     return invalid_channel_;
 }
 
+// bool XcomHandler::connected() {
+//     return connected_;
+// }
+
 void XcomHandler::set_sysstat_mode() {
     auto p_set = _xcom.get_generic_param<XCOMParDAT_SYSSTAT>();
     p_set.param_header.param_id = XCOMPAR_PARDAT_SYSSTAT;

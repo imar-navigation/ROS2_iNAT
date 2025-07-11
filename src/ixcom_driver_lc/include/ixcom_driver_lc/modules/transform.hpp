@@ -13,9 +13,12 @@
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <ixcom_driver_lc/ixcom_driver_conf.hpp>
 
-using XComMessages_Transform = xcom::MessageHandler<XCOMmsg_GNSSLEVERARM>;
+using XComMessages_Transform   = xcom::MessageHandler<XCOMmsg_GNSSLEVERARM>;
+using XComParameters_Transform = xcom::ParameterHandler<XCOMParIMU_MISALIGN>;
 
-class TransformStamped : public XComMessages_Transform, xcom::ResponseHandler  //, xcom::CommandHandler
+class TransformStamped : public XComMessages_Transform,
+                         xcom::ResponseHandler,
+                         XComParameters_Transform  //, xcom::CommandHandler
 {
 public:
     using SharedPtr = std::shared_ptr<TransformStamped>;
@@ -32,6 +35,7 @@ public:
 
     void activate();
     void subscriberAdded();
+    bool connected();
     bool success();
     void cleanup();
 
@@ -41,11 +45,13 @@ private:
 
 //    void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) override;
     void handle_response(XCOMResp response) noexcept override;
-    void handle_xcom_msg(const XCOMmsg_GNSSLEVERARM &msg) noexcept override;
+    void handle_xcom_msg(const XCOMmsg_GNSSLEVERARM& msg) noexcept override;
+    void handle_xcom_param(const XCOMParIMU_MISALIGN& par) noexcept override;
 
     void init();
 
     void updateGNSSLEVERARM(const XCOMmsg_GNSSLEVERARM& msg);
+    void updateIMUMISALIGN(const XCOMParIMU_MISALIGN& par);
 
     void broadcast();
 
@@ -58,11 +64,14 @@ private:
     std::array<float, 3> offset_2_ = {0.f, 0.f, 0.f};
     TransformStampedMsg tfs_msg_1_;
     TransformStampedMsg tfs_msg_2_;
+    TransformStampedMsg tfs_msg_enc_vehicle_;
     TFMsg tf_msg_;
     rclcpp::Time gps_time_;
     bool data_updated_ = false;
+    bool pardata_is_set_ = false;
     bool subscriber_added_ = false;
-    bool success_ = false;
+    std::atomic_bool connected_ = ATOMIC_VAR_INIT(false);
+    std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
 
     const std::string &ip_address_;
     int32_t ip_port_;

@@ -1,8 +1,10 @@
 #pragma once
 
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
+#include <tf2/LinearMath/Quaternion.hpp>
 #include <ixcom/ixcom.h>
 #include <ixcom/message_handler.h>
+#include <ixcom/parameter_handler.h>
 #include <ixcom/tcp_client.h>
 #include <ixcom/command_handler.h>
 // #include <ixcom/message_handler.h>
@@ -18,10 +20,12 @@
 #include <condition_variable>
 #include <mutex>
 
+
 // using XComMessages_SrvExtAid = xcom::MessageHandler<XCOMmsg_GNSSSOL>;
 
-class SrvExtAid : public xcom::ResponseHandler, xcom::CommandHandler
-{
+class SrvExtAid : public xcom::ResponseHandler,
+                  xcom::CommandHandler,
+                  xcom::ParameterHandler<XCOMParIMU_MISALIGN> {
 public:
 
     using SharedPtr = std::shared_ptr<SrvExtAid>;
@@ -34,7 +38,8 @@ public:
     ~SrvExtAid();
 
     // void activate();
-    // bool success();
+    bool connected();
+    bool success();
     void cleanup();
 
 private:
@@ -60,6 +65,7 @@ private:
 
     void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) noexcept override;
     void handle_response(XCOMResp response) noexcept override;
+    void handle_xcom_param(const XCOMParIMU_MISALIGN& msg) noexcept override;
     // void handle_xcom_msg(const XCOMmsg_GNSSSOL &msg) override;
 
     //    std::string log_msg(const std::string &s);
@@ -90,7 +96,8 @@ private:
     bool invalid_channel_ = false;
     bool init_done_ = false;
     // bool active_ = false;
-    // std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
+    std::atomic_bool connected_ = ATOMIC_VAR_INIT(false);
+    std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
 
     rclcpp_lifecycle::LifecycleNode::SharedPtr node_;
     rclcpp::Service<extaid_posllh_msg>::SharedPtr srv_posllh_;
@@ -108,6 +115,11 @@ private:
     // xcom::IWriter* tcp_writer_ = nullptr;
     std::mutex m_;
     std::condition_variable cv_;
+    struct RotVehicleToEnclosure {
+        tf2::Quaternion q_vehicle_to_enclosure;
+        bool isKnown = false;
+    } rotVehicleToEnclosure;
+
     struct ExtaidItem {
         bool requested;
         bool success;

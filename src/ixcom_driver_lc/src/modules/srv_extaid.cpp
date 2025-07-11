@@ -15,6 +15,7 @@ SrvExtAid::SrvExtAid(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
                      int32_t leap_seconds) :
     xcom::ResponseHandler(&state),
     xcom::CommandHandler(&state),
+    xcom::ParameterHandler<XCOMParIMU_MISALIGN>(&state),
     node_(node),
     xcom_(state),
     ip_address_(ip_address),
@@ -106,6 +107,10 @@ void SrvExtAid::init() {
         }
     }
     // while(true);
+}
+
+bool SrvExtAid::success() {
+    return success_;
 }
 
 void SrvExtAid::get_extaid_posllh_msg(const std::shared_ptr<extaid_posllh_msg::Request> request,
@@ -256,6 +261,21 @@ void SrvExtAid::get_extaid_velbody_msg(const std::shared_ptr<extaid_velbody_msg:
                                        std::shared_ptr<extaid_velbody_msg::Response> response) {
 
     RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTVELBODY.c_str(), "request received");
+    if(!rotVehicleToEnclosure.isKnown) {
+        RCLCPP_ERROR(node_->get_logger(), "[%s] %s", SRV_EXTVELBODY.c_str(),
+                     "Rotation between vehicle and enclosure frame is not known, "
+                     "please restart the node");
+        response->success = false;
+        return;
+    }
+    // Transform the velocity from vehicle frame to enclosure frame
+    tf2::Vector3 vel_vehicle(request->velocity[0], request->velocity[1], request->velocity[2]);
+    tf2::Vector3 vel_enclosure =
+        tf2::quatRotate(rotVehicleToEnclosure.q_vehicle_to_enclosure, vel_vehicle);
+    tf2::Vector3 vel_stddev_enclosure =
+        tf2::quatRotate(rotVehicleToEnclosure.q_vehicle_to_enclosure,
+                        tf2::Vector3(request->velocity_stddev[0], request->velocity_stddev[1],
+                                     request->velocity_stddev[2]));
 
     auto cmd = xcom_.get_xcomcmd_extaid_vel_body(gpsTimeStamp(request->time_stamp, leap_seconds_), request->time_mode,
                                                 request->velocity, request->velocity_stddev,
@@ -291,12 +311,31 @@ void SrvExtAid::handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *
        std::cout << "Command received" << cmd_id << "\n";
 }
 
+void SrvExtAid::handle_xcom_param(const XCOMParIMU_MISALIGN& msg) noexcept {
+    float rot_xyz[3] = {msg.xyz[0], msg.xyz[1], msg.xyz[2]};
+    RCLCPP_INFO(node_->get_logger(),
+                "[srv_extaid] Rotation between INS enclosure and vehicle frame: "
+                "[%.3f, %.3f, %.3f] rad",
+                rot_xyz[0], rot_xyz[1], rot_xyz[2]);
+    rotVehicleToEnclosure.q_vehicle_to_enclosure.setRPY(rot_xyz[0], rot_xyz[1], rot_xyz[2]);
+    rotVehicleToEnclosure.q_vehicle_to_enclosure =
+        rotVehicleToEnclosure.q_vehicle_to_enclosure
+            .inverse();  // Invert the rotation to get the final transformation from vehicle frame into
+                         // the INS enclosure frame
+    rotVehicleToEnclosure.isKnown = true;
+}
+
+bool SrvExtAid::connected() {
+    return connected_;
+}
+
 void SrvExtAid::handle_response(XCOMResp response) noexcept {
 
     // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid", "response: ", response);
 
     if(!init_done_) {
         if(response == XCOMResp::OK) {
+            connected_ = true;
             invalid_channel_ = false;
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTAID.c_str(),
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
@@ -304,13 +343,18 @@ void SrvExtAid::handle_response(XCOMResp response) noexcept {
             auto cmd_clearall = xcom_.get_xcomcmd_clearall();
             xcom_.send_message(cmd_clearall);
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            // Get rotation between INS enclosure and vehicle frame
+            // RCLCPP_INFO(node_->get_logger(),
+            //             "requesting rotation between INS enclosure and vehicle frame");
+            auto cmd_add_ins_enclosure = xcom_.get_generic_param<XCOMParIMU_MISALIGN>();
+            xcom_.send_message(cmd_add_ins_enclosure);
 
             // uint16_t div1 = calculateDividerForRate(((topic_freq_ > Config::FRQ_GNSS) ? (Config::FRQ_GNSS) : (topic_freq_)), maintiming_, prescaler_);
             // msg_GNSSSOL_frq_ = calculateRateForDivider(div1, maintiming_, prescaler_);
             // auto cmd_add_gnsssol = xcom_.get_xcomcmd_enablelog(XCOM_MSGID_GNSSSOL, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC, div1);
             // xcom_.send_message(cmd_add_gnsssol);
 
-            // success_ = true;
+            success_ = true;
             init_done_ = true;
         } else {
             if(response == XCOMResp::INVALIDCHANNEL) {

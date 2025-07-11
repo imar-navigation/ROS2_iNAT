@@ -36,6 +36,7 @@ public:
 
      void activate();
      uint16_t getSetupFreq();
+     bool connected();
      bool success();
      void cleanup();
 
@@ -74,6 +75,7 @@ private:
     bool active_ = false;
     int32_t setup_freq_ = 0;
     size_t num_of_subscribers_ = 0;
+    std::atomic_bool connected_ = ATOMIC_VAR_INIT(false);
     std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
     rclcpp::Publisher<TwistStampedMsg>::SharedPtr pub_;
     TwistStampedMsg twiststamped_msg_;

@@ -112,25 +112,33 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
         sleeper.sleep();
         build_srv_extaid();
         sleeper.sleep();
-        if(build_topic_imu())
+        if(build_topic_imu()) {
             sleeper.sleep();
-        if(build_topic_navsatstatus())
+        }
+        if(build_topic_navsatstatus()) {
             sleeper.sleep();
-        if(build_topic_navsatfix_gnss())
+        }
+        if(build_topic_navsatfix_gnss()) {
             sleeper.sleep();
-        if(build_topic_navsatfix_ins())
+        }
+        if(build_topic_navsatfix_ins()) {
             sleeper.sleep();
-        if(build_topic_timereference())
+        }
+        if(build_topic_timereference()) {
             sleeper.sleep();
-        if(build_topic_magneticfield())
+        }
+        if(build_topic_magneticfield()) {
             sleeper.sleep();
-        if(build_topic_odometry())
+        }
+        if(build_topic_odometry()) {
             sleeper.sleep();
-        if(build_topic_posewithcovariancestamped())
+        }
+        if(build_topic_posewithcovariancestamped()) {
             sleeper.sleep();
-        if(build_topic_twiststamped())
+        }
+        if(build_topic_twiststamped()) {
             sleeper.sleep();
-
+        }
         return CallbackReturn::SUCCESS;
     } else {
         std::cerr << "client error";
@@ -280,6 +288,12 @@ bool DriverNode::build_topic_imu() {
         built = false;
         RCLCPP_INFO(get_logger(), "[%s] %s", imu_topic_name_.c_str(), "- topic skipped");
     }
+    // rclcpp::Rate sleeper(0.1);
+    // while(!imu_->success()) {
+    //     RCLCPP_INFO(get_logger(), "[%s] %s", imu_topic_name_.c_str(), "WAITING");
+    //     sleeper.sleep();
+    // }
+    // RCLCPP_INFO(get_logger(), "[%s] %s", imu_topic_name_.c_str(), "DONE");
     return built;
 }
 
@@ -588,8 +602,20 @@ DriverNode::CallbackReturn DriverNode::on_activate(const rclcpp_lifecycle::State
     bool activeTopicsPresent = false;
 
     // this is not a topic but a broadcaster
+    bool transformstamped_ok = false;
     if(transformstamped_) {
-        transformstamped_->activate();
+        for(int c = 0; c < 10; c++) {
+            if(transformstamped_->success()) {
+                transformstamped_->activate();
+                transformstamped_ok = true;
+                break;
+            }
+            rclcpp::Rate sleeper(1.0);
+            sleeper.sleep();
+        }
+        if(!transformstamped_ok) {
+            RCLCPP_ERROR(get_logger(), "[%s] %s", "transform", "configuration failed");
+        }
     }
 
     bool imu_ok = false;
