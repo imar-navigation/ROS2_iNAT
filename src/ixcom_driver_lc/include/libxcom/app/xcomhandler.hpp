@@ -39,6 +39,7 @@ public:
     ~XcomHandler() override = default;
 
     bool invalidChannel();
+    // bool connected();
     uint16_t getMaintiming();
     uint16_t getPrescaler();
     int32_t getLeapSeconds();
@@ -49,6 +50,7 @@ private:
     xcom::XComState &_xcom;
     bool invalid_channel_ = false;
     bool _init_done = false;
+    // std::atomic_bool connected_ = ATOMIC_VAR_INIT(false);
 
     void handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *frame) noexcept override;
     void handle_response(XCOMResp response) noexcept override;
@@ -68,9 +70,9 @@ private:
     void set_sysstat_mode();
     void add_sysstat();
 
-    std::atomic<uint16_t> maintiming_ = 0;
-    std::atomic<uint16_t> prescaler_ = 0;
-    std::atomic<bool> sysstat_added_ = false;
+    std::atomic<uint16_t> maintiming_ = ATOMIC_VAR_INIT(0);
+    std::atomic<uint16_t> prescaler_ = ATOMIC_VAR_INIT(0);
+    std::atomic<bool> sysstat_added_ = ATOMIC_VAR_INIT(false);
     const uint32_t sysstat_mode_ = PARDAT_SYSSTAT_MASK_IMU |
                                    PARDAT_SYSSTAT_MASK_GNSS |
                                    PARDAT_SYSSTAT_MASK_REMALIGNTIME;

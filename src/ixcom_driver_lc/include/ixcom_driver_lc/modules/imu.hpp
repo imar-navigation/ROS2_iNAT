@@ -35,6 +35,7 @@ public:
         const rclcpp::QoS &qos);
     ~IMU();
 
+    bool connected();
     void activate();
     uint16_t getSetupFreq();
     bool success();
@@ -74,6 +75,7 @@ private:
 
     size_t num_of_subscribers_ = 0;
     std::atomic_bool success_ = ATOMIC_VAR_INIT(false);
+    std::atomic_bool connected_ = ATOMIC_VAR_INIT(false);
 //    rclcpp_lifecycle::LifecyclePublisher<ImuMsg>::SharedPtr pub_;
     rclcpp::Publisher<ImuMsg>::SharedPtr pub_;
     ImuMsg imu_msg_;

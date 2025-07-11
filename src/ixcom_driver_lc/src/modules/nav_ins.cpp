@@ -122,7 +122,7 @@ void NavINS::handle_response(XCOMResp response) noexcept {
         invalid_channel_ = false;
 
         if(!init_done_) {
-
+            connected_ = true;
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(),
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
 
@@ -220,6 +220,10 @@ void NavINS::activate() {
 
 uint16_t NavINS::getSetupFreq() {
     return setup_freq_;
+}
+
+bool NavINS::connected() {
+    return connected_;
 }
 
 bool NavINS::success() {

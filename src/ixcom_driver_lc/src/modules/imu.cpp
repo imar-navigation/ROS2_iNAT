@@ -120,6 +120,8 @@ void IMU::handle_response(XCOMResp response) noexcept {
         invalid_channel_ = false;
 
         if(!init_done_) {
+            connected_ = true;
+            // RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "CONNECTED");
 
             RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(),
                         ("connected to iNAT on channel " + std::to_string(channel_)).c_str());
@@ -247,6 +249,10 @@ uint16_t IMU::getSetupFreq() {
 
 bool IMU::success() {
     return success_;
+}
+
+bool IMU::connected() {
+    return connected_;
 }
 
 void IMU::setParData(const XCOMParEKF_IMUCONFIG2& param) {
