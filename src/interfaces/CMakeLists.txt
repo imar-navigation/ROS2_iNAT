@@ -7,14 +7,9 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Num.msg"
-  "msg/Sphere.msg"
-  "msg/Array.msg"
-  "srv/AddThreeInts.srv"
   "srv/ExtAidPosLlh.srv"
   "srv/ExtAidPosEcef.srv"
   "srv/ExtAidPosUtm.srv"
@@ -23,12 +18,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ExtAidVel.srv"
   "srv/ExtAidVelBody.srv"
   "srv/ExtAidHeight.srv"
-  "action/Example.action"
-  "action/Stop.action"
-  "action/Realign.action"
-  "action/Reboot.action"
-  "action/GetConfigFile.action"
-  DEPENDENCIES geometry_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
 )
 
 if(BUILD_TESTING)
