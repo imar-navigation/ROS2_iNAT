@@ -37,6 +37,8 @@ enum PluginIDs {
     XCOM_PLUGINID_IATALGO       = 13, /**< This parameter contains internal paramter concerning signal processing and control */
     XCOM_PLUGINID_COBRA         = 14, /**< COBRA plugin id */
     XCOM_PLUGINID_PEGASUS       = 15, /**< PEGASUS plugin id */
+    XCOM_PLUGINID_PIXHAWK       = 16, /**< Pixhawk plugin id */
+    XCOM_PLUGINID_MSU           = 17, /**< Mobile Surveying Unit (MSU) plugin id */
     XCOM_PLUGINID_DBXDBOUT  = 20, /**< Rail DBX-DB plugin message containing output data */
     XCOM_PLUGINID_DBXDBIN   = 21, /**< Rail DBX-DB plugin parameter to provide input data */
     XCOM_PLUGINID_DBXDBCONF = 22, /**< Rail DBX-DB plugin parameter to modify plugin configuration */
@@ -517,6 +519,49 @@ typedef struct XCOM_STRUCT_PACK {
     uint8_t reserved[4]; /**< Reserved for further use */ /**< Reserved for further use */
     XCOMFooter footer;
 } XCOMmsg_FeedforwardCtrlData;
+//**
+/* iPEGASUS specific plugin parameters
+*/
+enum class PEGASUS_MSG_ID : uint16_t {
+    CMD_ALIGN                  = 0,
+    PAR_QUAT                   = 100,
+    PAR_EARTHRATE              = 101,
+    PAR_MIN_ALIGNTIME          = 102,
+    PAR_MAX_DEV_EARTHRATE      = 103,
+    PAR_SHAFT_MISALIGNMENT     = 104,
+    PAR_USE_SHAFT_MISALIGNMENT = 105,
+    NOT_USED = 0xFFFF
+};
+struct XCOMPegasusStatusType {
+    uint32_t alignment                 : 1; /** 1 = Alignment running */
+    uint32_t in_motion                 : 1; /** 1 = Motion detected */
+    uint32_t alignment_in_motion       : 1; /** 1 = Alignment invalid due to motion detection */
+    uint32_t min_align_time_reached    : 1; /** 1 = alignment_time > XCOMParPEGASUS_ParMinAligntime */
+    uint32_t earthrate_error           : 1; /** 1 = Deviation of determined earth rotation rate > XCOMParPEGASUS_ParMaxDevEarthRate */
+    uint32_t shaft_misalignment_active : 1; /** 1 = XCOMParPEGASUS_ParShaftMisalignmnet active */
+    uint32_t res                       : 26;
+};
+typedef struct XCOM_STRUCT_PACK {
+    double quat[4];                     /**< Relative orientation to initial orientation as quaternion */
+    double phi[3];                      /**< Accumulated angle increments per axis, i.e. not redundant to the quaternion [rad, rad, rad] */
+    float std_azi;                      /**< Estimated azimuth/yaw standard deviation TBD */
+    float std_tilt;                     /**< Estimated tilt standard deviation TBD*/
+    float time_since_align;             /**< Duration since alignmnet finished [s] */
+    float alignment_time;               /**< Duration since alignmnet started [s] */
+    XCOMPegasusStatusType status;       /**< PEGASUS Status Bits */
+    double gps_time;                    /**< GPS/System Time depending on configuration [s] */
+    double absolute_rpy[3];             /**< Absolute orientation as Euler Angles [rad, rad, rad] */
+    uint32_t reserved;
+} XCOMmsg_PEGASUSLOG_payload;
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;
+    XCOMPluginDataHeader plugin_header;
+    XCOMmsg_PEGASUSLOG_payload log;
+    XCOMFooter footer;
+} XCOMmsg_PEGASUSLOG;
+/**
+ * End of iPEGASUS specific content.
+ */
 #define XCOMMSG_PLUGINID_DBXDBOUT                         XCOM_PLUGINID_DBXDBOUT
 #define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_BITE_LEVEL0      0x00
 #define XCOMMSG_PLUGINID_DBXDBOUT_STATUS_BITE_LEVEL1      0x01
