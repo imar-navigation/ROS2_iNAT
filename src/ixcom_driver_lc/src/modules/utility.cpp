@@ -60,3 +60,8 @@ uint8_t updateFrameCounter(uint8_t counter) {
         return 0;
     return ++counter;
 }
+
+void rclsleep(float t) {
+        rclcpp::Rate sleeper(t);
+        sleeper.sleep();
+}

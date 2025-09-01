@@ -313,11 +313,12 @@ void SrvExtAid::handle_command(uint16_t cmd_id, std::size_t frame_len, uint8_t *
 
 void SrvExtAid::handle_xcom_param(const XCOMParIMU_MISALIGN& msg) noexcept {
     float rot_xyz[3] = {msg.xyz[0], msg.xyz[1], msg.xyz[2]};
+
     RCLCPP_INFO(node_->get_logger(),
-                "[srv_extaid] Rotation between INS enclosure and vehicle frame: "
-                "[%.3f, %.3f, %.3f] rad",
-                rot_xyz[0], rot_xyz[1], rot_xyz[2]);
-    rotVehicleToEnclosure.q_vehicle_to_enclosure.setRPY(rot_xyz[0], rot_xyz[1], rot_xyz[2]);
+                "[%s] %s [%0.3f, %0.3f, %0.3f]",
+                SRV_EXTAID.c_str(), "Rotation between INS enclosure and vehicle frame:", rot_xyz[0], rot_xyz[1], rot_xyz[2]);
+    
+                rotVehicleToEnclosure.q_vehicle_to_enclosure.setRPY(rot_xyz[0], rot_xyz[1], rot_xyz[2]);
     rotVehicleToEnclosure.q_vehicle_to_enclosure =
         rotVehicleToEnclosure.q_vehicle_to_enclosure
             .inverse();  // Invert the rotation to get the final transformation from vehicle frame into
@@ -356,6 +357,7 @@ void SrvExtAid::handle_response(XCOMResp response) noexcept {
 
             success_ = true;
             init_done_ = true;
+            // cv_build_.notify_one();
         } else {
             if(response == XCOMResp::INVALIDCHANNEL) {
                 invalid_channel_ = true;

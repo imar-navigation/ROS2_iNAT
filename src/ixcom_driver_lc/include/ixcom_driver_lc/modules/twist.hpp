@@ -11,6 +11,7 @@
 #include <ixcom/message_handler.h>
 #include <ixcom/response_handler.h>
 #include <ixcom/parameter_handler.h>
+#include <condition_variable>
 
 using XComMessages_Twist = xcom::MessageHandler<
                                     XCOMmsg_INSSOL,
@@ -34,11 +35,12 @@ public:
                  const rclcpp::QoS &qos);
     ~TwistStamped();
 
-     void activate();
-     uint16_t getSetupFreq();
-     bool connected();
-     bool success();
-     void cleanup();
+    std::condition_variable cv_;
+    void activate();
+    uint16_t getSetupFreq();
+    bool connected();
+    bool success();
+    void cleanup();
 
 
 private:

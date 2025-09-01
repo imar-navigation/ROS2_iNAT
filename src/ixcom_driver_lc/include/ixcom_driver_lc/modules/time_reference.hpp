@@ -11,6 +11,7 @@
 #include <ixcom/parameter_handler.h>
 #include <ixcom_driver_lc/ixcom_driver_conf.hpp>
 #include <ixcom_driver_lc/modules/transform.hpp>
+#include <condition_variable>
 
 using XComMessages_TimeRef = xcom::MessageHandler<XCOMmsg_SYSSTAT>;
 
@@ -31,6 +32,7 @@ public:
         const rclcpp::QoS &qos);
     ~TimeReference();
 
+    std::condition_variable cv_;
     void activate();
     uint16_t getSetupFreq();
     bool connected();

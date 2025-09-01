@@ -10,3 +10,5 @@ uint8_t updateFrameCounter(uint8_t counter);
 
 uint16_t calculateDividerForRate(float rate, uint16_t maintiming, uint16_t prescaler);
 int32_t calculateRateForDivider(uint16_t divider, uint16_t maintiming, uint16_t prescaler);
+
+void rclsleep(float t);

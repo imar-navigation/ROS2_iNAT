@@ -27,7 +27,6 @@ class SrvExtAid : public xcom::ResponseHandler,
                   xcom::CommandHandler,
                   xcom::ParameterHandler<XCOMParIMU_MISALIGN> {
 public:
-
     using SharedPtr = std::shared_ptr<SrvExtAid>;
 
     SrvExtAid(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
@@ -37,13 +36,13 @@ public:
               int32_t leap_seconds);
     ~SrvExtAid();
 
+    std::condition_variable cv_build_;
     // void activate();
     bool connected();
     bool success();
     void cleanup();
 
 private:
-
     const std::string SRV_EXTAID {"srv_extaid"};
     const std::string SRV_EXTPOSLLH {"ext_position_llh"};
     const std::string SRV_EXTPOSECEF {"ext_position_ecef"};

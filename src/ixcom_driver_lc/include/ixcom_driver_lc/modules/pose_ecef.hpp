@@ -12,6 +12,7 @@
 #include <ixcom/parameter_handler.h>
 #include <ixcom_driver_lc/ixcom_driver_conf.hpp>
 #include <ixcom_driver_lc/modules/transform.hpp>
+#include <condition_variable>
 
 using XComMessages_PoseCovStamped = xcom::MessageHandler<
                                     XCOMmsg_INSSOLECEF,
@@ -34,6 +35,7 @@ public:
                               const rclcpp::QoS &qos);
     ~PoseWithCovarianceStamped();
 
+    std::condition_variable cv_;
     void activate();
     uint16_t getSetupFreq();
     bool connected();

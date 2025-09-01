@@ -133,6 +133,7 @@ void TransformStamped::handle_response(XCOMResp response) noexcept {
 
             broadcast_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
             success_ = true;
+            // cv_.notify_one();
         }
         init_done_ = true;
     } else {
@@ -210,9 +211,10 @@ void TransformStamped::updateGNSSLEVERARM(const XCOMmsg_GNSSLEVERARM& msg) {
 
 void TransformStamped::updateIMUMISALIGN(const XCOMParIMU_MISALIGN& par) {
     float rot_xyz[3] = {par.xyz[0], par.xyz[1], par.xyz[2]};
-    RCLCPP_INFO(node_->get_logger(),
-                "Rotation between INS enclosure and vehicle frame: [%f, %f, %f]", rot_xyz[0],
-                rot_xyz[1], rot_xyz[2]);
+
+    RCLCPP_INFO(node_->get_logger(), "[%s] %s [%0.3f, %0.3f, %0.3f]",
+                "tf2", "Rotation between INS enclosure and vehicle frame:", rot_xyz[0], rot_xyz[1], rot_xyz[2]);
+    
     tf2::Quaternion q;
     q.setRPY(rot_xyz[0], rot_xyz[1], rot_xyz[2]);
     q = q.inverse();  // Invert the rotation to get the vehicle frame in the INS enclosure frame
@@ -239,6 +241,7 @@ void TransformStamped::broadcast() {
         data_updated_ = false;
         subscriber_added_ = false;
         broadcast_->sendTransform(tf_msg_.transforms);
+        RCLCPP_INFO(node_->get_logger(), "[%s] %s", "tf2", "broadcast done!");
         tf_msg_.transforms.clear();
     }
 }

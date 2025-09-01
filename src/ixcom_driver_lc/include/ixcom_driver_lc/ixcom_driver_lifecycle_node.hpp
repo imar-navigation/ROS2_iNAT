@@ -30,6 +30,8 @@
 #include "ixcom_driver_lc/modules/twist.hpp"
 #include "ixcom_driver_lc/modules/srv_extaid.hpp"
 
+#include <mutex>
+
 class DriverNode : public rclcpp_lifecycle::LifecycleNode
 {
 public:
@@ -88,6 +90,7 @@ protected:
     std::shared_ptr<TwistStamped> twiststamped_;
 
 private:
+    std::mutex m_;
     void declare_parameters();
     void get_parameters();
     void build_broadcast_transformstamped();
@@ -101,4 +104,5 @@ private:
     bool build_topic_odometry();
     bool build_topic_posewithcovariancestamped();
     bool build_topic_twiststamped();
+    // static void quit(int s);
 };

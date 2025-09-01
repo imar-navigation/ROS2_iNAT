@@ -11,6 +11,7 @@
 #include <ixcom/parameter_handler.h>
 #include <ixcom_driver_lc/ixcom_driver_conf.hpp>
 #include <ixcom_driver_lc/modules/transform.hpp>
+#include <condition_variable>
 
 using XComMessages_MagField = xcom::MessageHandler<XCOMmsg_MAGDATA>;
 using XComParameters_MagField = xcom::ParameterHandler<XCOMParEKF_MAGATTAID>;
@@ -33,6 +34,7 @@ public:
                   const rclcpp::QoS &qos);
     ~MagneticField();
 
+    std::condition_variable cv_;
     void activate();
     uint16_t getSetupFreq();
     bool connected();

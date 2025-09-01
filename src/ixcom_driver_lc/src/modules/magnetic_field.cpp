@@ -158,6 +158,7 @@ void MagneticField::handle_response(XCOMResp response) noexcept {
 
             pub_ = node_->create_publisher<MagneticFieldMsg>(topic_name_, qos_);
             success_ = true;
+            // cv_.notify_one();
         }
         init_done_ = true;
     } else {
@@ -255,61 +256,61 @@ void MagneticField::publish() {
 
 void MagneticField::frq_mon() {
 
-    bool unknown_state_printed = false;
+    // bool unknown_state_printed = false;
     bool par_MAGATTAID_ok = true;
     bool msg_MAGDATA_ok = true;
 
     while(run_frq_mon_) {
 
-        bool pub_state_changed = false;
+        // bool pub_state_changed = false;
 
-        if(duration_ > (time_delta_ * 2.0)) {
-            if(pub_state_ != PubState::ERR) {
-                pub_state_changed = true;
-                pub_state_ = PubState::ERR;
-            }
-        } else if(duration_ > (time_delta_ * 1.3)) {
-            if(pub_state_ != PubState::WARN) {
-                pub_state_changed = true;
-                pub_state_ = PubState::WARN;
-            }
-            // RCLCPP_ERROR(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "frequency delayed by more than 100 %");
-        } else if(duration_ == 0) {
-            if(pub_state_ != PubState::UNKNOWN) {
-                pub_state_changed = true;
-                pub_state_ = PubState::UNKNOWN;
-            }
-        } else {
-            if(pub_state_ != PubState::OK) {
-                pub_state_changed = true;
-                pub_state_ = PubState::OK;
-            }
-            // RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), ("time delta / duration: " + std::to_string(time_delta_) + " / " + std::to_string(duration)).c_str());
-        }
+        // if(duration_ > (time_delta_ * 2.0)) {
+        //     if(pub_state_ != PubState::ERR) {
+        //         pub_state_changed = true;
+        //         pub_state_ = PubState::ERR;
+        //     }
+        // } else if(duration_ > (time_delta_ * 1.3)) {
+        //     if(pub_state_ != PubState::WARN) {
+        //         pub_state_changed = true;
+        //         pub_state_ = PubState::WARN;
+        //     }
+        //     // RCLCPP_ERROR(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "frequency delayed by more than 100 %");
+        // } else if(duration_ == 0) {
+        //     if(pub_state_ != PubState::UNKNOWN) {
+        //         pub_state_changed = true;
+        //         pub_state_ = PubState::UNKNOWN;
+        //     }
+        // } else {
+        //     if(pub_state_ != PubState::OK) {
+        //         pub_state_changed = true;
+        //         pub_state_ = PubState::OK;
+        //     }
+        //     // RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), ("time delta / duration: " + std::to_string(time_delta_) + " / " + std::to_string(duration)).c_str());
+        // }
 
-        if(pub_state_changed) {
-            switch(pub_state_) {
-                case PubState::UNKNOWN: {
-                    if(!unknown_state_printed) {
-                        RCLCPP_WARN(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "topic frequency unknown");
-                        unknown_state_printed = true;
-                    }
-                    break;
-                }
-                case PubState::OK: {
-                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "topic frequency ok");
-                    break;
-                }
-                case PubState::WARN: {
-                    RCLCPP_WARN(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "topic frequency delayed by more than 30 %");
-                    break;
-                }
-                case PubState::ERR: {
-                    RCLCPP_ERROR(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "topic frequency delayed by more than 100 %");
-                    break;
-                }
-            }
-        }
+        // if(pub_state_changed) {
+        //     switch(pub_state_) {
+        //         case PubState::UNKNOWN: {
+        //             if(!unknown_state_printed) {
+        //                 RCLCPP_WARN(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "topic frequency unknown");
+        //                 unknown_state_printed = true;
+        //             }
+        //             break;
+        //         }
+        //         case PubState::OK: {
+        //             RCLCPP_INFO(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "topic frequency ok");
+        //             break;
+        //         }
+        //         case PubState::WARN: {
+        //             RCLCPP_WARN(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "topic frequency delayed by more than 30 %");
+        //             break;
+        //         }
+        //         case PubState::ERR: {
+        //             RCLCPP_ERROR(node_->get_logger(), "[%s] %s", topic_name_.c_str(), "topic frequency delayed by more than 100 %");
+        //             break;
+        //         }
+        //     }
+        // }
 
         if(msg_MAGDATA_ok && (msg_MAGDATA_age_ > xcom_age_max_)) {
             msg_MAGDATA_ok = false;
