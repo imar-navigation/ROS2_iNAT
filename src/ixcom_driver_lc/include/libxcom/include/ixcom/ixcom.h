@@ -132,11 +132,27 @@ public:
                                               const double& heading_stddev);
     XCOMCmd_EXTAID_VEL get_xcomcmd_extaid_vel_ned(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
                                                   const std::array<double, 3>& vel_stddev);
+    XCOMCmd_EXTAID_VEL2 get_xcomcmd_extaid_vel_ned_2(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                     const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
+                                                     const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_VEL get_xcomcmd_extaid_vel_ecef(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                   const std::array<double, 3>& vel_stddev);
+    XCOMCmd_EXTAID_VEL2 get_xcomcmd_extaid_vel_ecef_2(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                      const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
+                                                      const std::array<double, 3>& leverarm_stddev);
     XCOMCmd_EXTAID_VELBODY get_xcomcmd_extaid_vel_body(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
                                                        const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
                                                        const std::array<double, 3>& leverarm_stddev);
     XCOMCmd_EXTAID_HEIGHT get_xcomcmd_extaid_height(const double& timestamp, uint16_t timemode, const double& height,
                                                     const double& height_stddev);
+    XCOMCmd_EXTAID_HEIGHT2 get_xcomcmd_extaid_height_2(const double& timestamp, uint16_t timemode, const double& height,
+                                                       const double& height_stddev, const std::array<double, 3>& leverarm,
+                                                       const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_BAROALT get_xcomcmd_extaid_baro_alt(const double& timestamp, uint16_t timemode, const double& height,
+                                                       const double& height_stddev, const std::array<double, 3>& leverarm,
+                                                       const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_MAGFIELD get_xcomcmd_extaid_mag_field(const double& timestamp, uint16_t timemode, const std::array<double, 3>& mag_field,
+                                                         const std::array<double, 3>& mag_field_stddev);
     // XCOM parameter
     template<typename ParamType>
     ParamType get_generic_param() {

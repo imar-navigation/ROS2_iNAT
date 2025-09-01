@@ -14,7 +14,18 @@ becomes
 
 A modified namespace can also be passed as argument to the launch file with `namespace:=your_ns` which must fit the namespace definition in the configuration file. Also, a different configuration file can be passed as argument with `publisher_config_file:='/your/path/to/file.yml'`. So, if multiple configuration files are available, multiple nodes can be launched using different namespaces and configuration files, which these namespaces are defined in, as arguments.<br>
 
-If no launch file is used, a subscriber must be launched with `--ros-args -r __ns:=/your_ns` as argument.
+Example:
+```console
+ros2 launch ixcom_driver_lc autostart.launch.py namespace:=your_ns
+```
+
+If no launch file is used, a subscriber must be launched with `--ros-args -r __ns:=/your_ns` as argument.<br>
+
+Example:
+```console
+ros2 run your_node sub --ros-args -r __ns:=/your_ns
+```
+
 
 
 ## General Information

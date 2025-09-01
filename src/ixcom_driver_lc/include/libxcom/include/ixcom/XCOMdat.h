@@ -189,6 +189,7 @@ enum XComMessageID {
     XCOM_MSGID_AHRS                 = 0xD3,    /**< AHRS module output */
     XCOM_MSGID_IPVAS                = 0xD2,    /**< Inertial data, position, velocity and status information */
     XCOM_MSGID_POSAVE               = 0xD4,    /**< Position averaging result */
+    XCOM_MSGID_TRANSFERALIGN        = 0x9D,    /**< Transfer alignment message */
     XCOM_MSGID_COMMAND              = 0xFD,    /**< iXCOM command ID */
     XCOM_MSGID_RESPONSE             = 0xFE,    /**< iXCOM response ID */
     XCOM_MSGID_PARAMETER            = 0xFF     /**< iXCOM parameter ID */
@@ -383,7 +384,11 @@ enum XCOMcmd_Extaid {
     XCOM_CMDEXTAID_POS_ECEF     = 0x000A,   /**< External position aiding in ECEF frame */
     XCOM_CMDEXTAID_POS_UTM      = 0x000B,   /**< External position aiding in UTM frame */
     XCOM_CMDEXTAID_POS_MGRS     = 0x000C,   /**< External position aiding in MGRS frame */
-    XCOM_CMDEXTAID_MAX          = XCOM_CMDEXTAID_POS_MGRS
+    XCOM_CMDEXTAID_VEL_ECEF2    = 0x000D,   /**< External velocity aiding in ECEF frame */
+    XCOM_CMDEXTAID_VEL_NED2     = 0x000E,   /**< External velocity aiding in NED frame. */
+    XCOM_CMDEXTAID_HGT2         = 0x000F,   /**< External height aiding.*/
+    XCOM_CMDEXTAID_MAGFIELD     = 0x0010,   /**< External magnetic field aiding.*/
+    XCOM_CMDEXTAID_MAX          = XCOM_CMDEXTAID_MAGFIELD
 };
 /**
  * XCOM Parameter
@@ -866,6 +871,7 @@ enum XComParameterID {
     XCOMPAR_EXTSENSOR_NMEA0183      = 2100,    /**< This parameter configures the external NMEA0183 input interface */
     XCOMPAR_EXTSENSOR_VIPS          = 2101,    /**< This parameter configures the external VIPS interface */
     XCOMPAR_EXTSENSOR_VBODYMISALIGN = 2102,    /**< This parameter defines the rotation matrix from the external sensor to the iNAT standard enclosure frame. */
+    XCOMPAR_EXTSENSOR_INAT          = 2103,    /**< This parameters configures the external iNAT interface */
     XCOMPAR_INVALID = 0xFFFF
 };
 /**
@@ -2824,6 +2830,7 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;                 /**< XCOM header */
     double time;                       /**< External magnetic sensor's timestamp [s] */
     float magnetic_field[3];           /**< Magnetic field vector [uT] */
+    float magnetic_heading;            /**< Magnetic heading (calculated from magnetic field values) [rad] */
     uint8_t measurement_valid;         /**< Magnetic measurements valid/invalid */
     uint8_t calib_state;               /**< 3D-calibration state */
     uint8_t reserved[6];               /**< Reserved for further use */
@@ -2867,6 +2874,21 @@ typedef struct XCOM_STRUCT_PACK {
     uint16_t divider;           /**< The data output rate divider for synchronous logs generation is relative to INS navigation rate */
     XCOMFooter footer;
 } XCOMCmd_LOG;
+/**
+ * iXCOM LOG2 command:
+ * ------------------
+ * The LOG command manipulates the log list of the currently active channel. Besides a specific message ID, a Trigger, a Command Parameter
+ * and a Divider value are expected.
+ */
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;          /**< XCOM header */
+    XCOMCmdHeader cmd_header;   /**< XCOM command header */
+    uint8_t msg_id;             /**< Defines the log which is manipulated. */
+    uint8_t trigger;            /**< see XComLogTrigger */
+    uint16_t log_cmd;           /**< see XComLogCmdParam */
+    uint32_t divider;           /**< The data output rate divider for synchronous logs generation is relative to INS navigation rate */
+    XCOMFooter footer;
+} XCOMCmd_LOG2;
 /**
  * iXCOM XCOM command:
  * -------------------
@@ -3191,6 +3213,22 @@ typedef XCOMCmd_EXTAID_VEL XCOMCmd_EXTAID_VELNED;  /**< External velocity aiding
 typedef XCOMCmd_EXTAID_VEL XCOMCmd_EXTAID_VELECEF; /**< External velocity aiding in ECEF frame */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;              /**< XCOM header */
+    XCOMCmdHeader cmd_header;       /**< XCOM command header */
+    double time_stamp;              /**< Time at which the measurement was valid [sec]  */
+    uint16_t time_mode;             /**< Time mode <time_stamp>:
+                                           0 = Absolute GPS timestamp
+                                           1 = Latency */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_VEL */
+    double velocity[3];             /**< Veast, Vnorth, Vdowm [m/s] */
+    double velocity_stddev[3];      /**< Standard deviation of external velocity aiding [m/s] */
+    double lever_arm[3];            /**< Lever arm in x,y,z-direction [m] */
+    double lever_arm_stddev[3];     /**< Standard deviation of lever arm in x,y,z-direction [m] */
+    XCOMFooter footer;
+} XCOMCmd_EXTAID_VEL2;
+typedef XCOMCmd_EXTAID_VEL2 XCOMCmd_EXTAID_VELNED2;  /**< External velocity aiding in NED frame */
+typedef XCOMCmd_EXTAID_VEL2 XCOMCmd_EXTAID_VELECEF2; /**< External velocity aiding in ECEF frame */
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;              /**< XCOM header */
     XCOMCmdHeader cmd_header;        /**< XCOM command header */
     double time_stamp;              /**< Time at which the measurement was valid [sec]  */
     uint16_t time_mode;             /**< Time mode <time_stamp>:
@@ -3200,7 +3238,7 @@ typedef struct XCOM_STRUCT_PACK {
     double velocity[3];             /**< External velocity in body x-,y-,z-direction [m/s] */
     double velocity_stddev[3];      /**< Standard deviation of external velocity aiding [m/s] */
     double lever_arm[3];            /**< Lever arm in x,y,z-direction [m] */
-    double lever_arm_stddev[3];     /**< tandard deviation of lever arm in x,y,z-direction [m] */
+    double lever_arm_stddev[3];     /**< Standard deviation of lever arm in x,y,z-direction [m] */
     XCOMFooter footer;
 } XCOMCmd_EXTAID_VELBODY;
 /**
@@ -3218,6 +3256,52 @@ typedef struct XCOM_STRUCT_PACK {
     double height_stddev;           /**< Standard deviation of external height aiding [m] */
     XCOMFooter footer;
 } XCOMCmd_EXTAID_HEIGHT;
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;              /**< XCOM header */
+    XCOMCmdHeader cmd_header;       /**< XCOM command header */
+    double time_stamp;              /**< Time at which the measurement was valid [sec]  */
+    uint16_t time_mode;             /**< Time mode <time_stamp>:
+                                           0 = Absolute GPS timestamp
+                                           1 = Latency */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_HGT */
+    double height;                  /**< External height [m] */
+    double height_stddev;           /**< Standard deviation of external height aiding [m] */
+    double lever_arm[3];            /**< Lever arm in x,y,z-direction [m] */
+    double lever_arm_stddev[3];     /**< Standard deviation of lever arm in x,y,z-direction [m] */
+    XCOMFooter footer;
+} XCOMCmd_EXTAID_HEIGHT2;
+/**
+ * External barometric height aiding
+ */
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;              /**< XCOM header */
+    XCOMCmdHeader cmd_header;       /**< XCOM command header */
+    double time_stamp;              /**< Time at which the measurement was valid [sec]  */
+    uint16_t time_mode;             /**< Time mode <time_stamp>:
+                                           0 = Absolute GPS timestamp
+                                           1 = Latency */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_HGT */
+    double height;                  /**< External barometric height [m] */
+    double height_stddev;           /**< Standard deviation of external barometric height aiding [m] */
+    double lever_arm[3];            /**< Lever arm in x,y,z-direction [m] */
+    double lever_arm_stddev[3];     /**< Standard deviation of lever arm in x,y,z-direction [m] */
+    XCOMFooter footer;
+} XCOMCmd_EXTAID_BAROALT;
+/**
+ * External magnetic field aiding
+ */
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;              /**< XCOM header */
+    XCOMCmdHeader cmd_header;       /**< XCOM command header */
+    double time_stamp;              /**< Time at which the measurement was valid [sec]  */
+    uint16_t time_mode;             /**< Time mode <time_stamp>:
+                                           0 = Absolute GPS timestamp
+                                           1 = Latency */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_HGT */
+    double magnetic_field[3];       /**< Magnetic field vector [uT] */
+    double magnetic_field_stddev[3];/**< Standard deviation of magnetic field vector [uT] */
+    XCOMFooter footer;
+} XCOMCmd_EXTAID_MAGFIELD;
 /**
  * ******************************************************************************************
  * XCOM parameter definition

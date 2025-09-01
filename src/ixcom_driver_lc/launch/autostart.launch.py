@@ -23,19 +23,20 @@ def generate_launch_description():
         default_value=get_package_share_directory(
             'ixcom_driver_lc') + '/params/publisher_config.yml',
             description='Path to a parameter file that will be passed '
-            'to the ixcom_driver_lc_node')
+            'to ixcom_driver_lc')
 
     ixcom_driver_lc_node = LifecycleNode(
         package="ixcom_driver_lc",
-        executable="ixcom_driver_lifecycle_node",
+        executable="ixcom_driver_lc",
         namespace=namespace,
-        name="ixcom_driver_lifecycle_node",
+        name="ixcom_driver_lc",
         output="screen",
         parameters=[
             publisher_config_file
         ],
         arguments=['--ros-args', '--log-level', 'INFO'],
-        on_exit=Shutdown()
+        # on_exit=Shutdown()  # causes error when user exits with ctrl-c:
+                              # [ERROR] [launch]: Caught exception in launch (see debug for traceback): Cannot shutdown a ROS adapter that is not running
     )
 
     # Changes the lifecycle state of the ixcom_driver_lc_node to configure
@@ -70,7 +71,7 @@ def generate_launch_description():
             target_lifecycle_node=ixcom_driver_lc_node,
             goal_state='active',
             entities=[
-                LogInfo(msg='ixcom_driver_lc_node reachted state "active"'),
+                LogInfo(msg='ixcom_driver_lc reachted state "active"'),
             ]
         )
     )
@@ -96,7 +97,7 @@ def generate_launch_description():
         # Add the launch arguments
         namespace_arg,
         pub_config_arg,
-        LogInfo(msg=['ixcom_driver_lifecycle_node started with the following parameter file: ', publisher_config_file]),
+        LogInfo(msg=['ixcom_driver_lc started with the following parameter file: ', publisher_config_file]),
         # Add the ixcom_driver_lc_node, as well as the necessary event handlers for automated
         # lifecycle state transitioning
         ixcom_driver_lc_node,

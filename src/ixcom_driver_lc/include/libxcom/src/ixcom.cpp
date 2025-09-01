@@ -501,6 +501,60 @@ XCOMCmd_EXTAID_VEL XComState::get_xcomcmd_extaid_vel_ned(const double& timestamp
     complete_message(frame);
     return frame;
 }
+XCOMCmd_EXTAID_VEL2 XComState::get_xcomcmd_extaid_vel_ned_2(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                            const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
+                                                            const std::array<double, 3>& leverarm_stddev) {
+    XCOMCmd_EXTAID_VEL2 frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_VEL_NED2;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    for(int i = 0; i < 3; i++) {
+        frame.velocity[i]         = vel[i];
+        frame.velocity_stddev[i]  = vel_stddev[i];
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_VEL XComState::get_xcomcmd_extaid_vel_ecef(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                          const std::array<double, 3>& vel_stddev) {
+    XCOMCmd_EXTAID_VEL frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_VEL_ECEF;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    for(int i = 0; i < 3; i++) {
+        frame.velocity[i]        = vel[i];
+        frame.velocity_stddev[i] = vel_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_VEL2 XComState::get_xcomcmd_extaid_vel_ecef_2(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                             const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
+                                                             const std::array<double, 3>& leverarm_stddev) {
+    XCOMCmd_EXTAID_VEL2 frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_VEL_ECEF2;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    for(int i = 0; i < 3; i++) {
+        frame.velocity[i]         = vel[i];
+        frame.velocity_stddev[i]  = vel_stddev[i];
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
 XCOMCmd_EXTAID_VELBODY XComState::get_xcomcmd_extaid_vel_body(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
                                                               const std::array<double, 3>& vel_stddev,
                                                               const std::array<double, 3>& leverarm,
@@ -532,6 +586,61 @@ XCOMCmd_EXTAID_HEIGHT XComState::get_xcomcmd_extaid_height(const double& timesta
     frame.time_mode            = timemode;
     frame.height               = height;
     frame.height_stddev        = height_stddev;
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_HEIGHT2 XComState::get_xcomcmd_extaid_height_2(const double& timestamp, uint16_t timemode, const double& height,
+                                                              const double& height_stddev, const std::array<double, 3>& leverarm,
+                                                              const std::array<double, 3>& leverarm_stddev) {
+    XCOMCmd_EXTAID_HEIGHT2 frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_HGT2;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    frame.height               = height;
+    frame.height_stddev        = height_stddev;
+    for(int i = 0; i < 3; i++) {
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_BAROALT XComState::get_xcomcmd_extaid_baro_alt(const double& timestamp, uint16_t timemode, const double& height,
+                                                              const double& height_stddev, const std::array<double, 3>& leverarm,
+                                                              const std::array<double, 3>& leverarm_stddev) {
+    XCOMCmd_EXTAID_BAROALT frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_BAROALT;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    frame.height               = height;
+    frame.height_stddev        = height_stddev;
+    for(int i = 0; i < 3; i++) {
+        frame.lever_arm[i]        = leverarm[i];
+        frame.lever_arm_stddev[i] = leverarm_stddev[i];
+    }
+    complete_message(frame);
+    return frame;
+}
+XCOMCmd_EXTAID_MAGFIELD XComState::get_xcomcmd_extaid_mag_field(const double& timestamp, uint16_t timemode,
+                                                                const std::array<double, 3>& mag_field,
+                                                                const std::array<double, 3>& mag_field_stddev) {
+    XCOMCmd_EXTAID_MAGFIELD frame{};
+    build_header(frame, 0.0, 0, XComMessageID::XCOM_MSGID_COMMAND, XComLogTrigger::XCOM_CMDLOG_TRIG_SYNC);
+    frame.cmd_header.cmd_id    = XCOM_CMDID_EXTAID;
+    frame.cmd_header.specific  = 0;
+    frame.command_parameter_id = XCOM_CMDEXTAID_MAGFIELD;
+    frame.time_stamp           = timestamp;
+    frame.time_mode            = timemode;
+    for(int i = 0; i < 3; i++) {
+        frame.magnetic_field[i]        = mag_field[i];
+        frame.magnetic_field_stddev[i] = mag_field_stddev[i];
+    }
     complete_message(frame);
     return frame;
 }

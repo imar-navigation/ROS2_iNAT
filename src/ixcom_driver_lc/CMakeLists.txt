@@ -26,21 +26,7 @@ find_package(ixcom_interfaces REQUIRED)
 #   "../interfaces/srv/ExtAidXcomMsg.srv"
 # )
 
-set(ixcom_src
-        include/libxcom/src/ixcom.cpp
-        include/libxcom/src/crc16.cpp
-        include/libxcom/src/xcom_parser.cpp
-        include/libxcom/src/tcp_client.cpp
-        include/libxcom/app/xcomhandler.cpp
-)
-
-include_directories(
-        include/libxcom/include/
-)
-
-add_executable(ixcom_driver_lifecycle_node
-        ${ixcom_src}
-        src/ixcom_driver_lifecycle_node.cpp
+set(src
         src/modules/utility.cpp
         src/modules/transform.cpp
         src/modules/imu.cpp
@@ -54,21 +40,39 @@ add_executable(ixcom_driver_lifecycle_node
         src/modules/twist.cpp
         src/modules/srv_extaid.cpp
 )
-# target_link_libraries(ixcom_driver_lifecycle_node
+
+set(ixcom_src
+        include/libxcom/src/ixcom.cpp
+        include/libxcom/src/crc16.cpp
+        include/libxcom/src/xcom_parser.cpp
+        include/libxcom/src/tcp_client.cpp
+        include/libxcom/app/xcomhandler.cpp
+)
+
+include_directories(
+        include/libxcom/include/
+)
+
+add_executable(ixcom_driver_lc
+        ${ixcom_src}
+        ${src}
+        src/ixcom_driver_lifecycle_node.cpp
+)
+# target_link_libraries(ixcom_driver_lc
 #         ${CMAKE_CURRENT_LIST_DIR}/include/libxcom/bin/libxcom/libxcom.a
 # )
 
-# target_include_directories(ixcom_driver_lifecycle_node PUBLIC
+# target_include_directories(ixcom_driver_lc PUBLIC
 #     ${PROJECT_SOURCE_DIR}/include/libxcom/include
 # )
 
-set_property(TARGET ixcom_driver_lifecycle_node PROPERTY CXX_STANDARD 11)
+set_property(TARGET ixcom_driver_lc PROPERTY CXX_STANDARD 11)
 
-target_include_directories(ixcom_driver_lifecycle_node PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+target_include_directories(ixcom_driver_lc PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(ixcom_driver_lifecycle_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(ixcom_driver_lc PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 ament_target_dependencies(
-  ixcom_driver_lifecycle_node
+  ixcom_driver_lc
   rclcpp
   rclcpp_lifecycle
   lifecycle_msgs
@@ -80,13 +84,43 @@ ament_target_dependencies(
   ixcom_interfaces
 )
 
-install(TARGETS ixcom_driver_lifecycle_node
-  DESTINATION lib/${PROJECT_NAME})
+install(TARGETS ixcom_driver_lc
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(DIRECTORY
   params launch
   DESTINATION share/${PROJECT_NAME}/
 )
+
+# if(BUILD_TESTING)
+#   find_package(ament_cmake_gtest REQUIRED)
+#   ament_add_gtest(${PROJECT_NAME}_common_test
+#                     test/common_test.cpp
+#                     ${ixcom_src}
+#                     ${src}
+#   )
+#   target_include_directories(${PROJECT_NAME}_common_test PUBLIC
+#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#     $<INSTALL_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+#   )
+
+#   target_link_libraries(${PROJECT_NAME}_common_test)
+
+#   ament_target_dependencies(
+#     ${PROJECT_NAME}_common_test
+#     rclcpp
+#     rclcpp_lifecycle
+#     lifecycle_msgs
+#     sensor_msgs
+#     geometry_msgs
+#     nav_msgs
+#     tf2
+#     tf2_geometry_msgs
+#     ixcom_interfaces
+#   )
+# endif()
+
 
 
 # if(BUILD_TESTING)
@@ -110,5 +144,5 @@ install(DIRECTORY
 
 # endif()
 
-# ament_export_dependencies(rosidl_default_runtime)
+ament_export_dependencies(rosidl_default_runtime)
 ament_package()

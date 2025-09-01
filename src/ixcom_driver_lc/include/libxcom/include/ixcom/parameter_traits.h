@@ -387,8 +387,16 @@ struct ParameterTraits<XCOMParEKF_GNSSPDOP> {
     static constexpr uint16_t Id = XCOMPAR_PAREKF_GNSSPDOP;
 };
 template<>
+struct ParameterTraits<XCOMParEKF_DUALANTAID> {
+    static constexpr uint16_t Id = XCOMPAR_PAREKF_DUALANTAID;
+};
+template<>
 struct ParameterTraits<XCOMParEKF_STARTUPV2> {
     static constexpr uint16_t Id = XCOMPAR_PAREKF_STARTUPV2;
+};
+template<>
+struct ParameterTraits<XCOMParEKF_MAGATTAID> {
+    static constexpr uint16_t Id = XCOMPAR_PAREKF_MAGATTAID;
 };
 template<>
 struct ParameterTraits<XCOMParEKF_MADCAID> {
@@ -497,10 +505,6 @@ struct ParameterTraits<XCOMParDAT_VEL> {
 template<>
 struct ParameterTraits<XCOMParDAT_IMU> {
     static constexpr uint16_t Id = XCOMPAR_PARDAT_IMU;
-};
-template<>
-struct ParameterTraits<XCOMParEKF_MAGATTAID> {
-    static constexpr uint16_t Id = XCOMPAR_PAREKF_MAGATTAID;
 };
 template<>
 struct ParameterTraits<XCOMParDAT_SYSSTAT> {
@@ -729,6 +733,10 @@ struct ParameterTraits<XCOMParIO_SYNCOUT2> {
 template<>
 struct ParameterTraits<XCOMParIO_SYNCIN> {
     static constexpr uint16_t Id = XCOMPAR_PARIO_SYNCIN;
+};
+template<>
+struct ParameterTraits<XCOMParSCU_NADIR> {
+    static constexpr uint16_t Id = XCOMPAR_PARSCU_NADIR;
 };
 template<>
 struct ParameterTraits<XCOMParTIMESYNC_NTP> {

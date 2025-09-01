@@ -1,4 +1,4 @@
-/ixcom/ixcom_driver_lifecycle_node:     # used by ixcom_driver_lifecycle_node in the namespace ixcom
+/ixcom/ixcom_driver_lc:                 # used by ixcom_driver_lc in the namespace ixcom
 # /**:                                  # one fits all
   ros__parameters:
     ip:
