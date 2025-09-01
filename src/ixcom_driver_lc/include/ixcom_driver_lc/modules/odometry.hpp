@@ -15,6 +15,7 @@
 #include <ixcom_driver_lc/ixcom_driver_conf.hpp>
 #include <ixcom_driver_lc/modules/transform.hpp>
 #include <tf2_ros/static_transform_broadcaster.h>
+#include <condition_variable>
 
 using XComMessages_Odo = xcom::MessageHandler<
                                     XCOMmsg_INSSOL,
@@ -40,6 +41,7 @@ public:
              const rclcpp::QoS &qos);
     ~Odometry();
 
+    std::condition_variable cv_;
     void activate();
     uint16_t getSetupFreq();
     bool connected();

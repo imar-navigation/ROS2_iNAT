@@ -12,6 +12,7 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <ixcom_driver_lc/ixcom_driver_conf.hpp>
+#include <condition_variable>
 
 using XComMessages_Transform   = xcom::MessageHandler<XCOMmsg_GNSSLEVERARM>;
 using XComParameters_Transform = xcom::ParameterHandler<XCOMParIMU_MISALIGN>;
@@ -33,6 +34,7 @@ public:
         uint16_t prescaler);
     ~TransformStamped();
 
+    std::condition_variable cv_;
     void activate();
     void subscriberAdded();
     bool connected();

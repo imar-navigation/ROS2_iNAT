@@ -1,5 +1,6 @@
 #pragma once
 
+#include <condition_variable>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_status.hpp>
@@ -35,6 +36,7 @@ public:
         const rclcpp::QoS &qos);
     ~IMU();
 
+    std::condition_variable cv_;
     bool connected();
     void activate();
     uint16_t getSetupFreq();
