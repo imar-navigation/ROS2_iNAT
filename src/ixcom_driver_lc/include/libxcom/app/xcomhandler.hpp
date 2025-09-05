@@ -10,6 +10,7 @@
 #include <ixcom/message_handler.h>
 #include <ixcom/response_handler.h>
 #include <ixcom/parameter_handler.h>
+#include <ixcom_driver_lc/ixcom_driver_conf.hpp>
 //#include <gflags/gflags.h>
 #include <iostream>
 
@@ -35,6 +36,7 @@ public:
                          uint8_t serial_port,
                          uint32_t serial_baud,
                          bool serial_enable,
+                         Config::ImudataMode imudata_mode,
                          int32_t leap_seconds);
     ~XcomHandler() override = default;
 
@@ -79,6 +81,7 @@ private:
     uint32_t current_sysstat_mode_;
     bool sysstat_mode_is_set_ = false;
     int fwv_[3] = {0, 0, 0};
+    Config::ImudataMode imudata_mode_;
     int32_t leap_seconds_;
     XCOM_PARDAT_VEL_Mode vel_mode_;
     XCOM_PARDAT_IMU_Mode imu_mode_;

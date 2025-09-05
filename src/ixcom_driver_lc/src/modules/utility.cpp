@@ -65,3 +65,30 @@ void rclsleep(float t) {
         rclcpp::Rate sleeper(t);
         sleeper.sleep();
 }
+
+bool operator!=(const Config::ImudataMode& lhs, const XCOM_PARDAT_IMU_Mode& rhs) {
+    if((lhs == Config::ImudataMode::IMURAW) and (rhs == XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMURAW)) return false;
+    if((lhs == Config::ImudataMode::IMUCORR) and (rhs == XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMUCORR)) return false;
+    if((lhs == Config::ImudataMode::IMUCOMP) and (rhs == XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMUCOMP)) return false;    
+    return true;
+}
+
+const std::string imu_mode_str(const XCOM_PARDAT_IMU_Mode imu_mode_conf) {
+    if(imu_mode_conf == XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMUCORR) {
+        return "IMUCORR";
+    } else if(imu_mode_conf == XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMUCOMP) {
+        return "IMUCOMP";
+    } else {
+        return "IMURAW";
+    }
+}
+
+const XCOM_PARDAT_IMU_Mode get_imu_mode_conf(const Config::ImudataMode imu_mode_conf) {
+    if(imu_mode_conf == Config::ImudataMode::IMUCORR) {
+        return XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMUCORR;
+    } else if(imu_mode_conf == Config::ImudataMode::IMUCOMP) {
+        return XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMUCOMP;
+    } else {
+        return XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMURAW;
+    }
+}

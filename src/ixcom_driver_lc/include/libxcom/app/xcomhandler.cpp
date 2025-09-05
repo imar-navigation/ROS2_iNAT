@@ -2,6 +2,7 @@
 #include <string>
 #include <chrono>
 #include <thread>
+#include <ixcom_driver_lc/modules/utility.hpp>
 
 
 XcomHandler::XcomHandler(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
@@ -10,6 +11,7 @@ XcomHandler::XcomHandler(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
                          uint8_t serial_port,
                          uint32_t serial_baud,
                          bool serial_enable,
+                         Config::ImudataMode imudata_mode,
                          int32_t leap_seconds)
     : MessageHandler(&state),
       XComParameters_XcomHandler(&state),
@@ -17,6 +19,7 @@ XcomHandler::XcomHandler(rclcpp_lifecycle::LifecycleNode::SharedPtr node,
       xcom::ResponseHandler(&state),
       node_(node),
       _xcom(state),
+      imudata_mode_(imudata_mode),
       leap_seconds_(leap_seconds),
       serial_ignore_(serial_ignore),
       serial_port_(serial_port),
@@ -41,12 +44,14 @@ void XcomHandler::handle_response(XCOMResp response) noexcept {
             auto cmd_clearall = _xcom.get_xcomcmd_clearall();
             _xcom.send_message(cmd_clearall);
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
             _xcom.send_message(_xcom.get_generic_param<XCOMParDAT_SYSSTAT>());
             _xcom.send_message(_xcom.get_generic_param<XCOMParSYS_FWVERSION>());
             _xcom.send_message(_xcom.get_generic_param<XCOMParSYS_MAINTIMING>());
             _xcom.send_message(_xcom.get_generic_param<XCOMParSYS_PRESCALER>());
             _xcom.send_message(_xcom.get_generic_param<XCOMParDAT_VEL>());
             _xcom.send_message(_xcom.get_generic_param<XCOMParDAT_IMU>());
+
             auto cmd_add_gnsssol = _xcom.get_xcomcmd_enablelog(XCOM_MSGID_GNSSSOL, XComLogTrigger::XCOM_CMDLOG_TRIG_EVENT, 1);
             _xcom.send_message(cmd_add_gnsssol);
         }
@@ -194,9 +199,9 @@ void XcomHandler::handle_xcom_param(const XCOMParXCOM_INTERFACE& param) {
 
 void XcomHandler::handle_xcom_param(const XCOMParDAT_VEL& param) {
 
-    vel_mode_ = static_cast<XCOM_PARDAT_VEL_Mode>(param.mode);
+    XCOM_PARDAT_VEL_Mode vel_mode = static_cast<XCOM_PARDAT_VEL_Mode>(param.mode);
 
-    if(vel_mode_ != XCOM_PARDAT_VEL_Mode::XCOM_PARDAT_VEL_BODY) {
+    if(vel_mode != XCOM_PARDAT_VEL_Mode::XCOM_PARDAT_VEL_BODY) {
         RCLCPP_INFO(node_->get_logger(), "%s", "setting INS velocity frame type to BODY");
         auto p_set = _xcom.get_generic_param<XCOMParDAT_VEL>();
         p_set.param_header.param_id = XCOMPAR_PARDAT_VEL;
@@ -218,14 +223,16 @@ void XcomHandler::handle_xcom_param(const XCOMParDAT_VEL& param) {
 }
 
 void XcomHandler::handle_xcom_param(const XCOMParDAT_IMU& param) {
-    imu_mode_ = static_cast<XCOM_PARDAT_IMU_Mode>(param.mode);
 
-    if(imu_mode_ != XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMURAW) {
-        RCLCPP_INFO(node_->get_logger(), "%s", "setting IMU output mode to IMURAW");
+    XCOM_PARDAT_IMU_Mode imu_mode = static_cast<XCOM_PARDAT_IMU_Mode>(param.mode);
+    XCOM_PARDAT_IMU_Mode imu_mode_conf = get_imu_mode_conf(imudata_mode_);
+
+    if(imudata_mode_ != imu_mode) {    // the operator != is overloaded here
+        RCLCPP_INFO(node_->get_logger(), "%s %s", "setting IMU output mode to", imu_mode_str(imu_mode_conf).c_str());
         auto p_set = _xcom.get_generic_param<XCOMParDAT_IMU>();
         p_set.param_header.param_id = XCOMPAR_PARDAT_IMU;
         p_set.param_header.is_request = 0;
-        p_set.mode = XCOM_PARDAT_IMU_Mode::XCOM_PARDAT_IMU_IMURAW;
+        p_set.mode = imu_mode_conf;
         _xcom.send_message(p_set);
 
         // doublecheck
@@ -233,7 +240,7 @@ void XcomHandler::handle_xcom_param(const XCOMParDAT_IMU& param) {
         p_get.param_header.param_id = XCOMPAR_PARDAT_IMU;
         _xcom.send_message(p_get);
     } else {
-        RCLCPP_INFO(node_->get_logger(), "%s", "IMU output mode is set to IMURAW");
+        RCLCPP_INFO(node_->get_logger(), "%s %s", "IMU output mode is set to" , imu_mode_str(imu_mode_conf).c_str());
     }
 
     complete_status_ =

@@ -2,13 +2,14 @@
 # /**:                                  # one fits all
   ros__parameters:
     ip:
-      address: 192.168.4.214
+      address: 127.0.0.1
     serial:
       ignore: true
       port: 1
       baud: 115200
       enable: true
     timestamp_mode: GPS
+    imudata_mode: IMURAW
     qos: SYSTEMDEFAULTS
     leap_seconds: 18
     manual_local_tangential_plane:
@@ -19,19 +20,19 @@
     magnetometer_scale_factor: 1.0000000116860974e-07
     topics:
       Imu:
-        frequency_hz: 0
+        frequency_hz: 10
         remap_to: ""
       NavSatStatus:
         frequency_hz: 0
         remap_to: ""
       NavSatFix_GNSS:
-        frequency_hz: 0
+        frequency_hz: 10
         remap_to: "NavSatFix"
       NavSatFix_INS:
         frequency_hz: 0
         remap_to: ""
       TimeReference:
-        frequency_hz: 0
+        frequency_hz: 10
         remap_to: ""
       MagneticField:
         frequency_hz: 0
@@ -44,6 +45,6 @@
         frequency_hz: 0
         remap_to: ""
       TwistStamped:
-        frequency_hz: 0
+        frequency_hz: 10
         remap_to: ""
 
