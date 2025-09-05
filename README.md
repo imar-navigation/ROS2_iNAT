@@ -98,6 +98,7 @@ The configuration file has currently the following structure.
       baud: 115200
       enable: true
     timestamp_mode: GPS
+    imudata_mode: IMURAW
     qos: SYSTEMDEFAULTS
     leap_seconds: 18
     manual_local_tangential_plane:
@@ -144,6 +145,8 @@ The configuration file has currently the following structure.
   the serial interface of the connected _iNAT_ can be configured with these data which can be skipped if `ignore` is set to `true`
 - `timestamp_mode`  
   contains the timestamp mode that can be the ROS System Time (value: `ROS`) or the _iNAT_ GPS Time (value: `GPS`)
+- `imudata_mode`  
+  this parameter defines the kind of inertial data (valid values: `IMURAW` (calibrated IMU data), `IMUCORR` (calibrated IMU data, additionally corrected for bias, scale factor and earth rate), `IMUCOMP` (Calibrated IMU data, corrected for bias and scale factor, additionally compensated for earth rate and gravity))
 - `qos`  
   quality of service configuration corresponding to the _ROS2_ QoS profiles (valid values: `SYSTEMDEFAULTS`, `SENSORDATA`, `ACTIONSTATUS`, `PARAMETEREVENTS`, `PARAMETERS`, `SERVICES`)
 - `leap_seconds`  

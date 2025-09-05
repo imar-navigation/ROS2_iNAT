@@ -78,6 +78,7 @@ DriverNode::CallbackReturn DriverNode::on_configure(const rclcpp_lifecycle::Stat
                                             conf_->serial_port_,
                                             conf_->serial_baud_,
                                             conf_->serial_enable_,
+                                            conf_->imudata_mode_,
                                             conf_->leap_seconds_);
 
     xcom.set_reader(&tcp_reader);
@@ -186,6 +187,7 @@ void DriverNode::declare_parameters() {
     declare_parameter<int32_t>(conf_->PAR_SERIAL_BAUD, 115200);
     declare_parameter<bool>(conf_->PAR_SERIAL_ENABLE, false);
     declare_parameter<std::string>(conf_->PAR_TIMESTAMP_MODE, std::string("GPS"));   // valid values: GPS, ROS
+    declare_parameter<std::string>(conf_->PAR_IMUDATA_MODE, std::string("IMURAW"));  // valid values: IMURAW, IMUCORR, IMUCOMP
     declare_parameter<std::string>(conf_->PAR_QOS, "SYSTEMDEFAULTS");                // valid values: SYSTEMDEFAULTS, SENSORDATA, CLOCK, PARAMETEREVENTS, PARAMETERS, SERVICES
     declare_parameter<int32_t>(conf_->PAR_LEAP_SECONDS, 18);
     declare_parameter<bool>(conf_->PAR_MLTP_ENABLE, false);
@@ -226,6 +228,8 @@ void DriverNode::get_parameters() {
     get_parameter(conf_->PAR_SERIAL_ENABLE, conf_->serial_enable_);
     conf_->timestamp_mode_ = Config::TimestampModeFromString(
         get_parameter(conf_->PAR_TIMESTAMP_MODE).get_value<std::string>());
+    conf_->imudata_mode_ = Config::ImudataModeFromString(
+        get_parameter(conf_->PAR_IMUDATA_MODE).get_value<std::string>());    
     conf_->qos_type_ = Config::qosTypeFromString(get_parameter(conf_->PAR_QOS).get_value<std::string>());
     qos_ = Config::qosFromString(conf_->qos_type_);
     conf_->leap_seconds_ = abs(get_parameter(conf_->PAR_LEAP_SECONDS).get_value<int32_t>());

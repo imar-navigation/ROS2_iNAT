@@ -19,6 +19,12 @@ struct Config
         GPS
     };
 
+    enum class ImudataMode : uint8_t {
+        IMURAW,
+        IMUCORR,
+        IMUCOMP
+    };
+
     struct MLTP {
         bool enable;
         float lon;
@@ -45,6 +51,8 @@ struct Config
 
     const std::string PAR_TIMESTAMP_MODE = "timestamp_mode";
     TimestampMode timestamp_mode_;
+    const std::string PAR_IMUDATA_MODE = "imudata_mode";
+    ImudataMode imudata_mode_;
     const std::string PAR_QOS = "qos";
     std::string qos_type_;
     const std::string PAR_LEAP_SECONDS = "leap_seconds";
@@ -129,6 +137,23 @@ struct Config
         }
 
         throw std::runtime_error("Invalid value \"" + mode + "\" for enum TimestampMode. Valid values: ROS, GPS.");
+    }
+
+    static Config::ImudataMode ImudataModeFromString(const std::string& mode)
+    {
+        std::string transformed;
+        transformed.resize(mode.size());
+        std::transform(mode.begin(), mode.end(), transformed.begin(), ::tolower);
+
+        if (transformed == "imuraw") {
+            return Config::ImudataMode::IMURAW;
+        } else if (transformed == "imucorr") {
+            return Config::ImudataMode::IMUCORR;
+        } else if (transformed == "imucomp") {
+            return Config::ImudataMode::IMUCOMP;
+        }
+
+        throw std::runtime_error("Invalid value \"" + mode + "\" for enum ImudataMode. Valid values: IMURAW, IMUCORR, IMUCOMP.");
     }
 
     static rclcpp::QoS* qosFromString(const std::string &qos_s) {
