@@ -223,9 +223,12 @@ bool TwistStamped::success() {
 
 void TwistStamped::updateINSSOL(const XCOMmsg_INSSOL& msg)
 {
-    vel_x_ = msg.vel[0];
-    vel_y_ = msg.vel[1];
-    vel_z_ = msg.vel[2];
+    // vel_x_ = msg.vel[0];
+    // vel_y_ = msg.vel[1];
+    // vel_z_ = msg.vel[2];
+    twiststamped_msg_.twist.linear.x = msg.vel[0];
+    twiststamped_msg_.twist.linear.y = msg.vel[1];
+    twiststamped_msg_.twist.linear.z = msg.vel[2];
 
     insSolDataIsSet_ = true;
 }
@@ -260,18 +263,19 @@ void TwistStamped::publish()
     // Do some inline matrix-vector multiplication
     // Remember that the coefficient matrix is put into memory column-by-column
     // which is why the first row is addressed by indices 0, 3, and 6
-    twiststamped_msg_.twist.linear.x =
-        coefficients_[0] * vel_x_ + coefficients_[3] * vel_y_ + coefficients_[6] * vel_z_;
+    // twiststamped_msg_.twist.linear.x =
+    //     coefficients_[0] * vel_x_ + coefficients_[3] * vel_y_ + coefficients_[6] * vel_z_;
 
-    twiststamped_msg_.twist.linear.y =
-        coefficients_[1] * vel_x_ + coefficients_[4] * vel_y_ + coefficients_[7] * vel_z_;
+    // twiststamped_msg_.twist.linear.y =
+    //     coefficients_[1] * vel_x_ + coefficients_[4] * vel_y_ + coefficients_[7] * vel_z_;
 
-    twiststamped_msg_.twist.linear.x =
-        coefficients_[2] * vel_x_ + coefficients_[5] * vel_y_ + coefficients_[8] * vel_z_;
-
-    twiststamped_msg_.header.stamp = (timestamp_mode_ == Config::TimestampMode::GPS) ? gps_time_ : node_->now();
+    // twiststamped_msg_.twist.linear.x =
+    //     coefficients_[2] * vel_x_ + coefficients_[5] * vel_y_ + coefficients_[8] * vel_z_;
 
     if(active_) {
+
+        twiststamped_msg_.header.stamp = (timestamp_mode_ == Config::TimestampMode::GPS) ? gps_time_ : node_->now();
+        
         pub_->publish(twiststamped_msg_);
 
         t_pub_ = t_pub_upd_;

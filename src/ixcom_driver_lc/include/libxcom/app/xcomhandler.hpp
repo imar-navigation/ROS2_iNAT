@@ -83,8 +83,8 @@ private:
     int fwv_[3] = {0, 0, 0};
     Config::ImudataMode imudata_mode_;
     int32_t leap_seconds_;
-    XCOM_PARDAT_VEL_Mode vel_mode_;
-    XCOM_PARDAT_IMU_Mode imu_mode_;
+    // XCOM_PARDAT_VEL_Mode vel_mode_;
+    // XCOM_PARDAT_IMU_Mode imu_mode_;
     bool serial_ignore_;
     uint8_t serial_port_;
     uint32_t serial_baud_;
