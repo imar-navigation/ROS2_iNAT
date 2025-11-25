@@ -5,11 +5,11 @@
 The default namespace used by the node is `ixcom`. To change this namespace, the top line of the configuration file must be modified:<br>
 
 ```console
-/ixcom/ixcom_driver_lifecycle_node:
+/ixcom/ixcom_driver_lc:
 ```
 becomes
 ```console
-/your_ns/ixcom_driver_lifecycle_node:
+/your_ns/ixcom_driver_lc:
 ```
 
 A modified namespace can also be passed as argument to the launch file with `namespace:=your_ns` which must fit the namespace definition in the configuration file. Also, a different configuration file can be passed as argument with `publisher_config_file:='/your/path/to/file.yml'`. So, if multiple configuration files are available, multiple nodes can be launched using different namespaces and configuration files, which these namespaces are defined in, as arguments.<br>
@@ -34,14 +34,14 @@ While running, the _ixcom_driver_lc_ will appear in the _ROS2_ node list.
 
 ```console
 ~$ ros2 node list
-/ixcom/ixcom_driver_lifecycle_node
+/ixcom/ixcom_driver_lc
 ```
 
 The node info shows the implemented features (not configured topics are not visible in this view, see configuration section for details).
 
 ```console
-~$ ros2 node info /ixcom/ixcom_driver_lifecycle_node
-/ixcom/ixcom_driver_lifecycle_node
+~$ ros2 node info /ixcom/ixcom_driver_lc
+/ixcom/ixcom_driver_lc
   Publishers:
     /ixcom/Imu: sensor_msgs/msg/Imu
     /ixcom/MagneticField: sensor_msgs/msg/MagneticField
@@ -86,7 +86,7 @@ The configuration file has currently the following structure.
 
 
 ```yaml
-/ixcom/ixcom_driver_lifecycle_node:     # used by ixcom_driver_lifecycle_node in the namespace ixcom
+/ixcom/ixcom_driver_lc:                 # used by ixcom_driver_lc in the namespace ixcom
 # /**:                                  # one fits all
   ros__parameters:
     ip:
@@ -138,7 +138,7 @@ The configuration file has currently the following structure.
         remap_to: ""
 
 ```
-- The first line names the node (`/ixcom_driver_lifecycle_node`) that uses this configuration and the namespace (/ixcom) this configuration is valid in.
+- The first line names the node (`/ixcom_driver_lc`) that uses this configuration and the namespace (/ixcom) this configuration is valid in.
 - `ip`  
   contains the connection data of an _iNAT_
 - `serial`  
@@ -473,6 +473,25 @@ The following Service Servers are implemented:
   ```
 
 _**NOTE:**_ The data sent to the node will be forwarded to the _iNAT_. The _iNAT_ must send a response back to the node within a second. Otherwise, the requester receives `success=False` due to the timeout. 
-    
+
+## Service Adapter
+The Service Adapter is a subscriber and service client. Start it as follows:
+```console
+ros2 run ixcom_service_adapter sub --ros-args -r __ns:=/your_ns
+```
+If the Service Adapter receives topics that can be used for _iNAT_ aiding, it puts the data into the service messages described above and sends it to the Service Server of the _ixcom_driver_lc_.
+```console
+[INFO] [1764065010.163590451] [ixcom.ixcom_service_adapter]: Received TwistStampedMsg, calling ext_velocity service.
+```
+The _ixcom_driver_lc_ sends the data to the _iNAT_ and receives a feedback from it, whether the data are accepted or not. It also forwards that feedback to the Service Adapter.
+```console
+[ixcom_driver_lc-1] [INFO] [1764065010.163932327] [ixcom.ixcom_driver_lc]: [ext_velocity] request received
+[ixcom_driver_lc-1] [INFO] [1764065010.164969479] [ixcom.ixcom_driver_lc]: [ext_velocity] iNAT accepted the data
+```
+The Service Adapter receives the feedback.
+```console
+[INFO] [1764065010.165315057] [ixcom.ixcom_service_adapter]: ext_velocity success: OK
+
+```
 
 
