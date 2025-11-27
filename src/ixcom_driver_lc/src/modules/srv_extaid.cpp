@@ -413,7 +413,7 @@ void SrvExtAid::handle_response(XCOMResp response) noexcept {
                     RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTPOSECEF.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTPOSECEF.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTPOSECEF.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_ecef.frame_counter);
             }
         } else if(extaidItems_.pos_utm.requested) {
             extaidItems_.pos_utm.requested = false;
@@ -426,7 +426,20 @@ void SrvExtAid::handle_response(XCOMResp response) noexcept {
                     RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTPOSUTM.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTPOSUTM.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTPOSUTM.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_utm.frame_counter);
+            }
+        } else if(extaidItems_.pos_mgrs.requested) {
+            extaidItems_.pos_mgrs.requested = false;
+            if(frame_counter == extaidItems_.pos_mgrs.frame_counter) {
+                // RCLCPP_INFO(node_->get_logger(), "[%s] %s %d", "srv_extaid_mgrs", "frame counter match: ", frame_counter);
+                extaidItems_.pos_mgrs.success = inv_resp;
+                if(extaidItems_.pos_mgrs.success) {
+                    RCLCPP_INFO(node_->get_logger(), "[%s] %s", SRV_EXTPOSMGRS.c_str(), "iNAT accepted the data");
+                } else {
+                    RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTPOSMGRS.c_str(), "iNAT did not accept the data", static_cast<int>(response));
+                }
+            } else {
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTPOSMGRS.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_mgrs.frame_counter);
             }
         } else if(extaidItems_.hdg.requested) {
             extaidItems_.hdg.requested = false;
@@ -439,7 +452,7 @@ void SrvExtAid::handle_response(XCOMResp response) noexcept {
                     RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTHDG.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTHDG.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTHDG.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.hdg.frame_counter);
             }
         } else if(extaidItems_.vel.requested) {
             extaidItems_.vel.requested = false;
@@ -452,7 +465,7 @@ void SrvExtAid::handle_response(XCOMResp response) noexcept {
                     RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTVEL.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTVEL.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTVEL.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.vel.frame_counter);
             }
         } else if(extaidItems_.vel_body.requested) {
             extaidItems_.vel_body.requested = false;
@@ -465,7 +478,7 @@ void SrvExtAid::handle_response(XCOMResp response) noexcept {
                     RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTVELBODY.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTVELBODY.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTVELBODY.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.vel_body.frame_counter);
             }
         } else if(extaidItems_.height.requested) {
             extaidItems_.height.requested = false;
@@ -478,7 +491,7 @@ void SrvExtAid::handle_response(XCOMResp response) noexcept {
                     RCLCPP_WARN(node_->get_logger(), "[%s] %s (XCOMResp: %d)", SRV_EXTHEIGHT.c_str(), "iNAT did not accept the data", static_cast<int>(response));
                 }
             } else {
-                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTHEIGHT.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.pos_llh.frame_counter);
+                RCLCPP_ERROR(node_->get_logger(), "[%s] %s %d %d", SRV_EXTHEIGHT.c_str(), "frame counter mismatch: ", frame_counter, extaidItems_.height.frame_counter);
             }
         }
         // RCLCPP_INFO(node_->get_logger(), "[%s] %s", "srv_extaid", "notifying");
