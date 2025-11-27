@@ -108,7 +108,7 @@ void ServiceAdapter::cb_navsatfixgnss(const NavSatFixMsg& msg) {
     rq_send_extposllh_->time_mode = 0;
     rq_send_extposllh_->position[0] = get_rad(msg.longitude);
     rq_send_extposllh_->position[1] = get_rad(msg.latitude);
-    rq_send_extposllh_->position[2] = get_rad(msg.altitude);
+    rq_send_extposllh_->position[2] = msg.altitude;
     rq_send_extposllh_->position_stddev[0] = 0.1;
     rq_send_extposllh_->position_stddev[1] = 0.1;
     rq_send_extposllh_->position_stddev[2] = 0.1;
@@ -134,7 +134,7 @@ void ServiceAdapter::cb_navsatfixins(const NavSatFixMsg& msg) {
     rq_send_extposllh_->time_mode = 0;
     rq_send_extposllh_->position[0] = get_rad(msg.longitude);
     rq_send_extposllh_->position[1] = get_rad(msg.latitude);
-    rq_send_extposllh_->position[2] = get_rad(msg.altitude);
+    rq_send_extposllh_->position[2] = msg.altitude;
     rq_send_extposllh_->position_stddev[0] = 0.1;
     rq_send_extposllh_->position_stddev[1] = 0.1;
     rq_send_extposllh_->position_stddev[2] = 0.1;

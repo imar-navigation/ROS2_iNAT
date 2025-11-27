@@ -425,7 +425,7 @@ The following Service Servers are implemented:
   
   `time_stamp       :` Time at which the measurement was valid in _s_  
   `time_mode        :` Timestamp mode: 0 = Absolute GPS timestamp OR 1 = Latency  
-  `velocity         :` Velocity east, north, dowm in _m/s_  
+  `velocity         :` Velocity east, north, down in _m/s_  
   `velocity_stddev  :` Velocity standard deviation in _m/s_  
   
   The following command can be used to send a request to this Service Server (_NOTE_: uses default values):  
