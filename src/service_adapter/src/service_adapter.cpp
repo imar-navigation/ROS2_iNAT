@@ -71,7 +71,7 @@ void ServiceAdapter::cb_twistwithcovariancestamped(const TwistWithCovarianceStam
 
     std::unique_lock<std::mutex> lk(mx_extvelbody_);
     rq_send_extvelbody_->time_stamp = get_timestamp(msg.header.stamp.sec, msg.header.stamp.nanosec);
-    rq_send_extvelbody_->time_mode = 1;
+    rq_send_extvelbody_->time_mode = 0;
     rq_send_extvelbody_->velocity[0] = msg.twist.twist.linear.x;
     rq_send_extvelbody_->velocity[1] = msg.twist.twist.linear.y;
     rq_send_extvelbody_->velocity[2] = msg.twist.twist.linear.z;
@@ -105,7 +105,7 @@ void ServiceAdapter::cb_navsatfixgnss(const NavSatFixMsg& msg) {
 
     std::unique_lock<std::mutex> lk(mx_extposllh_);
     rq_send_extposllh_->time_stamp = get_timestamp(msg.header.stamp.sec, msg.header.stamp.nanosec);
-    rq_send_extposllh_->time_mode = 1;
+    rq_send_extposllh_->time_mode = 0;
     rq_send_extposllh_->position[0] = get_rad(msg.longitude);
     rq_send_extposllh_->position[1] = get_rad(msg.latitude);
     rq_send_extposllh_->position[2] = get_rad(msg.altitude);
@@ -131,7 +131,7 @@ void ServiceAdapter::cb_navsatfixins(const NavSatFixMsg& msg) {
 
     std::unique_lock<std::mutex> lk(mx_extposllh_);
     rq_send_extposllh_->time_stamp = get_timestamp(msg.header.stamp.sec, msg.header.stamp.nanosec);
-    rq_send_extposllh_->time_mode = 1;
+    rq_send_extposllh_->time_mode = 0;
     rq_send_extposllh_->position[0] = get_rad(msg.longitude);
     rq_send_extposllh_->position[1] = get_rad(msg.latitude);
     rq_send_extposllh_->position[2] = get_rad(msg.altitude);
@@ -169,13 +169,14 @@ void ServiceAdapter::cb_twiststamped(const TwistStampedMsg& msg) {
 
     std::unique_lock<std::mutex> lk(mx_extvel_);
     rq_send_extvel_->time_stamp = get_timestamp(msg.header.stamp.sec, msg.header.stamp.nanosec);
-    rq_send_extvel_->time_mode = 1;
-    rq_send_extvel_->velocity[0] = msg.twist.linear.x;
-    rq_send_extvel_->velocity[1] = msg.twist.linear.y;
-    rq_send_extvel_->velocity[2] = msg.twist.linear.z;
-    rq_send_extvel_->velocity_stddev[0] = 0.1;
-    rq_send_extvel_->velocity_stddev[1] = 0.1;
-    rq_send_extvel_->velocity_stddev[2] = 0.1;
+    rq_send_extvel_->time_mode = 0;
+    // NED in iXCOM is END (see ICD and ROS2_iNAT README)
+    rq_send_extvel_->velocity[0] = msg.twist.linear.y;  // east
+    rq_send_extvel_->velocity[1] = msg.twist.linear.x;  // north
+    rq_send_extvel_->velocity[2] = msg.twist.linear.z;  // down
+    rq_send_extvel_->velocity_stddev[0] = 0.1;          // east
+    rq_send_extvel_->velocity_stddev[1] = 0.1;          // north
+    rq_send_extvel_->velocity_stddev[2] = 0.1;          // down
     lk.unlock();
 
     cl_extvel_->async_send_request(rq_send_extvel_,
