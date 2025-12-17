@@ -103,7 +103,7 @@ enum XComMessageID {
     XCOM_MSGID_JERKNED              = 0xA4,    /**< INS/GNSS jerk in NED frame */
     XCOM_MSGID_INSRPYACCEL          = 0xA5,    /**< INS/GNSS roll-, pitch- and yaw-acceleration */
     XCOM_MSGID_EKFSTDDEV            = 0x0F,    /**< EKF estimated standard deviations (@deprecated; use EKFSTDDEV3 for new developments) */
-    XCOM_MSGID_EKFSTDDEV2           = 0x28,    /**< EKF estimated standard deviations (@deprecated; use EKFSTDDEV3 for new developments) */
+    XCOM_MSGID_EKFSTDDEV2           = 0x28,    /**< EKF estimated standard deviations (use EKFSTDDEV3 for new developments) */
     XCOM_MSGID_EKFSTDDEV3           = 0x9A,    /**< EKF estimated standard deviations (including body velocity) */
     XCOM_MSGID_EKFERROR             = 0x10,    /**< EKF estimated sensor errors (@deprecated; use EKFERROR2 for new developments) */
     XCOM_MSGID_EKFERROR2            = 0x27,    /**< EKF estimated sensor uncertainties */
@@ -371,9 +371,6 @@ enum XCOMcmd_Fpga {
  * *****************************************************************************************************************************************
  */
 enum XCOMcmd_Extaid {
-    XCOM_CMDEXTAID_FREEZE_ALT   = 0x0000,   /**< Freeze altitude output */
-    XCOM_CMDEXTAID_FREEZE_HDG   = 0x0001,   /**< Freeze heading output */
-    XCOM_CMDEXTAID_FREEZE_VEL   = 0x0002,   /**< Freeze velocity ourout */
     XCOM_CMDEXTAID_POS_LLH      = 0x0003,   /**< External position aiding in LLH frame */
     XCOM_CMDEXTAID_VEL_NED      = 0x0004,   /**< External velocity aiding in NED frame. */
     XCOM_CMDEXTAID_HDG          = 0x0005,   /**< External heading aiding. */
@@ -929,7 +926,7 @@ typedef union {
  */
 typedef struct {
     uint32_t MAINTIMING_ERROR : 1;   /**< IMU maintiming error */
-    uint32_t RTC_ERROR : 1;          /**< RTC time + data not invalid */
+    uint32_t RTC_ERROR : 1;          /**< RTC time and data invalid */
     uint32_t reserced : 30;          /**< Reserved for further use */
 } XCOMSystemStatus2;
 typedef union {
@@ -1438,17 +1435,18 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMFooter footer;
 } XCOMmsg_INSMAGHDG;
 /**
- * The SYS_STAT message contains the extended system status. The content of this log can be configured via the PARDAT_SYSSTAT parameter.
+ * This message contains the extended system status, consisting of a constant part (4 bytes) and an additional
+ * part configurable via parameter PARDAT_SYSSTAT.
  * #domain: public
  * #rate: full
  */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;  /**< XCOM header */
-    uint32_t mode;      /**< This field contains the configuration of the payload */
-    union {             /**< System status information */
+    uint32_t mode;      /**< This field contains the configuration of the payload (see PARDAT_SYSSTAT_MASK_* in appendix).*/
+    union {
         XCOMSystemStatus bits;
         uint32_t value;
-    } sysstat;
+    } sysstat;          /**< System status information. */
     XCOMFooter footer;
 } XCOMmsg_SYSSTAT;
 /**
@@ -3171,7 +3169,7 @@ typedef struct XCOM_STRUCT_PACK {
     uint16_t time_mode;             /**< Time mode <time_stamp>:
                                            0 = Absolute GPS timestamp
                                            1 = Latency */
-    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_POS_UTM */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_POS_MGRS */
     int8_t mgrs[XCOM_EXTAID_POSMGRS_MAX_LENGTH];    /**< MGRS string (e.g. 32U LV 66136 59531) */
     double altitude;                /**< Altitude in [m] */
     double position_stddev[3];      /**< Standard deviation of the external position in [m] (easting, northing, altitude) */
@@ -3205,7 +3203,7 @@ typedef struct XCOM_STRUCT_PACK {
                                            0 = Absolute GPS timestamp
                                            1 = Latency */
     uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_VEL */
-    double velocity[3];             /**< Veast, Vnorth, Vdowm [m/s] */
+    double velocity[3];             /**< Veast, Vnorth, Vdown [m/s] */
     double velocity_stddev[3];      /**< Standard deviation of external velocity aiding [m/s] */
     XCOMFooter footer;
 } XCOMCmd_EXTAID_VEL;
@@ -3218,8 +3216,8 @@ typedef struct XCOM_STRUCT_PACK {
     uint16_t time_mode;             /**< Time mode <time_stamp>:
                                            0 = Absolute GPS timestamp
                                            1 = Latency */
-    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_VEL */
-    double velocity[3];             /**< Veast, Vnorth, Vdowm [m/s] */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_VEL2 */
+    double velocity[3];             /**< Veast, Vnorth, Vdown [m/s] */
     double velocity_stddev[3];      /**< Standard deviation of external velocity aiding [m/s] */
     double lever_arm[3];            /**< Lever arm in x,y,z-direction [m] */
     double lever_arm_stddev[3];     /**< Standard deviation of lever arm in x,y,z-direction [m] */
@@ -3263,7 +3261,7 @@ typedef struct XCOM_STRUCT_PACK {
     uint16_t time_mode;             /**< Time mode <time_stamp>:
                                            0 = Absolute GPS timestamp
                                            1 = Latency */
-    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_HGT */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_HGT2 */
     double height;                  /**< External height [m] */
     double height_stddev;           /**< Standard deviation of external height aiding [m] */
     double lever_arm[3];            /**< Lever arm in x,y,z-direction [m] */
@@ -3280,7 +3278,7 @@ typedef struct XCOM_STRUCT_PACK {
     uint16_t time_mode;             /**< Time mode <time_stamp>:
                                            0 = Absolute GPS timestamp
                                            1 = Latency */
-    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_HGT */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_BAROALT */
     double height;                  /**< External barometric height [m] */
     double height_stddev;           /**< Standard deviation of external barometric height aiding [m] */
     double lever_arm[3];            /**< Lever arm in x,y,z-direction [m] */
@@ -3297,7 +3295,7 @@ typedef struct XCOM_STRUCT_PACK {
     uint16_t time_mode;             /**< Time mode <time_stamp>:
                                            0 = Absolute GPS timestamp
                                            1 = Latency */
-    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_HGT */
+    uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_MAGFIELD */
     double magnetic_field[3];       /**< Magnetic field vector [uT] */
     double magnetic_field_stddev[3];/**< Standard deviation of magnetic field vector [uT] */
     XCOMFooter footer;
@@ -3426,7 +3424,7 @@ typedef struct XCOM_STRUCT_PACK {
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMParHeader param_header; /**< XCOM parameter header */
-    uint8_t payload[32];        /**< System’s manufacturing date with format jjjj-mm[-dd] */
+    uint8_t payload[32];        /**< System’s manufacturing date with format [dd.]mm.jjjj */
     XCOMFooter footer;
 } XCOMParSYS_MFG;
 /**
@@ -3516,7 +3514,7 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMParHeader param_header; /**< XCOM parameter header */
     uint16_t password;          /**< Reserved for further use */
     uint16_t reserved1;         /**< Reserved for further use */
-    uint8_t payload[32];        /**< System’s calibration date with format jjjj-mm[-dd] */
+    uint8_t payload[32];        /**< System’s calibration date with format [dd.]mm.jjjj */
     XCOMFooter footer;
 } XCOMParSYS_CALDATE;
 /**
@@ -4968,6 +4966,7 @@ typedef struct XCOM_STRUCT_PACK {
 #define PAREKF_VMP_MASK_POSITION      0x0001
 #define PAREKF_VMP_MASK_VELOCITY      0x0002
 #define PAREKF_VMP_MASK_SPECIFICFORCE 0x0004
+#define PAREKF_VMP_MASK_USE_DOMG      0x0008
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;                  /**< XCOM header */
     union {
@@ -5070,8 +5069,8 @@ typedef struct XCOM_STRUCT_PACK {
  * (field 14) of this parameter. The angular rate and acceleration measurement are low-pass filtered prior to comparing them to the
  * detection threshold. The cut-off frequency for this low-pass filter may bet set by the CutOffFreq field (field 8) of this parameter. A
  * zero velocity condition is detected if the values of all selected sources have been below their respective threshold for longer than the
- * delay field (field 13) of this parameter. The status of zero velocity detection will be reported in the In-Motion bit of the EXTSYSSTAT
- * field of the SYS_STAT message. A detected zero velocity condition will lead to aiding the EKF with zero velocity updates if the AutoZUPT
+ * delay field (field 13) of this parameter. The status of zero velocity detection will be reported in the INMOTION bit of the
+ * SYSSTAT message. A detected zero velocity condition will lead to aiding the EKF with zero velocity updates if the AutoZUPT
  * field (field 15) of this parameter is set. The rate for this zero velocity aiding is determined by the ZUPTRate field (field 9) of this
  * parameter.
  * #domain: deprecated
@@ -5111,7 +5110,7 @@ typedef struct XCOM_STRUCT_PACK {
  * (mask) of this parameter. The angular rate and acceleration measurement are low-pass filtered prior to comparing them to the
  * detection threshold. The cut-off frequency for this low-pass filter may be set by the cutoff field of this parameter. A zero velocity
  * condition is detected if the values of all selected sources have been below their respective threshold for longer than the delay field
- * of this parameter. The status of zero velocity detection will be reported in the In-Motion bit of the EXTSYSSTAT field of the SYS_STAT
+ * of this parameter. The status of zero velocity detection will be reported in the INMOTION bit of the SYSSTAT
  * message. A detected zero velocity condition will lead to aiding the EKF with zero velocity updates if the automatic_zupt field of this
  * parameter is set. The rate for this zero velocity aiding is determined by the zupt_period field of this parameter.
  * #domain: public
@@ -6051,7 +6050,7 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMFooter footer;
 } XCOMParDAT_IMU;
 /**
- * This parameter defines the content of the SYS_STAT message.
+ * This parameter defines the content of the SYSSTAT message.
  * #scope: read and write
  * #domain: public
  * #name: XCOMParDAT_SYSSTAT
@@ -6061,11 +6060,11 @@ typedef struct XCOM_STRUCT_PACK {
 #define PARDAT_SYSSTAT_MASK_MAG          0x00000004 /**< Magnetometer status information */
 #define PARDAT_SYSSTAT_MASK_MADC         0x00000008 /**< Air data computer status information */
 #define PARDAT_SYSSTAT_MASK_EKFAIDING    0x00000010 /**< EKF aiding status */
-#define PARDAT_SYSSTAT_MASK_EKFGENERAL   0x00000020 /**< EKF general status */
+#define PARDAT_SYSSTAT_MASK_EKFGENERAL   0x00000020 /**< EKF general status (@deprecated) */
 #define PARDAT_SYSSTAT_MASK_ADDSTATUS    0x00000040 /**< Additional IMU status information */
 #define PARDAT_SYSSTAT_MASK_SERVICE      0x00000080 /**< Service status information (@deprecated) */
 #define PARDAT_SYSSTAT_MASK_REMALIGNTIME 0x00000100 /**< Remaining alignment time */
-#define PARDAT_SYSSTAT_MASK_SYSSTAT2     0x00000200 /**< Extended system status */
+#define PARDAT_SYSSTAT_MASK_SYSSTAT2     0x00000200 /**< Additional system status information */
 #define PARDAT_SYSSTAT2_MAINTIMING       0x00000001 /**< System maintiming error  */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
@@ -6347,7 +6346,8 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
     XCOMParHeader param_header; /**< XCOM parameter header */
     uint8_t protocol_version;   /**< ABD protocol version */
-    uint8_t reserved[3];       /**< Reserved for further use */
+    uint16_t serial_id;          /**< Serial ID */
+    uint8_t reserved;           /**< Reserved for further use */
     XCOMFooter footer;
 } XCOMParXCOM_ABDVERSION;
 /**

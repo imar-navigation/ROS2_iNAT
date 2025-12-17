@@ -311,11 +311,11 @@ std::optional<XComState::system_status> XComState::process_msg_sysstat(const uin
         idx += sizeof(uint32_t);
     }
     if(sysstat.mode & PARDAT_SYSSTAT_MASK_EKFAIDING) {
-        std::array<uint32_t, 2> ekf_aiding{};
-        ekf_aiding[0] = *reinterpret_cast<const uint32_t*>(&data[idx]);
-        idx += sizeof(uint32_t);
-        ekf_aiding[1] = *reinterpret_cast<const uint32_t*>(&data[idx]);
-        idx += sizeof(uint32_t);
+        xcom_ekf_aiding_stat_type ekf_aiding{};
+        ekf_aiding.lo = *reinterpret_cast<const XCOMEkfAidingStatLoType*>(&data[idx]);
+        idx += sizeof(XCOMEkfAidingStatLoType);
+        ekf_aiding.hi = *reinterpret_cast<const XCOMEkfAidingStatHiType*>(&data[idx]);
+        idx += sizeof(XCOMEkfAidingStatHiType);
         sysstat.status_ekfaiding.emplace(ekf_aiding);
     }
     if(sysstat.mode & PARDAT_SYSSTAT_MASK_EKFGENERAL) {
@@ -342,7 +342,7 @@ std::optional<XComState::system_status> XComState::process_msg_sysstat(const uin
         sysstat.status_system2.emplace(*reinterpret_cast<const uint32_t*>(&data[idx]));
         idx += sizeof(uint32_t);
     }
-    sysstat.global_status = *reinterpret_cast<const uint32_t*>(&data[len - sizeof(XCOMFooter)]);
+    sysstat.global_status.value = *reinterpret_cast<const uint32_t*>(&data[len - sizeof(XCOMFooter)]);
     return sysstat;
 }
 std::tuple<std::vector<XCOMmsg_CANGATEWAY_MsgType>, XCOMGlobalStatus> XComState::process_cangateway(const XCOMmsg_CANGATEWAY& msg) {

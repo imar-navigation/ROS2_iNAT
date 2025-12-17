@@ -504,7 +504,7 @@ typedef struct XCOM_STRUCT_PACK {
     double uc_timer;          /**< TEC contoroller uptime in [s] */
     uint32_t fw_version;      /**< TEC controller firmware version */
     uint32_t checksum_eeprom; /**< EEPROM checksum */
-    uint8_t reserved[4];      /**< Reserved for further use */
+    float primary_voltage;    /**< Primary voltage in V */
     XCOMFooter footer;
 } XCOMmsg_TECDATA;
 typedef struct XCOM_STRUCT_PACK {
@@ -530,27 +530,31 @@ enum class PEGASUS_MSG_ID : uint16_t {
     PAR_MAX_DEV_EARTHRATE      = 103,
     PAR_SHAFT_MISALIGNMENT     = 104,
     PAR_USE_SHAFT_MISALIGNMENT = 105,
-    NOT_USED = 0xFFFF
+    NOT_USED                   = 0xFFFF
 };
+typedef struct XCOM_STRUCT_PACK {
+    PEGASUS_MSG_ID msg_id;
+    uint16_t reserved;
+} XCOMPegausHeader;
 struct XCOMPegasusStatusType {
     uint32_t alignment                 : 1; /** 1 = Alignment running */
     uint32_t in_motion                 : 1; /** 1 = Motion detected */
     uint32_t alignment_in_motion       : 1; /** 1 = Alignment invalid due to motion detection */
     uint32_t min_align_time_reached    : 1; /** 1 = alignment_time > XCOMParPEGASUS_ParMinAligntime */
     uint32_t earthrate_error           : 1; /** 1 = Deviation of determined earth rotation rate > XCOMParPEGASUS_ParMaxDevEarthRate */
-    uint32_t shaft_misalignment_active : 1; /** 1 = XCOMParPEGASUS_ParShaftMisalignmnet active */
+    uint32_t shaft_misalignment_active : 1; /** 1 = XCOMParPEGASUS_ParShaftMisalignment active */
     uint32_t res                       : 26;
 };
 typedef struct XCOM_STRUCT_PACK {
-    double quat[4];                     /**< Relative orientation to initial orientation as quaternion */
-    double phi[3];                      /**< Accumulated angle increments per axis, i.e. not redundant to the quaternion [rad, rad, rad] */
-    float std_azi;                      /**< Estimated azimuth/yaw standard deviation TBD */
-    float std_tilt;                     /**< Estimated tilt standard deviation TBD*/
-    float time_since_align;             /**< Duration since alignmnet finished [s] */
-    float alignment_time;               /**< Duration since alignmnet started [s] */
-    XCOMPegasusStatusType status;       /**< PEGASUS Status Bits */
-    double gps_time;                    /**< GPS/System Time depending on configuration [s] */
-    double absolute_rpy[3];             /**< Absolute orientation as Euler Angles [rad, rad, rad] */
+    double quat[4];               /**< Relative orientation to initial orientation as quaternion */
+    double phi[3];                /**< Accumulated angle increments per axis, i.e. not redundant to the quaternion [rad, rad, rad] */
+    float std_azi;                /**< Estimated azimuth/yaw standard deviation TBD */
+    float std_tilt;               /**< Estimated tilt standard deviation TBD*/
+    float time_since_align;       /**< Duration since alignmnet finished [s] */
+    float alignment_time;         /**< Duration since alignmnet started [s] */
+    XCOMPegasusStatusType status; /**< PEGASUS Status Bits */
+    double gps_time;              /**< GPS/System Time depending on configuration [s] */
+    double absolute_rpy[3];       /**< Absolute orientation as Euler Angles [rad, rad, rad] */
     uint32_t reserved;
 } XCOMmsg_PEGASUSLOG_payload;
 typedef struct XCOM_STRUCT_PACK {

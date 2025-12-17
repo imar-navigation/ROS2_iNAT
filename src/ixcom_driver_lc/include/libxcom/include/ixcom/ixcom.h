@@ -88,6 +88,10 @@ public:
     [[nodiscard]] std::size_t get_payload_length() const noexcept;
     void set_sync_byte(uint8_t sync_byte) noexcept;
     [[nodiscard]] uint8_t get_sync_byte() const noexcept;
+    struct xcom_ekf_aiding_stat_type {
+        XCOMEkfAidingStatLoType lo;
+        XCOMEkfAidingStatHiType hi;
+    };
     struct system_status {
         uint32_t mode          = 0;
         uint32_t status_system = 0;
@@ -95,12 +99,12 @@ public:
         std::optional<uint32_t> status_gnss{};
         std::optional<uint32_t> status_mag{};
         std::optional<uint32_t> status_madc{};
-        std::optional<std::array<uint32_t, 2>> status_ekfaiding{};
+        std::optional<xcom_ekf_aiding_stat_type> status_ekfaiding;
         std::optional<uint32_t> status_ekfgeneral{};
         std::optional<std::array<uint32_t, 4>> status_addimu{};
         std::optional<float> status_remaining_aligntime{};
         std::optional<uint32_t> status_system2{};
-        uint16_t global_status = 0;
+        XCOMGlobalStatusType global_status{};
     };
     static std::optional<system_status> process_msg_sysstat(const uint8_t* data, std::size_t len);
     static std::tuple<std::vector<XCOMmsg_CANGATEWAY_MsgType>, XCOMGlobalStatus> process_cangateway(const XCOMmsg_CANGATEWAY& msg);
