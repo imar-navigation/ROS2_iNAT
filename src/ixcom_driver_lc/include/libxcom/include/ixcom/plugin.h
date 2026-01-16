@@ -39,6 +39,7 @@ enum PluginIDs {
     XCOM_PLUGINID_PEGASUS       = 15, /**< PEGASUS plugin id */
     XCOM_PLUGINID_PIXHAWK       = 16, /**< Pixhawk plugin id */
     XCOM_PLUGINID_MSU           = 17, /**< Mobile Surveying Unit (MSU) plugin id */
+    XCOM_PLUGINID_TEMPSTAB_FEEDFORWDATA  = 18, /**< TEMPSTAB feed-forward control message ID (XCOMmsg_FeedforwardCtrlData)*/
     XCOM_PLUGINID_DBXDBOUT  = 20, /**< Rail DBX-DB plugin message containing output data */
     XCOM_PLUGINID_DBXDBIN   = 21, /**< Rail DBX-DB plugin parameter to provide input data */
     XCOM_PLUGINID_DBXDBCONF = 22, /**< Rail DBX-DB plugin parameter to modify plugin configuration */
@@ -510,13 +511,13 @@ typedef struct XCOM_STRUCT_PACK {
 typedef struct XCOM_STRUCT_PACK {
     // inat_iTempstab #47
     XCOMHeader header;                  /**< XCOM header */
-    XCOMPluginDataHeader plugin_header; /**< Plugin header: ID has to set to XCOMMSG_PLUGINID_TECDATA */
+    XCOMPluginDataHeader plugin_header; /**< Plugin header: ID has to set to XCOM_PLUGINID_TEMPSTAB_FEEDFORWDATA */
     float Ta;                           /**< Ambient Temperature from Ta-Model in [°C] */
     float Qa;                           /**< heat flux from imu to ambient temperature [W] */
-    float pwm_extra;                    /**< Additional Perltier-PWM to compensate for Qa [%] */
-    float Ip_extra;                     /**< Additional Current correspronding to pwm_extra [A] */
+    float extra_pwm;                    /**< Additional Peltier-PWM to compensate for Qa [%] */
+    float Ip_extra;                     /**< Additional Peltier-Current correspronding to extra_pwm [A] */
     float PID_info[4];                  /**< Referencing PID errors [PIDErr FRONT, IntErr FRONT, PIDErr BACK, IntErr BACK] */
-    uint8_t reserved[4]; /**< Reserved for further use */ /**< Reserved for further use */
+    uint8_t reserved[4];                /**< Reserved for further use */ /**< Reserved for further use */
     XCOMFooter footer;
 } XCOMmsg_FeedforwardCtrlData;
 //**

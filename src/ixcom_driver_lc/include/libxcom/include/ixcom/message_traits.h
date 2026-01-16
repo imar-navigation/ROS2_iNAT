@@ -231,6 +231,10 @@ struct MessageTraits<XCOMmsg_MAGDATA2> {
     static constexpr uint8_t Id = XCOM_MSGID_MAGDATA2;
 };
 template<>
+struct MessageTraits<XCOMmsg_IPST> {
+    static constexpr uint8_t Id = XCOM_MSGID_IPST;
+};
+template<>
 struct MessageTraits<XCOMmsg_WHEELDATA> {
     static constexpr uint8_t Id = XCOM_MSGID_WHEELDATA;
 };

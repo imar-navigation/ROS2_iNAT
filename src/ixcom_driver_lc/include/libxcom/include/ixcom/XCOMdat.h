@@ -163,6 +163,7 @@ enum XComMessageID {
     XCOM_MSGID_NMEA0183_PAPBN       = 0x7C,    /**< NMEA-0183: ECEF positions and velocities (AIRBUS Proprietary) */
     XCOM_MSGID_NMEA0183_PIARTS1     = 0x83,    /**< NMEA-0183: Acceleration, rate, time status (iMAR Proprietary) */
     XCOM_MSGID_NMEA0183_PASHR       = 0x84,    /**< NMEA-0183: Inertial Attitude Data (Proprietary) */
+    XCOM_MSGID_NMEA0183_PMSO        = 0x86,    /**< NMEA-0183: Wheel speed data (Proprietary) */
     XCOM_MSGID_ABDPROTOCOL          = 0x90,    /**< ABD protocol */
     XCOM_MSGID_CANGATEWAY           = 0x91,    /**< CAN/XCOM gateway message */
     XCOM_MSGID_CANSTATUS2           = 0x92,    /**< CAN status message */
@@ -385,7 +386,8 @@ enum XCOMcmd_Extaid {
     XCOM_CMDEXTAID_VEL_NED2     = 0x000E,   /**< External velocity aiding in NED frame. */
     XCOM_CMDEXTAID_HGT2         = 0x000F,   /**< External height aiding.*/
     XCOM_CMDEXTAID_MAGFIELD     = 0x0010,   /**< External magnetic field aiding.*/
-    XCOM_CMDEXTAID_MAX          = XCOM_CMDEXTAID_MAGFIELD
+    XCOM_CMDEXTAID_AIRSPEED     = 0x0011,   /**< External airspeed velocity aiding. */
+    XCOM_CMDEXTAID_MAX          = XCOM_CMDEXTAID_AIRSPEED
 };
 /**
  * XCOM Parameter
@@ -707,6 +709,8 @@ enum XComParameterID {
     XCOMPAR_PARXCOM_NTRIPV2         = 930,    /**< This parameter configures the integrated NTRIP client. */
     XCOMPAR_PARXCOM_ABDVERSION      = 931,    /**< This parameter configures the ABD protocol version */
     XCOMPAR_PARXCOM_MQTTCONFIG      = 932,    /**< This parameter configures MQTT monitor module */
+    XCOMPAR_PARXCOM_NETDUMP         = 933,    /**< This parameter enables/disables the internal network traffic numper */
+    XCOMPAR_PARXCOM_CALIBMODE       = 934,    /**< This parameter enables/disables the internal calibration mode */
     /**
      * -------------------------------------------------------------------------------------------------------------------------------------
      * FPGA Parameter
@@ -823,11 +827,12 @@ enum XComParameterID {
      * I/O Parameter
      * -------------------------------------------------------------------------------------------------------------------------------------
      */
-    XCOMPAR_PARIO_HW245     = 1500,    /**< @deprecated */
-    XCOMPAR_PARIO_HW288     = 1501,    /**< @deprecated */
-    XCOMPAR_PARIO_SYNCOUT   = 1502,    /**< @deprecated */
-    XCOMPAR_PARIO_SYNCOUT2  = 1503,    /**< This parameter configures the synchronization output module */
-    XCOMPAR_PARIO_SYNCIN    = 1504,    /**< This parameter configures the synchronization input module */
+    XCOMPAR_PARIO_HW245        = 1500,    /**< @deprecated */
+    XCOMPAR_PARIO_HW288        = 1501,    /**< @deprecated */
+    XCOMPAR_PARIO_SYNCOUT      = 1502,    /**< @deprecated */
+    XCOMPAR_PARIO_SYNCOUT2     = 1503,    /**< This parameter configures the synchronization output module */
+    XCOMPAR_PARIO_SYNCIN       = 1504,    /**< This parameter configures the synchronization input module */
+    XCOMPAR_PARIO_IPST_PINMODE = 1505,    /**< This parameter configures IPST pin muliplexing (odometer vs. can-bus) */
     /**
      * -------------------------------------------------------------------------------------------------------------------------------------
      * SCU Parameter
@@ -1285,6 +1290,8 @@ typedef struct XCOM_STRUCT_PACK {
 } XCOMmsg_OMGINT;
 /**
  * This message contains system raw data used for post-processing.
+ *
+ * Note: When using a divider, only snapshot values will be provided. No averaging is executed.
  * #domain: public
  * #rate: full
  * #name: XCOMmsg_RAWDATA
@@ -1896,6 +1903,27 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMFooter footer;
 } XCOMmsg_EKFERROR2;
 /**
+ * This message contains the calibrated measurements from the IMU of an iPST system, system status and odometer measurements.
+ * #domain: public
+ * #rate: full
+ * #name: XCOMmsg_IPST
+ */
+#define XCOMMSG_IPST_MAXODOMETERS 3 /**< Number of supported odometers */
+typedef struct {
+    int32_t ticks;             /**< Up/Down counter of odometer pulses. The counter will never be reset. */
+    uint32_t event_time;       /**< Time between IMU Trigger and first Odometer Event [25 ns/Tick] */
+    uint32_t event_time_next;  /**< Time between last Odometer Event and next IMU Trigger [25 ns/Tick] */
+} IPstOdometerType;
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;              /**< XCOM header */
+    float acc[3];                   /**< Calibrated acceleration along IMU x-, y- and z-axis in [m/s2] */
+    float omg[3];                   /**< Calibrated angular rate along IMU x-, y- and z-axis in [rad/s] */
+    uint32_t system_status;         /**< Extended system status */
+    uint32_t fpga_status;           /**< Extended FPGA status */
+    IPstOdometerType odometer[XCOMMSG_IPST_MAXODOMETERS];
+    XCOMFooter footer;
+} XCOMmsg_IPST;
+/**
  * This message contains the result of iMAR's tightly coupled solution.
  * #domain: hidden
  * #rate: ekf
@@ -2356,13 +2384,15 @@ typedef struct XCOM_STRUCT_PACK {
  * Each item consists of a float value and a related status.
  * #domain: public
  * #rate: gnss
+ * #name: XCOMmsg_GNSSHWMON
  */
+typedef struct {
+    float val;       /**< Value related to the status information */
+    uint32_t status; /**< The related status */
+} GnssHwMonitorType;
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;   /**< XCOM header */
-    struct {
-        float val;       /**< Value related to the status information */
-        uint32_t status; /**< The related status */
-    } GnssHwMonitor[16];
+    GnssHwMonitorType gnss_hw_monitor[16];
     XCOMFooter footer;
 } XCOMmsg_GNSSHWMON;
 /**
@@ -2374,20 +2404,21 @@ typedef struct XCOM_STRUCT_PACK {
  */
 #define XCOMMSG_PORTSTATS_MAXPORTS 3 /**< Number of supported ports */
 typedef struct XCOM_STRUCT_PACK {
+    uint32_t port;              /**< COM port */
+    uint32_t rx_chars;          /**< Total number of characters received through this port */
+    uint32_t tx_chars;          /**< Total number of characters transmitted through this port */
+    uint32_t acc_rx_chars;      /**< Total number of accepted characters received through this port */
+    uint32_t droppped_rx_chars; /**< Number of software overruns in receive */
+    uint32_t interrupts;        /**< Number of interrupts on this port */
+    uint32_t breaks;            /**< Number of breaks (only for serial ports) */
+    uint32_t parity_errors;     /**< Number of parity errors (only for serial ports) */
+    uint32_t frame_errors;      /**< Number of framing errors (only for serial ports) */
+    uint32_t rx_overrun;        /**< Number of hardware overruns in receive */
+} PortStatsType;
+typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;              /**< XCOM header */
     int32_t number_of_elements;     /**< Number of status elements */
-    struct {
-        uint32_t port;              /**< COM port */
-        uint32_t rx_chars;          /**< Total number of characters received through this port */
-        uint32_t tx_chars;          /**< Total number of characters transmitted through this port */
-        uint32_t acc_rx_chars;      /**< Total number of accepted characters received through this port */
-        uint32_t droppped_rx_chars; /**< Number of software overruns in receive */
-        uint32_t interrupts;        /**< Number of interrupts on this port */
-        uint32_t breaks;            /**< Number of breaks (only for serial ports) */
-        uint32_t parity_errors;     /**< Number of parity errors (only for serial ports) */
-        uint32_t frame_errors;      /**< Number of framing errors (only for serial ports) */
-        uint32_t rx_overrun;        /**< Number of hardware overruns in receive */
-    } stats[XCOMMSG_PORTSTATS_MAXPORTS];
+    PortStatsType stats[XCOMMSG_PORTSTATS_MAXPORTS];
     XCOMFooter footer;
 } XCOMmsg_PORTSTATS;
 /**
@@ -2445,6 +2476,8 @@ typedef struct XCOM_STRUCT_PACK {
  *
  * To support future extensions, this message is of variable length. It consists of at least 252 bytes; the actual length is given by
  * the “Msg Length” field of the message header.
+ *
+ * Note: When using a divider, only snapshot values will be provided. No averaging is executed.
  * #domain: public
  * #rate: full
  */
@@ -2716,6 +2749,17 @@ typedef struct XCOM_STRUCT_PACK {
   XCOMFooter footer;                               /**< XCOM footer */
 } XCOMmsg_NMEA0183_PASHR;
 /**
+ * This message contains the NMEA0183 PMSO sentence as XCOM payload. The message length depends on the NMEA0183 sentence
+ * length.
+ * #domain: public
+ * #rate: full
+ */
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;                                   /**< XCOM header */
+    uint8_t payload_buffer[XCOM_MAX_MSG_PAYLOAD_LENGTH]; /**< XCOM payload buffer */
+    XCOMFooter footer;                                   /**< XCOM footer */
+} XCOMmsg_NMEA0183_PMSO;
+/**
  * This message contains battery status data.
  * #name: XCOMmsg_BATSTAT2
  */
@@ -2824,6 +2868,8 @@ typedef struct XCOM_STRUCT_PACK {
 #define XCOMMSG_EXTMAG_CALSTATE_RUNNING 1   /**< 3D calibration is running */
 #define XCOMMSG_EXTMAG_CALSTATE_DONE    2   /**< 3D calibration done */
 #define XCOMMSG_EXTMAG_CALSTATE_ERROR   3   /**< 3D calibration error */
+#define XCOMMSG_EXTMAG_SENSOR_ID_EXTERNAL  0 /**< External magnetometer (e.g. iMAG-DMC) */
+#define XCOMMSG_EXTMAG_SENSOR_ID_EXTAIDCMD 1 /**< Magnetic field received from external aiding command interface */
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;                 /**< XCOM header */
     double time;                       /**< External magnetic sensor's timestamp [s] */
@@ -2831,7 +2877,8 @@ typedef struct XCOM_STRUCT_PACK {
     float magnetic_heading;            /**< Magnetic heading (calculated from magnetic field values) [rad] */
     uint8_t measurement_valid;         /**< Magnetic measurements valid/invalid */
     uint8_t calib_state;               /**< 3D-calibration state */
-    uint8_t reserved[6];               /**< Reserved for further use */
+    uint8_t sensor_id;                 /**< Sensor ID */
+    uint8_t reserved[5];               /**< Reserved for further use */
     XCOMFooter footer;
 } XCOMmsg_EXTMAGNETOMETER;
 /**
@@ -2929,7 +2976,8 @@ enum XCOM_ENUM_EXT XCOMLoglistPreset {
     Rawdata = 0,        /**< IMU/GNSS/Odometer rawdata (usefully for post-processing without having an INS online solution) */
     NavSolution = 1,    /**< INS online solution without rawdata acquisition  */
     Support = 2,        /**< Combination of Rawdata and NavSolution */
-    Qualification = 3   /**< Similar to Rawdata but with additional hardware monitoring messages */
+    Qualification = 3,  /**< Similar to Rawdata but with additional hardware monitoring messages */
+    Mqtt = 4            /**< MQTT monitoring messages */
 };
 typedef struct XCOM_STRUCT_PACK {
     XCOMHeader header;          /**< XCOM header */
@@ -3203,7 +3251,7 @@ typedef struct XCOM_STRUCT_PACK {
                                            0 = Absolute GPS timestamp
                                            1 = Latency */
     uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_VEL */
-    double velocity[3];             /**< Veast, Vnorth, Vdown [m/s] */
+    double velocity[3];             /**< Vnorth, Veast, Vdown (NED) or velocity along ECEF x-, y- and z-coordinate in [m/s] */
     double velocity_stddev[3];      /**< Standard deviation of external velocity aiding [m/s] */
     XCOMFooter footer;
 } XCOMCmd_EXTAID_VEL;
@@ -3217,7 +3265,7 @@ typedef struct XCOM_STRUCT_PACK {
                                            0 = Absolute GPS timestamp
                                            1 = Latency */
     uint16_t command_parameter_id;  /**< ID = XCOM_CMDEXTAID_VEL2 */
-    double velocity[3];             /**< Veast, Vnorth, Vdown [m/s] */
+    double velocity[3];             /**< Vnorth, Veast, Vdown (NED) or velocity along ECEF x-, y- and z-coordinate in [m/s] */
     double velocity_stddev[3];      /**< Standard deviation of external velocity aiding [m/s] */
     double lever_arm[3];            /**< Lever arm in x,y,z-direction [m] */
     double lever_arm_stddev[3];     /**< Standard deviation of lever arm in x,y,z-direction [m] */
@@ -3239,6 +3287,7 @@ typedef struct XCOM_STRUCT_PACK {
     double lever_arm_stddev[3];     /**< Standard deviation of lever arm in x,y,z-direction [m] */
     XCOMFooter footer;
 } XCOMCmd_EXTAID_VELBODY;
+typedef XCOMCmd_EXTAID_VELBODY XCOMCmd_EXTAID_V_AIR; /**< External airspeed aiding in body x-,y-,z-direction [m/s] */
 /**
  * External height aiding
  */
@@ -6380,15 +6429,6 @@ typedef struct XCOM_STRUCT_PACK {
     XCOMFooter footer;
 } XCOMParXCOM_CLIENT;
 /**
- * @deprecated
- */
-typedef struct XCOM_STRUCT_PACK {
-    XCOMHeader header;          /**< XCOM header */
-    XCOMParHeader param_header; /**< XCOM parameter header */
-    uint8_t tcpdump_args[256];     /**< tcpdump arguments */
-    XCOMFooter footer;
-} XCOMParXCOM_TCPDUMP;
-/**
  * This parameter configures the serial ports
  * #scope: read and write
  * #domain: public
@@ -6470,6 +6510,21 @@ typedef struct XCOM_STRUCT_PACK {
     uint8_t reserved;                       /**< Reserved for further use */
     XCOMFooter footer;                      /**< XCOM footer */
 } XCOMParIO_SYNCIN;
+/**
+ * This parameter is only applicable to the iPST system and configures pin multiplexing (odometer vs. can-bus).
+ * #scope: read and write
+ * #domain: public
+ * #name: XCOMParIO_IPST_PINMODE
+ */
+#define XCOM_IPST_PINMODE_ODOMETER  0   /**< Select odometer pins */
+#define XCOM_IPST_PINMODE_CANBUS    1   /**< Select CAN-Bus pins */
+typedef struct XCOM_STRUCT_PACK {
+    XCOMHeader header;                      /**< XCOM header */
+    XCOMParHeader param_header;             /**< XCOM parameter header */
+    uint8_t pin_mode;                       /**< Pin selection */
+    uint8_t reserved[3];                    /**< Reserved for further use */
+    XCOMFooter footer;                      /**< XCOM footer */
+} XCOMParIO_IPST_PINMODE;
 /*
  * Aliases
  */

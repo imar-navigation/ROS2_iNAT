@@ -735,6 +735,10 @@ struct ParameterTraits<XCOMParIO_SYNCIN> {
     static constexpr uint16_t Id = XCOMPAR_PARIO_SYNCIN;
 };
 template<>
+struct ParameterTraits<XCOMParIO_IPST_PINMODE> {
+    static constexpr uint16_t Id = XCOMPAR_PARIO_IPST_PINMODE;
+};
+template<>
 struct ParameterTraits<XCOMParSCU_NADIR> {
     static constexpr uint16_t Id = XCOMPAR_PARSCU_NADIR;
 };
