@@ -147,6 +147,9 @@ public:
     XCOMCmd_EXTAID_VELBODY get_xcomcmd_extaid_vel_body(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
                                                        const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
                                                        const std::array<double, 3>& leverarm_stddev);
+    XCOMCmd_EXTAID_V_AIR get_xcomcmd_extaid_airspeed(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                     const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
+                                                     const std::array<double, 3>& leverarm_stddev);
     XCOMCmd_EXTAID_HEIGHT get_xcomcmd_extaid_height(const double& timestamp, uint16_t timemode, const double& height,
                                                     const double& height_stddev);
     XCOMCmd_EXTAID_HEIGHT2 get_xcomcmd_extaid_height_2(const double& timestamp, uint16_t timemode, const double& height,
@@ -191,7 +194,7 @@ public:
         frame.initpos_lat             = pos[0];
         frame.initpos_lon             = pos[1];
         frame.initpos_alt             = static_cast<float>(pos[2]);
-        for(int idx = 0; idx < 3; idx++) {
+        for(size_t idx = 0; idx < 3; idx++) {
             frame.initpos_stddev[idx]   = pos_stddev[idx];
             frame.lever_arm[idx]        = la[idx];
             frame.lever_arm_stddev[idx] = la_stddev[idx];

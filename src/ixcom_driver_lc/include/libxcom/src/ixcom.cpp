@@ -575,6 +575,14 @@ XCOMCmd_EXTAID_VELBODY XComState::get_xcomcmd_extaid_vel_body(const double& time
     complete_message(frame);
     return frame;
 }
+XCOMCmd_EXTAID_V_AIR XComState::get_xcomcmd_extaid_airspeed(const double& timestamp, uint16_t timemode, const std::array<double, 3>& vel,
+                                                            const std::array<double, 3>& vel_stddev, const std::array<double, 3>& leverarm,
+                                                            const std::array<double, 3>& leverarm_stddev) {
+    auto frame                 = get_xcomcmd_extaid_vel_body(timestamp, timemode, vel, vel_stddev, leverarm, leverarm_stddev);
+    frame.command_parameter_id = XCOM_CMDEXTAID_AIRSPEED;
+    complete_message(frame);
+    return frame;
+}
 XCOMCmd_EXTAID_HEIGHT XComState::get_xcomcmd_extaid_height(const double& timestamp, uint16_t timemode, const double& height,
                                                            const double& height_stddev) {
     XCOMCmd_EXTAID_HEIGHT frame{};
